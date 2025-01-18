@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login and Sign-Up</title>
+    <style>
+        /* Styles here */
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        /* Basic Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-image: url('/path/to/background/image.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #333;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            background-color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #f9f9f9;
+        }
+
+        .password-wrapper {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            color: #777;
+        }
+
+        .toggle-password:hover {
+            color: #333;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .signup-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .signup-link a {
+            color: #007BFF;
+            text-decoration: none;
+            font-size: 16px;
+        }
+
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+
+        .error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="container">
+        <h2 id="formTitle">Login</h2>
+        <form id="form" onsubmit="handleSubmit(event)">
+            <div class="input-group">
+                <label for="email">Email ID</label>
+                <input type="email" id="email" name="email" required placeholder="Enter your Email">
+                <div class="error" id="emailError"></div>
+            </div>
+            <div class="input-group password-wrapper">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+                <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
+                <div class="error" id="passwordError"></div>
+            </div>
+            <div id="confirmPasswordGroup" class="input-group password-wrapper" style="display: none;">
+                <label for="confirmPassword">Confirm Password</label>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
+                <span class="toggle-password" onclick="togglePassword('confirmPassword')">👁️</span>
+                <div class="error" id="confirmPasswordError"></div>
+            </div>
+            <button type="submit">Submit</button>
+        </form>
+        <hr>
+        <div class="signup-link">
+            <span id="toggleLink">Don't have an account? <a href="javascript:void(0);" onclick="toggleForm()">Sign Up</a></span>
+        </div>
+    </div>
+
+    <script>
+        let isLogin = true;
+
+        function toggleForm() {
+            isLogin = !isLogin;
+            const formTitle = document.getElementById("formTitle");
+            const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
+            const toggleLink = document.getElementById("toggleLink");
+            if (isLogin) {
+                formTitle.textContent = "Login";
+                confirmPasswordGroup.style.display = "none";
+                toggleLink.innerHTML = "Don't have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign Up</a>";
+            } else {
+                formTitle.textContent = "Sign Up";
+                confirmPasswordGroup.style.display = "block";
+                toggleLink.innerHTML = "Already have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Login</a>";
+            }
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        async function handleSubmit(event) {
+           
+            event.preventDefault();  // Prevent form from submitting normally
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value.trim();
+            const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
+
+            let isValid = true;
+
+            // Reset errors
+            document.getElementById("emailError").textContent = "";
+            document.getElementById("passwordError").textContent = "";
+            document.getElementById("confirmPasswordError").textContent = "";
+
+            // Validate email domain
+            if (!email.endsWith("@shivalikbank.com")) {
+                document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
+                isValid = false;
+            }
+
+            // Validate password
+            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+            if (!passwordRegex.test(password)) {
+                document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
+                isValid = false;
+            }
+
+            // Validate confirm password (if sign-up)
+            if (!isLogin && password !== confirmPassword) {
+                document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
+                isValid = false;
+            }
+
+            if (isValid) {
+                const formData = {
+                    username: email,
+                    password,
+                    confirmPassword: !isLogin ? confirmPassword : undefined,
+                };
+
+                // Send POST request for login/signup
+                const response = await fetch(isLogin ? '/login' : '/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    alert(`Error: ${errorData.message}`);
+                    return;
+                }
+
+                const data = await response.json();
+           
+                if (isLogin) {
+                    alert("Login Successful! Redirecting...");
+                    window.location.href = "/home";  // Redirect to the home page
+                } else {
+                    alert("Signup Successful! Redirecting...");
+                    window.location.href = "/home";  // Redirect to home page after signup
+                }
+            } else {
+                alert("Please correct the errors before submitting.");
+            }
+        }
+    </script>
+</body>
+</html>
