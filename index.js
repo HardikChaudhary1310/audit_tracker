@@ -10,7 +10,6 @@ const { dirname } = require('path');
 // For ES Modules to resolve __dirname
 const cors = require('cors');
 
-
 const app = express();
 const PORT = 3001; // Changed port to 3001
 
