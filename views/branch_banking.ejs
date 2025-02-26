@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shivalik Bank Policies</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom right, #f0f8ff, #4682b4);
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-image: var(--gradient);
+            animation: gradientBackground 15s infinite;
+        }
+
+
+    @keyframes gradientBackground {
+        0% {
+            background: linear-gradient(to bottom, #789fc2, #f0f8ff);
+            background-position: left;
+        }
+        25% {
+            background: linear-gradient(to bottom, #789fc2, #f0f8ff);
+            background-position: right
+        }
+        50% {
+            background: linear-gradient(to bottom, #789fc2, #f0f8ff);
+            background-position: left;
+        }
+        75% {
+            background: linear-gradient(to bottom, #668eb1, #f0f8ff);
+            background-position: right
+        }
+        100% {
+            background: linear-gradient(to bottom, #789fc2, #f0f8ff);
+            background-position: left;
+        }
+    }
+        .header {
+            background: linear-gradient(90deg, #674dcd, #3883c4, #52d7ee);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header .title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .header a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            padding: 8px 15px;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .header a:hover {
+            background-color: rgba(72, 132, 192, 0.7);
+        }
+        .container {
+            max-width: 900px;
+            margin: 110px auto;
+            background: linear-gradient(90deg, #674dcd, #3883c4, #52d7ee);
+            padding: 25px;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+        h1 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .policy-item {
+            cursor: pointer;
+            position: relative;
+            padding-left: 20px;
+        }
+        .policy-item .sub-policy-list {
+            display: none;
+            padding-left: 20px;
+            margin-top: 10px;
+        }
+        .policy-item.open .sub-policy-list {
+            display: block;
+        }
+        .policy-item::before {
+            content: '\002B';
+            position: absolute;
+            left: 0;
+            font-size: 20px;
+            color: white;
+            transition: transform 0.3s ease;
+        }
+        .policy-item.open::before {
+            content: '\2212';
+            transform: rotate(180deg);
+        }
+        .sub-policy {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            transition: text-decoration 0.3s ease;
+        }
+        .action-buttons {
+            float: right;
+            margin-top: 5px;
+        }
+        .action-buttons a {
+            margin-left: 10px;
+        }
+        .sub-policy:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="title">SHIVALIK BANK</div>
+        <div>
+            <a href="/">LOGIN</a>
+            <span style="margin: 0 2px;">|</span>
+            <a href="javascript:history.back()">HOME</a>
+            <span style="margin: 0 2px;">|</span>
+            <a href="#">E-REGISTER</a>
+        </div>
+    </div>
+    <div class="container">
+        <h1 style="color: white; font-weight: bolder;font-style: italic;background-image: var(--gradient);transition: background-position 1s;display: inline-block;color: whitesmoke;font-size:30px;align-items: center;text-align: center;justify-content: center;margin-left: 140px;">Select Branch Banking Which You Want To Read!!</h1>
+        <ul>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                CASA Sales
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/audit/SSFB_ATM_Opening.pdf" class="sub-policy" download>SSFB_ATM Opening on Holiday and After Banking Hours Policy_Ver_2.0.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/audit/SSFB_ATM_Opening.pdf" download style="color: lightgreen;">Download</a>
+                            <a href="#" style="color: salmon;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/audit/SSFB_Gunman_Age.pdf" class="sub-policy" download>SSFB_Gunman Age Policy_Ver_2.0.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/audit/SSFB_Gunman_Age.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                Assest Sales
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/loan/SSFB_Loan_Eligibility.pdf" class="sub-policy" download>SSFB_Loan Eligibility Criteria Policy_Ver_3.0.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/loan/SSFB_Loan_Eligibility.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/loan/SSFB_Loan_Approval.pdf" class="sub-policy" download>SSFB_Loan Approval Process Policy_Ver_4.0.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/loan/SSFB_Loan_Approval.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                Forms
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/customer_service/SSFB_Complaint_Handling.pdf" class="sub-policy" download>SSFB_Complaint Handling Policy_Ver_1.5.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/customer_service/SSFB_Complaint_Handling.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/customer_service/SSFB_Customer_Engagement.pdf" class="sub-policy" download>SSFB_Customer Engagement Policy_Ver_2.1.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/customer_service/SSFB_Customer_Engagement.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                Mandatory Notices
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/hr/SSFB_Employee_Conduct.pdf" class="sub-policy" download>SSFB_Employee Conduct Policy_Ver_3.2.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Employee_Conduct.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/hr/SSFB_Leave_Management.pdf" class="sub-policy" download>SSFB_Leave Management Policy_Ver_2.8.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Leave_Management.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                Knowledge Series
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/hr/SSFB_Employee_Conduct.pdf" class="sub-policy" download>SSFB_Employee Conduct Policy_Ver_3.2.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Employee_Conduct.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/hr/SSFB_Leave_Management.pdf" class="sub-policy" download>SSFB_Leave Management Policy_Ver_2.8.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Leave_Management.pdf" download style="color: whitesmoke;">Download</a>
+                            <a href="#" style="color: whitesmoke;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                Internal Escalation Metrix
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/hr/SSFB_Employee_Conduct.pdf" class="sub-policy" download>SSFB_Employee Conduct Policy_Ver_3.2.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Employee_Conduct.pdf" download style="color: lightgreen;">Download</a>
+                            <a href="#" style="color: salmon;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/hr/SSFB_Leave_Management.pdf" class="sub-policy" download>SSFB_Leave Management Policy_Ver_2.8.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Leave_Management.pdf" download style="color: lightgreen;">Download</a>
+                            <a href="#" style="color: salmon;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+            <li class="policy-item" onclick="togglePolicy(this)">
+                Holiday List
+                <ul class="sub-policy-list">
+                    <li>
+                        <a href="/policies/hr/SSFB_Employee_Conduct.pdf" class="sub-policy" download>SSFB_Employee Conduct Policy_Ver_3.2.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Employee_Conduct.pdf" download style="color: lightgreen;">Download</a>
+                            <a href="#" style="color: salmon;">Delete</a>
+                        </div>
+                    </li>
+                    <li>
+                        <a href="/policies/hr/SSFB_Leave_Management.pdf" class="sub-policy" download>SSFB_Leave Management Policy_Ver_2.8.pdf</a>
+                        <div class="action-buttons">
+                            <a href="/policies/hr/SSFB_Leave_Management.pdf" download style="color: lightgreen;">Download</a>
+                            <a href="#" style="color: salmon;">Delete</a>
+                        </div>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <script>
+        function togglePolicy(policyItem) {
+            policyItem.classList.toggle('open');
+        }
+    </script>
+</body>
+</html>

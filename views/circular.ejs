@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shivalik Bank Circulars</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #f0f8ff, #4682b4);
+            padding: 20px;
+            background-image: var(--gradient);
+            animation: gradientBackground 15s infinite;
+        }
+
+        
+    
+
+    @keyframes gradientBackground {
+        0% {
+            background: linear-gradient(to bottom, #f0f8ff, #5f8db4);
+            background-position: left;
+        }
+        25% {
+            background: linear-gradient(to bottom, #789fc2, #f0f8ff);
+            background-position: right
+        }
+        50% {
+            background: linear-gradient(to bottom, #f0f8ff, #5f8db4);
+            background-position: left;
+        }
+        75% {
+            background: linear-gradient(to bottom, #668eb1, #f0f8ff);
+            background-position: right
+        }
+        100% {
+            background: linear-gradient(to bottom, #f0f8ff, #5f8db4);
+            background-position: left;
+        }
+    }
+
+        
+        
+        .header {
+           
+            background: linear-gradient(to bottom right, #f0f8ff, #4682b4);
+            color: black;
+            padding: 18px 24px;
+            margin-left: 0px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: auto;
+            height: auto;
+        }
+        .header a {
+            color: black;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .header a:hover {
+            text-decoration: underline;
+        }
+        .container {
+            margin-top: 20px;
+            
+        }
+        table {
+            width: 100%;
+            height: 100%;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .filter-input {
+            display: none;
+            margin-top: 5px;
+        }
+        tbody tr td {
+            vertical-align: middle;
+        }
+        .scrollable-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div style="font-weight: bolder;"><b>SHIVALIK BANK</b></div>
+        <div>
+            <a href="/home">HOME</a>
+            <span style="margin: 0 10px;">|</span>
+            <a href="/circular">E-REGISTER</a>
+            <span style="margin: 0 10px;">|</span>
+            <a href="/">LOGIN</a>
+        </div>
+    </div>
+    <div class="container">
+        <h2 class="text-center" style="color: white;color: white; font-weight: bolder;font-style: italic;background-image: var(--gradient);transition: background-position 1s;display: inline-block;color: whitesmoke;font-size:30px;align-items: center;text-align: center;justify-content: center;margin-left: 540px;"><b>CIRCULAR</b></h2>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <label for="entries">Show 
+                    <select id="entries" name="entries" class="custom-select custom-select-sm" style="width: auto; display: inline;">
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select> 
+                    entries
+                </label>
+            </div>
+            <div>
+                <label for="search">Search:</label>
+                <input id="search" type="text" class="form-control form-control-sm" style="display: inline; width: auto;"><i class="fas fa-search"></i>
+            </div>
+        </div>
+
+        <div class="scrollable-container">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>Sr <i class="fas fa-filter filter-icon" data-target="filterSr"></i></th>
+                        <th>File <i class="fas fa-filter filter-icon" data-target="filterFile"></i></th>
+                        <th>Category <i class="fas fa-filter filter-icon" data-target="filterCategory"></i></th>
+                        <th>Date <i class="fas fa-filter filter-icon" data-target="filterDate"></i></th>
+                        <th>PDF</th>
+                    </tr>
+                    <tr>
+                        <td><input type="text" id="filterSr" class="form-control form-control-sm filter-input" placeholder="Filter Sr"></td>
+                        <td><input type="text" id="filterFile" class="form-control form-control-sm filter-input" placeholder="Filter File"></td>
+                        <td><input type="text" id="filterCategory" class="form-control form-control-sm filter-input" placeholder="Filter Category"></td>
+                        <td><input type="text" id="filterDate" class="form-control form-control-sm filter-input" placeholder="Filter Date"></td>
+                        <td></td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Example row, repeat for each circular -->
+                    <tr>
+                        <td>01</td>
+                        <td>Circular#SSFB-1268_Cash Retention Limits.pdf</td>
+                        <td>OPS</td>
+                        <td class="download-time">19/01/2025 12:00:00 AM</td>
+                        <td><a href="/circulars/Circular#SSFB-1268_Cash_Retention_Limits.pdf" class="download-link" style="color: white;" download><i class="fas fa-download"></i> Download</a></td>
+                    </tr>
+                    <tr>
+                        <td>02</td>
+                        <td>Circular#SSFB-1268_Cash Retention Limits.pdf</td>
+                        <td>ACCOUNTS</td>
+                        <td class="download-time">18/01/2025 12:00:00 AM</td>
+                        <td><a href="/circulars/Circular#SSFB-1268_Cash_Retention_Limits.pdf" class="download-link" style="color: white;" download><i class="fas fa-download"></i> Download</a></td>
+                    </tr>
+                    <tr>
+                        <td>03</td>
+                        <td>Circular#SSFB-1268_Cash Retention Limits.pdf</td>
+                        <td>HR</td>
+                        <td class="download-time">17/01/2025 12:00:00 AM</td>
+                        <td><a href="/circulars/Circular#SSFB-1268_Cash_Retention_Limits.pdf" class="download-link" style="color: white;" download><i class="fas fa-download"></i> Download</a></td>
+                    </tr>
+                    <tr>
+                        <td>04</td>
+                        <td>Circular#SSFB-1268_Cash Retention Limits.pdf</td>
+                        <td>IT</td>
+                        <td class="download-time">16/01/2025 12:00:00 AM</td>
+                        <td><a href="/circulars/Circular#SSFB-1268_Cash_Retention_Limits.pdf" class="download-link" style="color: white;" download><i class="fas fa-download"></i> Download</a></td>
+                    </tr>
+                    <tr>
+                        <td>05</td>
+                        <td>Circular#SSFB-1268_Cash Retention Limits.pdf</td>
+                        <td>OPS</td>
+                        <td class="download-time">15/01/2025 12:00:00 AM</td>
+                        <td><a href="/circulars/Circular#SSFB-1268_Cash_Retention_Limits.pdf" class="download-link" style="color: white;" download><i class="fas fa-download"></i> Download</a></td>
+                    </tr>
+                    <!-- Add more rows as needed -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <!-- Bootstrap JS, Popper.js, and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.3/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const filterIcons = document.querySelectorAll('.filter-icon');
+
+            filterIcons.forEach(icon => {
+                icon.addEventListener('click', function () {
+                    const targetId = this.getAttribute('data-target');
+                    const inputField = document.getElementById(targetId);
+                    inputField.style.display = inputField.style.display === 'none' || inputField.style.display === '' ? 'block' : 'none';
+                });
+            });
+
+            // Handle download tracking
+            const downloadLinks = document.querySelectorAll('.download-link');
+            downloadLinks.forEach(link => {
+                link.addEventListener('click', function (event) {
+                    const row = this.closest('tr');
+                    const fileName = row.querySelector('td:nth-child(2)').innerText;
+                    const currentTime = new Date().toLocaleString();
+                    
+                    // Update the time in the table
+                    row.querySelector('.download-time').innerText = currentTime;
+                    
+                    // Store in local storage
+                    let downloadHistory = JSON.parse(localStorage.getItem('downloadHistory')) || [];
+                    downloadHistory.push({ fileName, time: currentTime });
+                    localStorage.setItem('downloadHistory', JSON.stringify(downloadHistory));
+
+                    // Debugging output
+            console.log('Download tracked:', downloadLinks);
+            console.log('Updated download history:', downloadHistory);
+                });
+            });
+        });
+
+
+
+
+
+
+
+    // document.addEventListener('DOMContentLoaded', function () {
+    //     const downloadLinks = document.querySelectorAll('.download-link');
+
+    //     downloadLinks.forEach(link => {
+    //         link.addEventListener('click', function (event) {
+    //             event.preventDefault(); // Prevent default anchor click behavior
+
+    //             const row = this.closest('tr');
+    //             const fileName = row.querySelector('td:nth-child(2)').innerText;
+    //             const downloadUrl = this.href;
+                
+    //             fetch(downloadUrl)
+    //                 .then(response => {
+    //                     if (!response.ok) {
+    //                         throw new Error('Network response was not ok');
+    //                     }
+    //                     return response.blob();
+    //                 })
+    //                 .then(blob => {
+    //                     // Create a temporary link to download the file
+    //                     const url = window.URL.createObjectURL(blob);
+    //                     const a = document.createElement('a');
+    //                     a.style.display = 'none';
+    //                     a.href = url;
+    //                     a.download = fileName;
+    //                     document.body.appendChild(a);
+    //                     a.click();
+    //                     window.URL.revokeObjectURL(url);
+    //                     document.body.removeChild(a);
+
+    //                     // Update the time in the table
+    //                     const currentTime = new Date().toLocaleString();
+    //                     row.querySelector('.download-time').innerText = currentTime;
+
+    //                     // Update server with download information
+    //                     updateDownloadHistory(fileName, currentTime, true);
+
+    //                     alert('Download successful!');
+    //                 })
+    //                 .catch(error => {
+    //                     console.error('There was an error downloading the file:', error);
+    //                     alert('Failed to download the file.');
+
+    //                     // Update server with download failure
+    //                     updateDownloadHistory(fileName, new Date().toLocaleString(), false);
+    //                 });
+    //         });
+    //     });
+
+    //     function updateDownloadHistory(fileName, time, success) {
+    //         const data = {
+    //             fileName: fileName,
+    //             time: time,
+    //             success: success
+    //         };
+
+    //         fetch('/update-download-history', {
+    //             method: 'POST',
+    //             headers: {
+    //                 'Content-Type': 'application/json'
+    //             },
+    //             body: JSON.stringify(data)
+    //         })
+    //         .then(response => {
+    //             if (!response.ok) {
+    //                 throw new Error('Failed to update download history on the server.');
+    //             }
+    //             console.log('Download history updated successfully.');
+    //         })
+    //         .catch(error => {
+    //             console.error('Error updating download history:', error);
+    //         });
+    //     }
+    // });
+
+
+
+
+
+</script>
+
+   
+</body>
+</html>

@@ -99,7 +99,9 @@
   {
     "username": "hardik1310@shivalikbank.com",
     "password": "$2b$10$gBmPanGmOskTdkrv5QJYhOhxLHnniAulMXZAMm3bwRxY9vWGq1FZ.",
-    "status": "passed"
+    "status": "active",
+    "timestamp": "2025-02-05 10:45:19",
+    "type": "login"
   },
   {
     "username": "hardik1@shivalikbank.com",
@@ -145,5 +147,463 @@
     "username": "hardik13105545@shivalikbank.com",
     "password": "$2b$10$GsMcdz68GeKJyh8XO6ENReeQr.jn.L0paNPAA9oirD9rJnTfVuUGK",
     "status": "passed"
+  },
+  {
+    "username": "hardik13106@shivalikbank.com",
+    "password": "$2b$10$jZVhiW1lyszUPFC5kx7G8uHM7ojP8pOsZG/7az/Wij7CPdk5ab1me",
+    "status": "passed"
+  },
+  {
+    "username": "h123@shivalikbank.com",
+    "password": "$2b$10$wdFyIrbsbjHXpKipX5ffAunychcdiw9vsvEh/Y28qLLbMeFldVpX6",
+    "status": "passed"
+  },
+  {
+    "username": "hardikNew1@shivalikbank.com",
+    "password": "$2b$10$ST898NJ8yOAKta5sVlr6cOGko1TqQRH4vqyfLHLVYY6jACmru0h86",
+    "status": "passed"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "action": "login",
+    "policy_name": "Hardik@12345",
+    "timestamp": "2025-02-05 00:05:22"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "action": "login",
+    "policy_name": "Hardik@12345",
+    "timestamp": "2025-02-05 00:12:39"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "action": "login",
+    "policy_name": "Hardik@12345",
+    "timestamp": "2025-02-05 00:15:34"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "action": "login",
+    "policy_name": "Hardik@12345",
+    "timestamp": "2025-02-05 00:16:35"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "action": "login",
+    "policy_name": "Hardik@12345",
+    "timestamp": "2025-02-05 00:21:58"
+  },
+  {
+    "username": "hardik00@shivalikbank.com",
+    "password": "$2b$10$zSH1EVCcPrc36Uuu0f7FFOncH0AX0XoCJDuROKQ0GCyk45dLQq09y",
+    "timestamp": "2025-02-05 10:40:43",
+    "type": "signup",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "timestamp": "2025-02-05 10:48:36",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "timestamp": "2025-02-05 10:51:02",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "timestamp": "2025-02-05 10:53:40",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 10:55:10",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik009988@shivalikbank.com",
+    "password": "$2b$10$cMezIY2zt1XG0u0VC8Zfq..g8OrkslzubuX/vU2lEDRVCxL.PBY/G",
+    "timestamp": "2025-02-05 10:56:09",
+    "type": "signup",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 11:46:14",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 11:58:18",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 12:15:12",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 12:18:44",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 12:43:57",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 13:24:13",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 13:45:32",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 13:57:26",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 14:01:54",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 14:19:13",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 15:30:51",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 17:11:33",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-05 18:49:28",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 10:54:32",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 10:58:07",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 11:29:10",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 11:34:40",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 11:37:55",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 12:14:18",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:07:02",
+    "type": "signup",
+    "status": "active"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:07:18",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:07:30",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:07:50",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:09:07",
+    "type": "signup",
+    "status": "active"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:09:33",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:12:43",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:12:46",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:13:01",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:17:45",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:18:12",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:19:55",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:19:59",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:21:18",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:21:21",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:24:05",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik098@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:25:18",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:25:31",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:26:56",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@123",
+    "timestamp": "2025-02-06 13:27:02",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardiknew12345@shivalikbank.com",
+    "password": "Hardik@123456",
+    "timestamp": "2025-02-06 13:27:10",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardikNew1@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 13:27:54",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 20:11:38",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 20:36:05",
+    "type": "login",
+    "status": "active"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 20:39:03",
+    "type": "signup",
+    "status": "active"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 20:39:24",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "login",
+    "timestamp": "2025-02-06 21:29:33",
+    "type": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "login",
+    "timestamp": "2025-02-06 21:32:38",
+    "type": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "login",
+    "timestamp": "2025-02-06 21:32:56",
+    "type": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "login",
+    "timestamp": "2025-02-06 21:46:21",
+    "type": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 22:06:02",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 22:15:38",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 22:19:01",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik000@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 22:19:06",
+    "type": "login",
+    "status": "failed"
+  },
+  {
+    "username": "hardik1310@shivalikbank.com",
+    "password": "Hardik@12345",
+    "timestamp": "2025-02-06 22:19:17",
+    "type": "login",
+    "status": "active"
   }
 ]

@@ -1,0 +1,344 @@
+const express = require('express');
+const fs = require('fs');
+const bcrypt = require('bcrypt');
+const path = require('path');
+const ejs = require('ejs');
+const moment = require('moment');
+const cors = require('cors');
+
+const app = express();
+const PORT = 3001;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set("views", path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use(cors());
+
+const USER_DATA_FILE = "user_data.json";
+
+// Ensure the data file exists
+if (!fs.existsSync(USER_DATA_FILE)) {
+    fs.writeFileSync(USER_DATA_FILE, JSON.stringify([]));
+}
+
+// Read user data from file
+const readUserData = () => {
+    try {
+        const data = fs.readFileSync(USER_DATA_FILE, "utf8");
+        return JSON.parse(data || "[]");
+    } catch (err) {
+        console.error("Error reading user data:", err);
+        return [];
+    }
+};
+
+// Write user data to file
+const writeUserData = (data) => {
+    try {
+        fs.writeFileSync(USER_DATA_FILE, JSON.stringify(data, null, 2));
+    } catch (err) {
+        console.error("Error writing user data:", err);
+    }
+};
+
+// Email validation
+const isValidEmail = (username) => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@shivalikbank\.com$/;
+    return emailRegex.test(username);
+};
+
+// Password validation
+const isValidPassword = (password) => {
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+    return passwordRegex.test(password);
+};
+
+// Log user actions (Signup/Login)
+function logUserAction(username, type, plainPassword = "") {
+    let users = readUserData();
+    const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
+
+    // Find existing user
+    const existingUserIndex = users.findIndex(user => user.username === username);
+
+    if (existingUserIndex !== -1) {
+        // Update existing user
+        users[existingUserIndex].timestamp = timestamp;
+        users[existingUserIndex].type = type;
+    } else {
+        // Add new user if signing up
+        users.push({
+            username,
+            password: plainPassword, // Temporarily store plain password
+            timestamp,
+            type,
+            status: "active"
+        });
+    }
+
+    // Save back to file
+    writeUserData(users);
+}
+
+// Home route
+app.get("/", (req, res) => {
+    res.render("index");
+});
+
+app.get("/home", (req, res) => {
+    res.render("home");
+});
+
+
+
+
+// Policy Route
+app.get("/policy", (req, res) => {
+     const policies = [
+        { name: "Privacy Policy", downloadLink: "/files/privacy-policy.pdf" },
+        { name: "Refund Policy", downloadLink: "/files/refund-policy.pdf" },
+         { name: "Terms of Service", downloadLink: "/files/terms-of-service.pdf" },
+         { name: "Cookie Policy", downloadLink: "/files/cookie-policy.pdf" },
+         { name: "User Agreement", downloadLink: "/files/user-agreement.pdf" },
+        { name: "Security Policy", downloadLink: "/files/security-policy.pdf" },
+       { name: "Data Retention Policy", downloadLink: "/files/data-retention-policy.pdf" },
+       { name: "Accessibility Policy", downloadLink: "/files/accessibility-policy.pdf" },
+        { name: "Fair Lending Policy", downloadLink: "/files/fair-lending-policy.pdf" },
+        { name: "Customer Service Policy", downloadLink: "/files/customer-service-policy.pdf" }
+     ];
+
+    res.render("policy", { policies });
+});
+
+// newww
+// Function to log user actions
+function logUserAction(username, action, policyName) {
+    let data = [];
+
+    // Load existing logs if file exists
+    if (fs.existsSync(USER_DATA_FILE)) {
+        const fileContent = fs.readFileSync(USER_DATA_FILE, "utf8");
+        data = fileContent ? JSON.parse(fileContent) : [];
+    }
+
+    // Create log entry
+    const logEntry = {
+        username: username || "Unknown User",
+        action,
+        policy_name: policyName,
+        timestamp: moment().format("YYYY-MM-DD HH:mm:ss")
+    };
+
+    // Append log entry
+    data.push(logEntry);
+
+    // Write back to file
+    fs.writeFileSync(USER_DATA_FILE, JSON.stringify(data, null, 4));
+}
+
+// Download API
+app.get("/download/:policyName", (req, res) => {
+    const { policyName } = req.params;
+    const username = req.query.username || "Anonymous"; // Get username from request
+    const filePath = path.join(__dirname, "policies", policyName);
+
+    if (fs.existsSync(filePath)) {
+        logUserAction(username, "download", policyName);
+        res.download(filePath);
+    } else {
+        res.status(404).json({ error: "Policy not found" });
+    }
+});
+
+// Delete API
+app.delete("/delete/:policyName", (req, res) => {
+    const { policyName } = req.params;
+    const username = req.query.username || "Anonymous"; // Get username from request
+    const filePath = path.join(__dirname, "policies", policyName);
+
+    if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        logUserAction(username, "delete", policyName);
+        res.json({ message: "Policy deleted successfully" });
+    } else {
+        res.status(404).json({ error: "Policy not found" });
+    }
+});
+
+
+// Route to log and download the file
+app.get('/download/:policyType/:filename', (req, res) => {
+    const { policyType, filename } = req.params;
+    const username = req.user.username;
+    const timestamp = moment().format('YYYY-MM-DD HH:mm:ss');
+
+    // Log the download
+    const logMessage = `${timestamp} - User: ${username}, Policy Type: ${policyType}, File: ${filename}\n`;
+    fs.appendFile('download-log.txt', logMessage, (err) => {
+        if (err) console.error('Error logging download:', err);
+    });
+
+    // Send the file to the client
+    const filePath = `${__dirname}/public/policies/${policyType}/${filename}`;
+    res.download(filePath, filename, (err) => {
+        if (err) {
+            console.error('Error sending file:', err);
+            res.status(500).send('Error downloading the file.');
+        }
+    });
+});
+
+
+
+
+
+// circulars route
+app.get("/circular", (req, res) => {
+    res.render("circular");
+    
+});
+
+// manuals route
+app.get("/manuals", (req, res) => {
+    res.render("manuals");
+    
+});
+
+
+// branch_banking route
+app.get("/branch_banking", (req, res) => {
+    res.render("branch_banking");
+    
+});
+
+
+app.get("/head_office", (req, res) => {
+    res.render("head_office");
+    
+});
+
+app.get("/product_notes", (req, res) => {
+    res.render("product_notes");
+    
+});
+
+app.get("/document_templates", (req, res) => {
+    res.render("document_templates");
+    
+});
+
+
+
+// Signup Route
+app.post("/signup", (req, res) => {
+    const { username, password, confirmPassword } = req.body;
+    console.log("Signup request received:", { username, password, confirmPassword });
+
+    if (!isValidEmail(username)) {
+        return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
+    }
+
+    if (!isValidPassword(password)) {
+        return res.status(400).json({
+            message: "Password must be at least 6 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character."
+        });
+    }
+
+    if (password !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match." });
+    }
+
+    const users = readUserData();
+
+    if (users.some(user => user.username === username)) {
+        console.log("User already exists:", username);
+        return res.status(400).json({ message: "User already exists." });
+    }
+
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    users.push({ username, password: hashedPassword, status: "active" });
+    writeUserData(users);
+
+    logUserAction(username, "signup", password);
+    console.log("User added successfully:", username);
+
+    res.status(201).json({ message: "Signup successful." });
+});
+
+app.post("/login", (req, res) => {
+    const { username, password } = req.body;
+    console.log("Login request received:", { username, password });
+
+    // Validate email and password presence
+    if (!username || !password) {
+        return res.status(400).json({ message: "Email and password are required." });
+    }
+
+    // Validate email format
+    if (!isValidEmail(username)) {
+        return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
+    }
+
+    // Validate password format
+    if (!isValidPassword(password)) {
+        return res.status(400).json({
+            message: "Password must be at least 6 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character."
+        });
+    }
+
+    const users = readUserData();
+    const user = users.find((user) => user.username === username);
+
+    if (!user) {
+        console.log("User not found:", username);
+        return res.status(400).json({ message: "Invalid credentials." });
+    }
+
+    try {
+        if (!bcrypt.compareSync(password, user.password)) {
+            console.log("Invalid credentials for:", username);
+            return res.status(400).json({ message: "Invalid credentials." });
+        }
+    } catch (error) {
+        console.error("Error comparing passwords:", error);
+        return res.status(500).json({ message: "Internal server error." });
+    }
+    console.log("harrr");
+    res.status(200).json({ message: "Login successful" });
+    console.log("Login successful for:", username);
+    user.status = "passed"; // Set status to passed on successful login
+    writeUserData(users); // Update user data
+    console.log("Redirecting to home page..."); // Log redirection
+    //res.redirect("/home"); // Redirect to home page after successful login
+    console.log("Response sent to client."); // Log response sent
+
+    
+});
+
+
+
+// View Data Route
+app.get("/viewData", (req, res) => {
+    const users = readUserData();
+    const formattedUsers = users.map(user => ({
+        username: user.username,
+        password: user.password || "Not Available", // Show stored plain password (if available)
+        timestamp: user.timestamp || "N/A",
+        type: user.type || "unknown", // Ensure it displays "login" or "signup"
+        status: user.status || "unknown"
+    }));
+    res.json(formattedUsers);
+});
+
+// Start the server
+app.listen(PORT, (err) => {
+    if (err) {
+        console.error("Error starting server:", err);
+    } else {
+        console.log(`Server running at http://localhost:${PORT}`);
+    }
+});
+
+module.exports = app;
