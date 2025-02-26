@@ -130,6 +130,39 @@
         .sub-policy:hover {
             text-decoration: underline;
         }
+
+        .upload-section {
+    position: absolute; /* Position it freely */
+    top: 78px; /* Adjust vertical positioning */
+    right: 260px; /* Align to the right */
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Space between elements */
+    background: #f8f9fa; /* Light background */
+    padding: 7px;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.upload-section select,
+.upload-section input[type="file"],
+.upload-section button {
+    padding: 2px;
+    border-radius: 1px;
+    border: 1px solid #ccc;
+}
+
+.upload-section button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.upload-section button:hover {
+    background-color: #0056b3;
+}
+
     </style>
 </head>
 <body>
@@ -153,40 +186,22 @@
             <select id="policyCategory">
                 <option value="">Select Policy Category</option>
                 <option value="HR">HR</option>
+                <option value="Brand and Marketing">Brand and Marketing</option>
+                <option value="Customer Service">Customer Service</option>
                 <option value="Finance">Finance</option>
+                <option value="Financial Inclusion Group">Financial Inclusion Group</option>
                 <option value="IT">IT</option>
+                <option value="Human Resource">Human Resource</option>
+                <option value="Finance">Finance</option>
             </select>
             <input type="file" id="uploadPolicy" />
             <button onclick="uploadPolicy()">Upload</button>
         </div>
         
-        <!-- Policy List -->
-        <table>
-            <thead>
-                <tr>
-                    <th>Policy Name</th>
-                    <th>Category</th>
-                    <th>Last Updated</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <% policies.forEach(function(policy) { %>
-                <tr>
-                    <td><%= policy.name %></td>
-                    <td><%= policy.category %></td>
-                    <td><%= policy.lastUpdated %></td>
-                    <td>
-                        <button onclick="updatePolicy('<%= policy.id %>')">Update</button>
-                        <a href="/download/<%= policy.id %>" onclick="trackDownload('<%= policy.id %>')">Download</a>
-                    </td>
-                </tr>
-                <% }); %>
-            </tbody>
-        </table>
+    
 
 
-        
+
         <ul>
             <li class="policy-item" onclick="togglePolicy(this)">
                 Audit
@@ -195,7 +210,7 @@
                         <a href="/policies/audit/har.pdf" class="sub-policy" download>SSFB_ATM Opening on Holiday and After Banking Hours Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
                             <a href="/public/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/public/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
+                            <a href="/public/policies/audit/har.pdf" class="" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
                         
                         </div>
                     </li>
@@ -215,14 +230,14 @@
                         <a href="/policies/audit/har.pdf" class="sub-policy" download>SSFB_Security Drill at Branches and HO Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
                             <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
+                            <a href="/policies/audit/har.pdf" class="" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
                         </div>
                     </li>
                     <li>
                         <a href="/policies/audit/har.pdf" class="sub-policy" download>SSFB_Visiting Card Issuance Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
                             <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
+                            <a href="/policies/audit/har.pdf" class="" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
                         </div>
                     </li>
                 </ul>
@@ -234,7 +249,7 @@
                         <a href="/policies/audit/har.pdf" class="sub-policy" download>SSFB_Collection Policy_Ver_1.0.pdf</a>
                         <div class="action-buttons">
                             <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
+                            <a href="/policies/audit/har.pdf" class="" style="color: whitesmoke;" data-filename="har.pdf">Delete</a>
                         </div>
                     </li>
                 </ul>
