@@ -145,6 +145,48 @@
     </div>
     <div class="container">
         <h1 style="color: white; font-weight: bolder;color: white; font-weight: bolder;font-style: italic;background-image: var(--gradient);transition: background-position 1s;display: inline-block;color: whitesmoke;font-size:30px;align-items: center;text-align: center;justify-content: center;margin-left: 140px;"><b>Select Policy Which You Want To Read!!</b></h1>
+
+
+
+        <!-- Upload Section -->
+        <div class="upload-section">
+            <select id="policyCategory">
+                <option value="">Select Policy Category</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="IT">IT</option>
+            </select>
+            <input type="file" id="uploadPolicy" />
+            <button onclick="uploadPolicy()">Upload</button>
+        </div>
+        
+        <!-- Policy List -->
+        <table>
+            <thead>
+                <tr>
+                    <th>Policy Name</th>
+                    <th>Category</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% policies.forEach(function(policy) { %>
+                <tr>
+                    <td><%= policy.name %></td>
+                    <td><%= policy.category %></td>
+                    <td><%= policy.lastUpdated %></td>
+                    <td>
+                        <button onclick="updatePolicy('<%= policy.id %>')">Update</button>
+                        <a href="/download/<%= policy.id %>" onclick="trackDownload('<%= policy.id %>')">Download</a>
+                    </td>
+                </tr>
+                <% }); %>
+            </tbody>
+        </table>
+
+
+        
         <ul>
             <li class="policy-item" onclick="togglePolicy(this)">
                 Audit
