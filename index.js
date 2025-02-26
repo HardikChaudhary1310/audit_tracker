@@ -1,6 +1,6 @@
 const express = require('express');
 const fs = require('fs');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const path = require('path');
 const ejs = require('ejs');
 const moment = require('moment');
