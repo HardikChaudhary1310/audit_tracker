@@ -1,0 +1,52 @@
+| 2025-02-27T08:42:20.507Z | SIGNUP   | piyush90@shivalikbank.com   | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T08:42:55.999Z | piyush90@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T08:46:39.175Z | SIGNUP   | pdayal@shivalikbank.com     | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T08:49:33.282Z | SIGNUP   | et-support@shivalikbank.com | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T11:44:03.940Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T11:55:27.485Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:00:42.168Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:02:33.754Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:07:21.190Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:11:50.146Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:25:34.735Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:31:20.695Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:33:54.948Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:37:53.745Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:45:48.202Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:55:17.162Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:55:22.247Z | DOWNLOAD | admin@shivalikbank.com      | admin          | har.pdf        | ::1        |
+| 2025-02-27T12:56:55.043Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T12:57:00.512Z | DOWNLOAD | admin@shivalikbank.com      | admin          | har.pdf        | ::1        |
+| 2025-02-27T12:59:47.751Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:00:05.481Z | DOWNLOAD | Unknown Email               | Unknown Type   | har.pdf        | ::1        |
+| 2025-02-27T13:04:44.870Z | SIGNUP   | Unknown Email               | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:04:49.393Z | DOWNLOAD | Unknown Email               | Unknown Type   | har.pdf        | ::1        |
+| 2025-02-27T13:10:22.083Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:11:56.197Z | DOWNLOAD | Unknown Email               | Unknown Type   | har.pdf        | ::1        |
+| 2025-02-27T13:15:53.288Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:15:57.906Z | DOWNLOAD | a@shivalikbank.com          | user           | har.pdf        | Unknown    |
+| 2025-02-27T13:20:09.980Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:20:14.380Z | DOWNLOAD | Unknown Email               | Unknown Type   | har.pdf        | Unknown    |
+| 2025-02-27T13:24:12.154Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:25:46.500Z | SIGNUP   | a@shivalikbank.com          | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:28:18.654Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:29:30.718Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:29:30.722Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:35:37.735Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:36:13.661Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:36:13.666Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:36:59.649Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:37:12.686Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:37:12.689Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:40:28.192Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:40:40.589Z | LOGIN    | Unknown Email               | Unknown Type   | Success - Logged In | Unknown    |
+| 2025-02-27T13:40:40.591Z | admin@shivalikbank.com | Unknown Email               | Unknown Type   | N/A            | Unknown    |
+| 2025-02-27T13:43:18.481Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:43:30.701Z | LOGIN    | admin@shivalikbank.com      | admin          | Success - Logged In | Unknown    |
+| 2025-02-27T13:55:18.308Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:55:42.027Z | LOGIN    | admin@shivalikbank.com      | admin          | Success - Logged In | Unknown    |
+| 2025-02-27T13:57:02.877Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:57:26.349Z | LOGIN    | admin@shivalikbank.com      | admin          | Success - Logged In | Unknown    |
+| 2025-02-27T13:57:59.334Z | SIGNUP   | admin@shivalikbank.com      | Admin          | N/A            | SUCCESS    |
+| 2025-02-27T13:58:32.857Z | LOGIN    | abc@shivalikbank.com        | Unknown        | Failed - User Not Found | Unknown    |
+| 2025-02-27T13:58:52.004Z | SIGNUP   | hardik@shivalikbank.com     | Admin          | N/A            | SUCCESS    |
