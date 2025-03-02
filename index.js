@@ -1,18 +1,32 @@
 const express = require('express');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
-const path = require('path');
 const ejs = require('ejs');
 const moment = require('moment');
 const cors = require('cors');
 const session = require('express-session');
 const morgan = require('morgan');
- 
+const path = require("path");
  
 const DownloadLogs = require('./models/DownloadLogs');
  
 const logDir = path.join(__dirname, 'logs');
-const logFilePath1 = path.join(__dirname, 'logs', 'user_activity.log');
+const logFilePath1 = path.join(__dirname, 'logs', 'user_data.json');
+
+
+const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
+
+const usersFilePath = path.join(__dirname, "logs", "user_activity.log");
+
+const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+        user: "hardikchaudhary713@gmail.com",  // Use a sender email (e.g., your company's email)
+        pass: "atxj ijbl xuxt gwfe",     // Use an App Password (not your real password)
+    },
+});
+
 
 
 if (!fs.existsSync(logDir)) {
@@ -118,10 +132,32 @@ app.use(cors());
 // Read user data from file
 const readUserData = () => {
     try {
-        const data = fs.readFileSync(USER_DATA_FILE, "utf8");
-        return JSON.parse(data || "[]");
-    } catch (err) {
-        console.error("Error reading user data:", err);
+        if (!fs.existsSync(logFilePath1)) {
+            return [];
+        }
+
+        const data = fs.readFileSync(logFilePath1, "utf8");
+
+        // If file is empty, return an empty array
+        if (!data.trim()) {
+            return [];
+        }
+
+        // Split log file into lines and parse each line into an object
+        const logs = data.split("\n").filter(line => line.trim()).map(line => {
+            const parts = line.split(" | ");
+            return {
+                timestamp: parts[0] || "N/A",
+                type: parts[1] || "N/A",
+                username: parts[2] || "N/A",
+                status: parts[3] || "N/A",
+            };
+        });
+
+        return logs;
+
+    } catch (error) {
+        console.error("❌ Error reading log file:", error);
         return [];
     }
 };
@@ -354,6 +390,54 @@ app.post("/signup", (req, res) => {
         return res.status(400).json({ message: "Invalid password or mismatch." });
     }
 
+
+
+    let users = [];
+    if (fs.existsSync(usersFilePath)) {
+        try {
+            const rawData = fs.readFileSync(usersFilePath, "utf8").trim();
+            
+            // ✅ If the file is empty, set `users` as an empty array
+            users = rawData ? JSON.parse(rawData) : [];
+            
+        } catch (error) {
+            console.error("❌ Error reading user data:", error);
+            users = []; // Prevent crash by setting users to an empty array
+        }
+    }
+
+    // Check if user already exists
+    if (users.some(user => user.username === username)) {
+        return res.status(400).json({ message: "User already exists. Please log in." });
+    }
+
+    // Generate a verification token (valid for 1 hour)
+    const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: "1h" });
+
+    // Store user with `verified: false`
+    users.push({ username, password, verified: false, token });
+    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
+
+       // **Verification Email**
+       const verificationLink = `http://localhost:3001/verify-email?token=${token}`;
+       const mailOptions = {
+           from: "hardikchaudhary713@gmail.com",
+           to: username, // User's email
+           subject: "Verify Your EmailId For Audit Portal!!!",
+           text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
+       };
+
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log("Error sending email:", error);
+            return res.status(500).json({ message: "Error sending verification email." });
+        }
+        res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+        alert: "Thanks for signing up! A verification email has been sent to your email address."
+    });
+
+
+
     const hashedPassword = bcrypt.hashSync(password, 10);
     
     const newUser = {
@@ -382,6 +466,35 @@ app.post("/signup", (req, res) => {
     res.status(201).json({ message: "Signup successful", user: req.session.user });
     
 });
+
+
+app.get("/verify-email", (req, res) => {
+    const { token } = req.query;
+
+    try {
+        const decoded = jwt.verify(token, "SECRET_KEY");
+        const email = decoded.email;
+
+        // Load users from file
+        let users = JSON.parse(fs.readFileSync(usersFilePath));
+
+        // Find user and update verification status
+        users = users.map(user => {
+            if (user.email === email) {
+                return { ...user, verified: true };
+            }
+            return user;
+        });
+
+        // Save updated users
+        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
+
+        res.send("✅ Email verified successfully! You can now log in.");
+    } catch (error) {
+        res.status(400).send("Invalid or expired token.");
+    }
+});
+
 
 
 
@@ -476,6 +589,33 @@ function readUsersFromLog() {
 
 app.post("/login", async (req, res) => {
     console.log("Received request body:", req.body); 
+
+
+    let users = [];
+    if (fs.existsSync(usersFilePath)) {
+        users = JSON.parse(fs.readFileSync(usersFilePath));
+    }
+
+    // Find user
+    const user = users.find(u => u.email === email);
+    if (!user) {
+        return res.status(401).json({ message: "User not found." });
+    }
+
+    // Check if user is verified
+    if (!user.verified) {
+        return res.status(403).json({ message: "Please verify your email before logging in." });
+    }
+
+    // Check password
+    if (user.password !== password) {
+        return res.status(401).json({ message: "Invalid credentials." });
+    }
+
+   // res.status(200).json({ message: "Login successful", user });
+
+
+
     try {
         const { username, password } = req.body;
         if (!username || !password) {
@@ -852,6 +992,8 @@ app.get("/policy", (req, res) => {
 
 // View Data Route - Reads data from log file
 app.get("/viewData", (req, res) => {
+    let logs = readUserData(); // Get logs from file
+
     try {
         // Read log file
         const logData = fs.readFileSync(logFilePath1, "utf8");
@@ -874,6 +1016,7 @@ app.get("/viewData", (req, res) => {
 
         // Send as JSON response
         res.json(users);
+        res.json(logs);
     } catch (error) {
         console.error("Error reading user activity log:", error);
         res.status(500).json({ message: "Failed to load user activity data." });

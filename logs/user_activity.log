@@ -1,27 +1,14 @@
-Testing file write operation
-{"username":"a@shivalikbank.com","password":"$2a$10$Qirvdbjo.JmsMyKBwcN4g.eST8n6IdSMlJha8Uf2tYQcbbgiEF89S","type":"signup","status":"active"}
-| 2/27/2025, 10:41:39 PM | SIGNUP | a@shivalikbank.com | user | N/A | Success - Signed Up |
-{"username":"admin@shivalikbank.com","password":"$2a$10$Zvt8IKUHV/TA/OlTmBWAQOdpMjXe1lfnv6hWNts415d4C7d62xP/q","type":"signup","status":"active"}
-| 2/27/2025, 10:42:29 PM | SIGNUP | admin@shivalikbank.com | admin | N/A | Success - Signed Up |
-{"username":"piyush@shivalikbank.com","password":"$2a$10$j52GXr5nSEAGh1O59l0uaeHQrGWfCMB/KxpLKWhVk.3iO51ZzfPMS","type":"signup","status":"active"}
-| 2/27/2025, 10:43:56 PM | SIGNUP | piyush@shivalikbank.com | user | N/A | Success - Signed Up |
-| 2/27/2025, 10:45:25 PM | LOGIN | admin@shivalikbank.com | Unknown | Failed - Incorrect Password | Unknown |
-| 2/27/2025, 10:45:35 PM | LOGIN | admin@shivalikbank.com | Unknown | Failed - Incorrect Password | Unknown |
-| 2/27/2025, 10:45:44 PM | LOGIN | admin@shivalikbank.com | admin | Success - Logged In | Unknown |
-| 2/27/2025, 10:46:09 PM | LOGIN | piyush@shivalikbank.com | user | Success - Logged In | Unknown |
-| 2/27/2025, 10:53:07 PM | LOGIN | admin@shivalikbank.com | admin | Success - Logged In | Unknown |
-
-[2/27/2025, 10:53:12 PM] ACTION: CLICK, USER: admin@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:53:12 PM] ACTION: DOWNLOAD, USER: admin@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:53:12 PM] ACTION: CLICK, USER: admin@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:53:12 PM] ACTION: DOWNLOAD, USER: admin@shivalikbank.com, POLICY_ID: har.pdf
-
-| 2/27/2025, 10:53:30 PM | LOGIN | piyush@shivalikbank.com | user | Success - Logged In | Unknown |
-[2/27/2025, 10:53:34 PM] ACTION: CLICK, USER: piyush@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:53:34 PM] ACTION: CLICK, USER: piyush@shivalikbank.com, POLICY_ID: har.pdf
-
-[2/27/2025, 10:55:07 PM] ACTION: CLICK, USER: piyush@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:55:07 PM] ACTION: DOWNLOAD, USER: piyush@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:55:07 PM] ACTION: CLICK, USER: piyush@shivalikbank.com, POLICY_ID: har.pdf
-[2/27/2025, 10:55:07 PM] ACTION: DOWNLOAD, USER: piyush@shivalikbank.com, POLICY_ID: har.pdf
-
+[
+  {
+    "username": "mmkhan@shivalikbank.com",
+    "password": "Hardik@12345",
+    "verified": false,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Im1ta2hhbkBzaGl2YWxpa2JhbmsuY29tIiwiaWF0IjoxNzQwOTQ3NDA3LCJleHAiOjE3NDA5NTEwMDd9.pM6Z-hiTTFrLN7aTXbaq5J3y3svyUUbbHxxl_1pEVZM"
+  },
+  {
+    "username": "communications@shivalikbank.com",
+    "password": "Communications@12345",
+    "verified": false,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNvbW11bmljYXRpb25zQHNoaXZhbGlrYmFuay5jb20iLCJpYXQiOjE3NDA5NDk5OTgsImV4cCI6MTc0MDk1MzU5OH0._aFsiruZkGRtM5cqwitmIIJO2681WmZeD6HEg1Blk0M"
+  }
+]
