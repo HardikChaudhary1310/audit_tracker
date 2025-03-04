@@ -1,30 +1,9 @@
 [
   {
-    "username": "aguleria@shivalikbank.com",
-    "email": "aguleria@shivalikbank.com",
-    "password": "$2a$10$sdCCX2jzd3BD7e.m/Fqp5uHvNiPZFSUH44ocfYJnY5xLpoDnSuGDG",
-    "verified": false,
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFndWxlcmlhQHNoaXZhbGlrYmFuay5jb20iLCJpYXQiOjE3NDEwNzY5MzAsImV4cCI6MTc0MTA4MDUzMH0.e63s7gV_ka62K6aiYxws2ZsCs_0VfZDI9kMXbVAU3Qs"
-  },
-  {
-    "username": "pdayal@shivalikbank.com",
-    "email": "pdayal@shivalikbank.com",
-    "password": "$2a$10$6ASBDdnDSZpsQ8JctNj5IuysHsX.Um4qHxqkeo1UjCTwiyshfMDwu",
-    "verified": false,
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InBkYXlhbEBzaGl2YWxpa2JhbmsuY29tIiwiaWF0IjoxNzQxMDc4NTYzLCJleHAiOjE3NDEwODIxNjN9.spyZuyC1JR1a4CRB_rl6K1lbHH1b7LNryqhp0BSyJZs"
-  },
-  {
-    "username": "aryaman@shivalikbank.com",
-    "email": "aryaman@shivalikbank.com",
-    "password": "$2a$10$I9yTHsGwJj1cA3QLipkMf.4M89TiEy.KymHBZHQWoTPi8PWtb3zyG",
-    "verified": false,
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFyeWFtYW5Ac2hpdmFsaWtiYW5rLmNvbSIsImlhdCI6MTc0MTA4MTE1MiwiZXhwIjoxNzQxMDg0NzUyfQ.51DiTlCpiMJO07jPqf_aLWtHJ96TrwFl4eYkGRywkqE"
-  },
-  {
     "username": "communications@shivalikbank.com",
     "email": "communications@shivalikbank.com",
-    "password": "$2a$10$H0GsymVRLDqzNghPBIivVePFVBYIqn6zB073kNZyyIHw4Sp/RiZbu",
+    "password": "$2a$10$8gRqntSQagc0KGISACjOneb6BLnJxaLuqOLs5O8nTnvo8.rXVvSIC",
     "verified": false,
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNvbW11bmljYXRpb25zQHNoaXZhbGlrYmFuay5jb20iLCJpYXQiOjE3NDEwODc2MjcsImV4cCI6MTc0MTA5MTIyN30.o6kim-daHQmRda1YDhcLB5o7GDz-ewQvWBVFe8OhqGQ"
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNvbW11bmljYXRpb25zQHNoaXZhbGlrYmFuay5jb20iLCJpYXQiOjE3NDEwODk2NTV9.SQtrTZigtIdF-IiOU4zcmc1y0p__5-XqJA-nxupBatA"
   }
 ]

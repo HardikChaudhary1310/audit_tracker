@@ -559,7 +559,7 @@ app.get("/verify-email", (req, res) => {
             try {
                 let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
                 users = rawData ? JSON.parse(rawData) : [];
-                console.log("All users 1:", users);
+               
             } catch (error) {
                 console.error("❌ Error reading user data:", error);
                 return res.status(500).json({ message: "Server error. Please try again later." });
@@ -575,7 +575,7 @@ app.get("/verify-email", (req, res) => {
             return res.status(500).json({ message: "Invalid user data format." });
         }
 
-        console.log("All users 2:", users);
+        console.log("All users:", users);
         // 🔍 Find user by email
         const userIndex = users.findIndex(user => user.username === username1);
         console.log("🔍 User found at index:", userIndex);
