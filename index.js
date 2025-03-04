@@ -514,8 +514,20 @@ app.get("/verify-email", (req, res) => {
     try {
         console.log("🔑 Decoding token:", token);
         const decoded = jwt.verify(token, "SECRET_KEY");
-        const email = decoded.username;
+        // const email = decoded.username;
         console.log("✅ Token Decoded:", decoded);
+
+
+         // ✅ Ensure username exists in decoded token
+         if (!decoded.username) {
+            console.error("❌ Verification Error: username is missing from token payload.");
+            return res.status(400).json({ message: "Invalid token structure." });
+        }
+
+        const username1 = decoded.username; // Now it is correctly assigned
+        console.log("✅ Extracted Username:", username1);
+
+       // return res.status(200).json({ message: `Email verified successfully for ${username}` });
 
         // Read user data from file
         let users = [];
