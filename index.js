@@ -460,7 +460,7 @@ app.post("/signup", (req, res) => {
     }
 
     // Generate a verification token (valid for 1 hour)
-    const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: "1h" });
+    const token = jwt.sign({ username }, "SECRET_KEY");
 
     // ✅ **Hash the password before storing it**
     const hashedPassword = bcrypt.hashSync(password, 10);
@@ -481,6 +481,7 @@ app.post("/signup", (req, res) => {
     // **Verification Email**
     const verificationLink = `https://audit-tracker-1.onrender.com/verify-email?token=${token}`;
     console.log("🔑 Received token:", token);
+    
 
     const mailOptions = {
         from: "hardikchaudhary713@gmail.com",
@@ -499,13 +500,35 @@ app.post("/signup", (req, res) => {
 
     // ✅ **Remove duplicate logging**
     logUserActivity1("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+    res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
 });
 
+// Function to send the verification email
+function sendVerificationEmail(username, verificationLink) {
+    const mailOptions = {
+        from: "hardikchaudhary713@gmail.com",
+        to: username,
+        subject: "Verify Your EmailId For Audit Portal!!!",
+        text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
+    };
 
-
+    transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+            console.log("Error sending email:", error);
+        } else {
+            console.log("Email sent: " + info.response);
+        }
+    
+    });
+}
 app.get("/verify-email", (req, res) => {
     const { token } = req.query;
+  // const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: "1h" });
+
     console.log("🔹 Received token for verification:", token);
+
+      // ✅ Read user data from file
+      let users = [];
 
     if (!token) {
         return res.status(400).json({ message: "Invalid or missing verification token." });
@@ -513,45 +536,58 @@ app.get("/verify-email", (req, res) => {
 
     try {
         console.log("🔑 Decoding token:", token);
-        const decoded = jwt.verify(token, "SECRET_KEY");
-        // const email = decoded.username;
+        const decoded = jwt.verify(token, "SECRET_KEY");  // Ensure you use the correct secret key
         console.log("✅ Token Decoded:", decoded);
 
 
          // ✅ Ensure username exists in decoded token
-         if (!decoded.username) {
-            console.error("❌ Verification Error: username is missing from token payload.");
+        if (!decoded.username) {
+            console.error("❌ Verification Error: Username ");
             return res.status(400).json({ message: "Invalid token structure." });
         }
 
-        const username1 = decoded.username; // Now it is correctly assigned
+        const username1 = decoded.username;
         console.log("✅ Extracted Username:", username1);
 
-       // return res.status(200).json({ message: `Email verified successfully for ${username}` });
 
+
+      
+      
         // Read user data from file
         let users = [];
         if (fs.existsSync(usersFilePath)) {
             try {
                 let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
                 users = rawData ? JSON.parse(rawData) : [];
+                console.log("All users 1:", users);
             } catch (error) {
                 console.error("❌ Error reading user data:", error);
                 return res.status(500).json({ message: "Server error. Please try again later." });
             }
         }
+        else {
+            console.error("❌ users.json file not found.");
+            return res.status(500).json({ message: "User data file missing." });
+        }
 
-        // Find user by email
+        if (!Array.isArray(users)) {
+            console.error("❌ Error: users.json is not an array!");
+            return res.status(500).json({ message: "Invalid user data format." });
+        }
+
+        console.log("All users 2:", users);
+        // 🔍 Find user by email
         const userIndex = users.findIndex(user => user.username === username1);
         console.log("🔍 User found at index:", userIndex);
+
         if (userIndex === -1) {
             console.log("❌ User not found for verification.");
             return res.status(404).json({ message: "User not found." });
         }
 
-        // Check if already verified
+        // ✅ Check if already verified
         if (users[userIndex].verified) {
-            console.log("✅ User is already verified:", username);
+            console.log(`✅ User "${username1}" is already verified.`);
             return res.status(200).send(`
                 <h2>Email Already Verified</h2>
                 <p>You can now <a href="https://audit-tracker-1.onrender.com/login">log in</a>.</p>
@@ -562,14 +598,12 @@ app.get("/verify-email", (req, res) => {
         users[userIndex].verified = true;
 
         // ✅ Save updated user data back to file
-        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2),"utf8");
+        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), "utf8");
+        console.log(`✅ Email verified successfully for: ${username1}`);
 
-        console.log(`✅ Email verified successfully for: ${username}`);
-
-        // Read the file again to verify
-const updatedData = fs.readFileSync(usersFilePath, "utf8");
-console.log("📂 Updated File Content:\n", updatedData);
-
+        // 🔄 Read the file again to verify
+        const updatedData = fs.readFileSync(usersFilePath, "utf8");
+        console.log("📂 Updated File Content:\n", updatedData);
 
         return res.status(200).send(`
             <h2>Email Verified Successfully!</h2>
@@ -577,12 +611,12 @@ console.log("📂 Updated File Content:\n", updatedData);
         `);
     } catch (error) {
         console.error("❌ Verification Error:", error.message);
-        res.status(400).send("Invalid or expired token.");
+        return res.status(400).send(`
+            <h2>Invalid or Expired Token</h2>
+            <p>The verification link may have expired or is invalid.</p>
+        `);
     }
 });
-
-
-
 
 // Function to read and extract user credentials from log file
 function readUsersFromLog() {
