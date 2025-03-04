@@ -551,7 +551,7 @@ app.get("/verify-email", (req, res) => {
 
         // Check if already verified
         if (users[userIndex].verified) {
-            console.log("✅ User is already verified:", email);
+            console.log("✅ User is already verified:", username);
             return res.status(200).send(`
                 <h2>Email Already Verified</h2>
                 <p>You can now <a href="https://audit-tracker-1.onrender.com/login">log in</a>.</p>
@@ -564,7 +564,7 @@ app.get("/verify-email", (req, res) => {
         // ✅ Save updated user data back to file
         fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2),"utf8");
 
-        console.log(`✅ Email verified successfully for: ${email}`);
+        console.log(`✅ Email verified successfully for: ${username}`);
 
         // Read the file again to verify
 const updatedData = fs.readFileSync(usersFilePath, "utf8");
