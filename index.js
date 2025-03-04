@@ -530,7 +530,7 @@ app.get("/verify-email", (req, res) => {
         }
 
         // Find user by email
-        const userIndex = users.findIndex(user => user.username === email);
+        const userIndex = users.findIndex(user => user.username === username);
         console.log("🔍 User found at index:", userIndex);
         if (userIndex === -1) {
             console.log("❌ User not found for verification.");
