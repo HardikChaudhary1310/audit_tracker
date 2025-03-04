@@ -128,7 +128,7 @@ app.use(cors());
  
  
 function readUserActivityLog() {
-    const logFilePath = "./user_activity.log";
+    
 
     if (!fs.existsSync(logFilePath)) {
         console.warn("⚠️ Log file does not exist. Returning empty array.");
@@ -432,7 +432,7 @@ app.post("/signup", (req, res) => {
         logUserActivity1("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
         return res.status(400).json({ message: "Invalid password or mismatch." });
     }
-
+   
     let users = [];
     if (fs.existsSync(usersFilePath)) {
         try {
@@ -455,7 +455,7 @@ app.post("/signup", (req, res) => {
     }
 
     // Check if user already exists
-    if (users.some(user => user.username === username)) {
+    if (users.find(user => user.username === username)) {
         return res.status(400).json({ message: "User already exists. Please log in." });
     }
 
@@ -550,8 +550,7 @@ app.get("/verify-email", (req, res) => {
         users[userIndex].verified = true;
 
         // ✅ Save updated user data back to file
-        fs.writeFileSync(usersFilePath, users.map(user => JSON.stringify(user)).join("\n") + "\n", "utf8");
-
+        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2),"utf8");
 
         console.log(`✅ Email verified successfully for: ${email}`);
 
