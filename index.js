@@ -17,7 +17,7 @@ const logFilePath1 = path.join(__dirname, 'logs', 'user_data.json');
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 
-const usersFilePath = path.join(__dirname, "logs", "user_activity.log");
+const usersFilePath = path.join(__dirname, 'logs', 'user_activity.json');
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -127,6 +127,43 @@ app.set('view engine', 'ejs');
 app.use(cors());
  
  
+function readUserActivityLog() {
+    const logFilePath = "./user_activity.log";
+
+    if (!fs.existsSync(logFilePath)) {
+        console.warn("⚠️ Log file does not exist. Returning empty array.");
+        return []; // Return an empty array if file doesn't exist
+    }
+
+    try {
+        const logData = fs.readFileSync(logFilePath, "utf8").trim();
+        
+        if (!logData) {
+            console.warn("⚠️ Log file is empty. Returning empty array.");
+            return []; // Return empty array if file is empty
+        }
+
+        // ✅ Convert log data into JSON array, skipping invalid lines
+        let users = logData
+            .split("\n")
+            .filter(line => line.trim() !== "") // Ignore empty lines
+            .map(line => {
+                try {
+                    return JSON.parse(line); // Try parsing each line
+                } catch (error) {
+                    console.error("❌ Invalid JSON line skipped:", line);
+                    return null; // Skip invalid JSON
+                }
+            })
+            .filter(user => user !== null); // Remove null entries
+
+        return users;
+
+    } catch (error) {
+        console.error("❌ Error reading log file:", error);
+        return []; // Return empty array on failure
+    }
+}
 
  
 // Read user data from file
@@ -162,7 +199,14 @@ const readUserData = () => {
     }
 };
 
- 
+const writeUserData = (users) => {
+    try {
+        fs.writeFileSync(logFilePath1, JSON.stringify(users, null, 2), "utf8");
+    } catch (error) {
+        console.error("❌ Error writing to JSON file:", error);
+    }
+};
+
 const logEntry = 'Testing file write operation\n';
  
 // Write test entry to the log
@@ -375,7 +419,6 @@ function saveUserToLog(userData) {
     }
 }
 
-// Signup Route
 app.post("/signup", (req, res) => {
     const { username, password, confirmPassword } = req.body;
     console.log("Signup request received:", { username, password, confirmPassword });
@@ -390,19 +433,24 @@ app.post("/signup", (req, res) => {
         return res.status(400).json({ message: "Invalid password or mismatch." });
     }
 
-
-
     let users = [];
     if (fs.existsSync(usersFilePath)) {
         try {
-            const rawData = fs.readFileSync(usersFilePath, "utf8").trim();
-            
-            // ✅ If the file is empty, set `users` as an empty array
-            users = rawData ? JSON.parse(rawData) : [];
-            
+            let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
+            if (!rawData) {
+                users = [];
+            } else {
+                try {
+                    users = JSON.parse(rawData);
+                } catch (jsonError) {
+                    console.error("❌ Invalid JSON in usersFilePath:", jsonError.message);
+                    console.log("📂 Raw data:", rawData);
+                    users = [];
+                }
+            }
         } catch (error) {
             console.error("❌ Error reading user data:", error);
-            users = []; // Prevent crash by setting users to an empty array
+            users = [];
         }
     }
 
@@ -414,18 +462,32 @@ app.post("/signup", (req, res) => {
     // Generate a verification token (valid for 1 hour)
     const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: "1h" });
 
-    // Store user with `verified: false`
-    users.push({ username, password, verified: false, token });
+    // ✅ **Hash the password before storing it**
+    const hashedPassword = bcrypt.hashSync(password, 10);
+
+    // ✅ **Store only the hashed password**
+    const newUser = {
+        username,
+        email: username,
+        password: hashedPassword, // ✅ Store the hashed password
+        verified: false,
+        token
+    };
+
+    // ✅ **Save the updated users list**
+    users.push(newUser);
     fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
 
-       // **Verification Email**
-       const verificationLink = `http://localhost:3001/verify-email?token=${token}`;
-       const mailOptions = {
-           from: "hardikchaudhary713@gmail.com",
-           to: username, // User's email
-           subject: "Verify Your EmailId For Audit Portal!!!",
-           text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
-       };
+    // **Verification Email**
+    const verificationLink = `https://audit-tracker-1.onrender.com/verify-email?token=${token}`;
+    console.log("🔑 Received token:", token);
+
+    const mailOptions = {
+        from: "hardikchaudhary713@gmail.com",
+        to: username,
+        subject: "Verify Your EmailId For Audit Portal!!!",
+        text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
+    };
 
     transporter.sendMail(mailOptions, (error, info) => {
         if (error) {
@@ -433,64 +495,77 @@ app.post("/signup", (req, res) => {
             return res.status(500).json({ message: "Error sending verification email." });
         }
         res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
-        alert: "Thanks for signing up! A verification email has been sent to your email address."
     });
 
-
-
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    
-    const newUser = {
-        username,
-        password: hashedPassword,
-        type: "signup",
-        status: "active"
-    };
-
-
-    const userType = username === 'admin@shivalikbank.com' ? 'admin' : 'user';
-
-    req.session.user = {
-        id: 'ID' + Date.now(),
-        username,
-        userType
-    };
-
-    console.log("User signed up:", req.session.user); // Debugging
-
-   
-    // Save new user in the log file
-    saveUserToLog(newUser);
-
-    logUserActivity1("SIGNUP", { email: username, userType}, "N/A", "Success - Signed Up");
-    res.status(201).json({ message: "Signup successful", user: req.session.user });
-    
+    // ✅ **Remove duplicate logging**
+    logUserActivity1("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 });
+
 
 
 app.get("/verify-email", (req, res) => {
     const { token } = req.query;
+    console.log("🔹 Received token for verification:", token);
+
+    if (!token) {
+        return res.status(400).json({ message: "Invalid or missing verification token." });
+    }
 
     try {
+        console.log("🔑 Decoding token:", token);
         const decoded = jwt.verify(token, "SECRET_KEY");
-        const email = decoded.email;
+        const email = decoded.username;
+        console.log("✅ Token Decoded:", decoded);
 
-        // Load users from file
-        let users = JSON.parse(fs.readFileSync(usersFilePath));
-
-        // Find user and update verification status
-        users = users.map(user => {
-            if (user.email === email) {
-                return { ...user, verified: true };
+        // Read user data from file
+        let users = [];
+        if (fs.existsSync(usersFilePath)) {
+            try {
+                let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
+                users = rawData ? JSON.parse(rawData) : [];
+            } catch (error) {
+                console.error("❌ Error reading user data:", error);
+                return res.status(500).json({ message: "Server error. Please try again later." });
             }
-            return user;
-        });
+        }
 
-        // Save updated users
-        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
+        // Find user by email
+        const userIndex = users.findIndex(user => user.username === email);
+        console.log("🔍 User found at index:", userIndex);
+        if (userIndex === -1) {
+            console.log("❌ User not found for verification.");
+            return res.status(404).json({ message: "User not found." });
+        }
 
-        res.send("✅ Email verified successfully! You can now log in.");
+        // Check if already verified
+        if (users[userIndex].verified) {
+            console.log("✅ User is already verified:", email);
+            return res.status(200).send(`
+                <h2>Email Already Verified</h2>
+                <p>You can now <a href="https://audit-tracker-1.onrender.com/login">log in</a>.</p>
+            `);
+        }
+
+        // ✅ Update verification status
+        users[userIndex].verified = true;
+
+        // ✅ Save updated user data back to file
+        fs.writeFileSync(usersFilePath, users.map(user => JSON.stringify(user)).join("\n") + "\n", "utf8");
+
+
+        console.log(`✅ Email verified successfully for: ${email}`);
+
+        // Read the file again to verify
+const updatedData = fs.readFileSync(usersFilePath, "utf8");
+console.log("📂 Updated File Content:\n", updatedData);
+
+
+        return res.status(200).send(`
+            <h2>Email Verified Successfully!</h2>
+            <p>You can now <a href="https://audit-tracker-1.onrender.com/login">log in</a>.</p>
+        `);
     } catch (error) {
+        console.error("❌ Verification Error:", error.message);
         res.status(400).send("Invalid or expired token.");
     }
 });
@@ -587,35 +662,7 @@ function readUsersFromLog() {
 
 
 
-app.post("/login", async (req, res) => {
-    console.log("Received request body:", req.body); 
-
-
-    let users = [];
-    if (fs.existsSync(usersFilePath)) {
-        users = JSON.parse(fs.readFileSync(usersFilePath));
-    }
-
-    // Find user
-    const user = users.find(u => u.email === email);
-    if (!user) {
-        return res.status(401).json({ message: "User not found." });
-    }
-
-    // Check if user is verified
-    if (!user.verified) {
-        return res.status(403).json({ message: "Please verify your email before logging in." });
-    }
-
-    // Check password
-    if (user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials." });
-    }
-
-   // res.status(200).json({ message: "Login successful", user });
-
-
-
+app.post("/login", (req, res) => {
     try {
         const { username, password } = req.body;
         if (!username || !password) {
@@ -623,28 +670,45 @@ app.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Email and password are required." });
         }
 
+        console.log("✅ Extracted Username (Email):", username);
+
         // Fetch users from log file
-        const users = readUsersFromLog();
-        console.log("Loaded users from log:", users);
+        const users = JSON.parse(fs.readFileSync(usersFilePath, "utf8").trim());
+        console.log("📂 Loaded users:", users);
+        console.log("✅ User Verification Status:", users?.verified);
+
+        // Ensure users is an array before using .some()
+if (!Array.isArray(users)) {
+    console.error("❌ Users data is not an array:", users);
+    return res.status(500).json({ message: "Invalid user data format." });
+}
+
 
         // Find user by email
-        const user = users.find(u => u.username === username);
+        const user = users.find(u => u.email === username || u.username === username);
         if (!user) {
             logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - User Not Found");
             return res.status(401).json({ message: "User not found." });
         }
 
-        console.log("User found:", user);
-
-        // Ensure stored password exists
-        if (!user.password) {
-            logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - No Password Set");
-            return res.status(500).json({ message: "Internal server error. Try again later." });
+        console.log("🔍 Found User:", user);
+        console.log("✅ User Verification Status Before Check:", user.verified);
+        // Check if user is verified
+        if (!user.verified) {
+            console.log("❌ User is not verified.");
+            return res.status(403).json({ message: "User not verified! Please verify your email first." });
         }
+        console.log("🔍 Checking user verification status:", user);
+
+        // Debugging stored and entered password
+        console.log("🔍 Stored Password:", user.password);
+        console.log("🔑 Entered Password:", password);
 
         // Compare password using bcrypt
         const isMatch = bcrypt.compareSync(password, user.password);
+        console.log("🔎 Password Match Result:", isMatch);
         if (!isMatch) {
+            console.log("❌ Passwords do NOT match!");
             logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - Incorrect Password");
             return res.status(401).json({ message: "Invalid credentials." });
         }
@@ -659,12 +723,12 @@ app.post("/login", async (req, res) => {
             userType 
         };
 
-        console.log("User logged in:", req.session.user); // Debugging
+        console.log("✅ Logging in user:", req.session.user); // Debugging
 
         // Log user activity
         logUserActivity1("LOGIN", { email: username, userType }, "Success - Logged In");
 
-        // Send response only once
+        // Send response
         res.status(200).json({ message: "Login successful", user: req.session.user });
 
     } catch (error) {
@@ -673,7 +737,6 @@ app.post("/login", async (req, res) => {
         res.status(500).json({ message: "Server error." });
     }
 });
-
 
 // Route to track policy downloads
 app.post('/track-download', mockUserAuth, (req, res) => {
