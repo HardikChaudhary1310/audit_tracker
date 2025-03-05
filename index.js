@@ -169,11 +169,11 @@ function readUserActivityLog() {
 // Read user data from file
 const readUserData = () => {
     try {
-        if (!fs.existsSync(logFilePath1)) {
+        if (!fs.existsSync(usersFilePath)) {
             return [];
         }
 
-        const data = fs.readFileSync(logFilePath1, "utf8");
+        const data = fs.readFileSync(usersFilePath, "utf8");
 
         // If file is empty, return an empty array
         if (!data.trim()) {
@@ -477,6 +477,9 @@ app.post("/signup", (req, res) => {
     // ✅ **Save the updated users list**
     users.push(newUser);
     fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
+  
+    const data = fs.readFileSync(usersFilePath, "utf8");
+    console.log(data, "adddddddddddddd");
 
     // **Verification Email**
     const verificationLink = `https://audit-tracker-1.onrender.com/verify-email?token=${token}`;
@@ -487,7 +490,7 @@ app.post("/signup", (req, res) => {
         from: "hardikchaudhary713@gmail.com",
         to: username,
         subject: "Verify Your EmailId For Audit Portal!!!",
-        text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
+        text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username} \nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
     };
 
     transporter.sendMail(mailOptions, (error, info) => {

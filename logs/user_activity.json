@@ -1,4 +1,30 @@
 [
- 
-    
+  {
+    "username": "aguleria@shivalikbank.com",
+    "email": "aguleria@shivalikbank.com",
+    "password": "$2a$10$vi/SF1pwQaRyrYMmV/GSv.TdB1TmhehFpzTTm4pg8LpFUooDN0hNe",
+    "verified": false,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFndWxlcmlhQHNoaXZhbGlrYmFuay5jb20iLCJpYXQiOjE3NDEwOTEwMTR9.Iv3EVj0pHJAfGOZ1eYiFrBcVidvWIxvJSXj6iSF6aYs"
+  },
+  {
+    "username": "communications@shivalikbank.com",
+    "email": "communications@shivalikbank.com",
+    "password": "$2a$10$SpYKhh1YJRl7rjThnCkc1u63XaCORQ9QZ.W0tosKMGqcmu9T9Nr7i",
+    "verified": true,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImNvbW11bmljYXRpb25zQHNoaXZhbGlrYmFuay5jb20iLCJpYXQiOjE3NDEwOTEzMTh9.wtT9PVlTI1dsL25GLVYqh7Ms8rvgKFpnfXT9ah0LdHY"
+  },
+  {
+    "username": "aaguleria@shivalikbank.com",
+    "email": "aaguleria@shivalikbank.com",
+    "password": "$2a$10$KSHZOKQy4e4vZetG349F5eeBhTzxut/sl.JNiU9v57gwLDSmhYu7i",
+    "verified": false,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFhZ3VsZXJpYUBzaGl2YWxpa2JhbmsuY29tIiwiaWF0IjoxNzQxMDkzODkxfQ.K12dK9RVUmfiupOHKuhCxe9QASnXSb8W2ElAXg7l_io"
+  },
+  {
+    "username": "hardik@shivalikbank.com",
+    "email": "hardik@shivalikbank.com",
+    "password": "$2a$10$sLuhHrxR3MIms5hBZX34meqN/cXhTwkfzn61oPlg6U8BlAG8lN4Wa",
+    "verified": false,
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImhhcmRpa0BzaGl2YWxpa2JhbmsuY29tIiwiaWF0IjoxNzQxMDk0NDE2fQ.ppZzuLosrU2KENgjOy1oW-NABezp-VWJH1BjCD0bHPM"
+  }
 ]
