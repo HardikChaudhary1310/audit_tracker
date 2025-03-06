@@ -272,7 +272,7 @@ const logUserActivity = (action, user, policyId) => {
 
     // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
    // console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
-    const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}\n`;
+    const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user.email}, POLICY_ID: ${policyId}, UserID: ${user.id}\n`;
 
     fs.appendFile(logFilePath, logEntry, (err) => {
         if (err) {
@@ -291,8 +291,13 @@ const logUserActivity = (action, user, policyId) => {
 // Route to track policy clicks
 app.post('/track-policy-click', mockUserAuth, (req, res) => {
     const { filename } = req.body;
+    const { policyId, actionType } = req.body;
     const user = req.user;
   
+    if (!policyId || !actionType) {
+        return res.status(400).send('Policy ID and Action Type are required');
+    }
+
     console.log("Request body track-policy-click:", req.body);
     
     console.log("User track-policy-click:", user);
@@ -301,7 +306,10 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
         return res.status(400).send('Filename is required');
     }
  
-    logUserActivity('CLICK', user.email, filename,user.id);
+     // Log the action (view or click)
+     logUserActivity(actionType, user, policyId);
+
+    logUserActivity('CLICK', user, filename);
   //  logUserActivity('DOWNLOAD', user, policyId); // Log click event
     console.log("track-policy-click",user);
     res.status(200).json({ message: "User click tracked" });
@@ -327,15 +335,14 @@ app.post('/track-download', mockUserAuth, (req, res) => {
  
     const { policyId } = req.body;
     const user = req.user;
-   // console.log("Missss");
-  //  console.log("1233333" + user.id);
+  
  
     if (!policyId) {
         console.log("Missing policyId");
         return res.status(400).json({ message: "policyId is required" });
     }
  
-    logUserActivity('DOWNLOAD', user.email, policyId,user.id);
+    logUserActivity('DOWNLOAD', user, policyId);
     console.log("Download tracked successfully!");
     res.status(200).json({ message: "Download tracked successfully" });
 });
@@ -823,7 +830,7 @@ app.post('/track-download', mockUserAuth, (req, res) => {
     logUserActivity('DOWNLOAD', user, policyId);
     console.log("Download tracked successfully!");
     res.status(200).json({ message: "Download tracked successfully" });
-    const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${req.user} | ${filename} | IP: ${req.ip} | Status: SUCCESS\n`;
+    const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${req.user} | ${filename} | IP: ${policyId} | Status: SUCCESS\n`;
              fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
 });
 
