@@ -901,7 +901,7 @@ app.get('/download-policy/:filename', mockUserAuth, (req, res) => {
     const user = req.user;
     const username = user?.username || "Unknown User";  // Extract username safely
 
-    console.log("User downloading file:", username);
+    console.log("User downloading file:", user);
 
     const filePath = path.join(__dirname, '..', 'public', 'policies', 'audit', decodedFilename);
     // Check if the file exists before sending it
@@ -917,9 +917,12 @@ app.get('/download-policy/:filename', mockUserAuth, (req, res) => {
                 return res.status(500).send('Error sending file');
             }
  
+            logUserActivity('DOWNLOAD', user, policyId);
+            console.log("Download tracked successfully!");
+            res.status(200).json({ message: "Download tracked successfully" });
             // *Log user details*
              const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${req.user} | ${filename} | IP: ${req.ip} | Status: SUCCESS\n`;
-             fs.appendFileSync(path.join(__dirname, '..', 'logs', 'user_activity.log'), logEntry);
+             fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
         });
     });
 });
