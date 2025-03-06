@@ -270,6 +270,8 @@ const mockUserAuth = (req, res, next) => {
 
 const logUserActivity = (action, user, policyId) => {
 
+    console.log("hardikkkkkkkkkk jiiiiiii"+ user);
+    console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
     const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}\n`;
 
     fs.appendFile(logFilePath, logEntry, (err) => {
@@ -301,7 +303,7 @@ app.post('/track-download', mockUserAuth, (req, res) => {
         return res.status(400).json({ message: "policyId is required" });
     }
  
-    logUserActivity('DOWNLOAD', user.email, policyId);
+    logUserActivity('DOWNLOAD', user.email, policyId,user.id);
     console.log("Download tracked successfully!");
     res.status(200).json({ message: "Download tracked successfully" });
 });
@@ -320,7 +322,7 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
         return res.status(400).send('Filename is required');
     }
  
-    logUserActivity('CLICK', user.email, filename);
+    logUserActivity('CLICK', user.email, filename,user.id);
   //  logUserActivity('DOWNLOAD', user, policyId); // Log click event
     console.log("track-policy-click",user);
     res.status(200).json({ message: "User click tracked" });
