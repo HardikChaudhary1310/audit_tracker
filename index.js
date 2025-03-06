@@ -270,8 +270,8 @@ const mockUserAuth = (req, res, next) => {
 
 const logUserActivity = (action, user, policyId) => {
 
-    console.log("hardikkkkkkkkkk jiiiiiii"+ user);
-    console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
+    // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
+   // console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
     const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}\n`;
 
     fs.appendFile(logFilePath, logEntry, (err) => {
@@ -287,27 +287,6 @@ const logUserActivity = (action, user, policyId) => {
     console.log("User activity logged:", logEntry);
     });
 };
- 
-app.post('/track-download', mockUserAuth, (req, res) => {
-    console.log("Track-download route triggered!");
-    console.log("Request body:", req.body);
-    console.log("User:", req.user);
- 
-    const { policyId } = req.body;
-    const user = req.user;
-   // console.log("Missss");
-    console.log("1233333" + user.id);
- 
-    if (!policyId) {
-        console.log("Missing policyId");
-        return res.status(400).json({ message: "policyId is required" });
-    }
- 
-    logUserActivity('DOWNLOAD', user.email, policyId,user.id);
-    console.log("Download tracked successfully!");
-    res.status(200).json({ message: "Download tracked successfully" });
-});
- 
  
 // Route to track policy clicks
 app.post('/track-policy-click', mockUserAuth, (req, res) => {
@@ -328,6 +307,29 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
     res.status(200).json({ message: "User click tracked" });
 });
  
+
+app.post('/track-download', mockUserAuth, (req, res) => {
+    console.log("Track-download route triggered!");
+    console.log("Request body:", req.body);
+    console.log("User:", req.user);
+ 
+    const { policyId } = req.body;
+    const user = req.user;
+   // console.log("Missss");
+  //  console.log("1233333" + user.id);
+ 
+    if (!policyId) {
+        console.log("Missing policyId");
+        return res.status(400).json({ message: "policyId is required" });
+    }
+ 
+    logUserActivity('DOWNLOAD', user.email, policyId,user.id);
+    console.log("Download tracked successfully!");
+    res.status(200).json({ message: "Download tracked successfully" });
+});
+ 
+ 
+
  
 // const logUserActivity = (eventType, user, policyIdOrFilename) => {
 //     const logDir = path.dirname(logFilePath1);
