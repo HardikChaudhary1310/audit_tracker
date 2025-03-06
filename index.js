@@ -502,7 +502,7 @@ app.post("/signup", (req, res) => {
     });
 
     // ✅ **Remove duplicate logging**
-    logUserActivity1("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+    logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
     res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
 });
 
@@ -774,14 +774,14 @@ if (!Array.isArray(users)) {
         console.log("✅ Logging in user:", req.session.user); // Debugging
 
         // Log user activity
-        logUserActivity1("LOGIN", { email: username, userType }, "Success - Logged In");
+        logUserActivity("LOGIN", { email: username, userType }, "Success - Logged In");
 
         // Send response
         res.status(200).json({ message: "Login successful", user: req.session.user });
 
     } catch (error) {
         console.error("Login error:", error);
-        logUserActivity1("LOGIN", { email: req.body.username || "Unknown", userType: "Unknown" }, "Failed - Server Error");
+        logUserActivity("LOGIN", { email: req.body.username || "Unknown", userType: "Unknown" }, "Failed - Server Error");
         res.status(500).json({ message: "Server error." });
     }
 });
@@ -803,6 +803,8 @@ app.post('/track-download', mockUserAuth, (req, res) => {
     logUserActivity('DOWNLOAD', user, policyId);
     console.log("Download tracked successfully!");
     res.status(200).json({ message: "Download tracked successfully" });
+    const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${req.user} | ${filename} | IP: ${req.ip} | Status: SUCCESS\n`;
+             fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
 });
 
 

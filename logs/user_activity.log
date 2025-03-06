@@ -13,3 +13,8 @@
 [3/5/2025, 5:57:34 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
 [3/5/2025, 5:58:17 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
 [3/5/2025, 5:58:17 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/5/2025, 7:03:22 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/5/2025, 7:03:22 PM] ACTION: DOWNLOAD, UserName: unknown_user, POLICY_ID: har.pdf
+[3/5/2025, 7:03:22 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/5/2025, 7:03:22 PM] ACTION: DOWNLOAD, UserName: unknown_user, POLICY_ID: har.pdf
+2025-03-05 19:03:22 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
