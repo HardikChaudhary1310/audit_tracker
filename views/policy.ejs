@@ -211,7 +211,7 @@
                         <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;">SSFB_ATM Opening on Holiday and After Banking Hours Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
                             <a href="/public/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/public/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
+                            <a href="/public/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
                         
                         </div>
                     </li>
@@ -219,7 +219,7 @@
                         <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;">SSFB_Gunman Age Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
                             <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
+                            <a href="/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
                         </div>
                     </li>
                 </ul>
@@ -504,43 +504,43 @@ const handleLogin = (username, password) => {
 
 //// this one we have to use ::::
                 // Function to track policy click
-                const trackPolicyClick = (filename) => {
-            fetch('http://localhost:3001/track-policy-click', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ filename: filename }),
-            })
-            .then((response) => response.json())
-            .then((data) => {
-                console.log('Policy click tracked:', data);
-            })
-            .catch((error) => {
-                console.error('Error tracking click:', error);
-            });
-        };
+//                 const trackPolicyClick = (filename) => {
+//             fetch('http://localhost:3001/track-policy-click', {
+//                 method: 'POST',
+//                 headers: {
+//                     'Content-Type': 'application/json',
+//                 },
+//                 body: JSON.stringify({ filename: filename }),
+//             })
+//             .then((response) => response.json())
+//             .then((data) => {
+//                 console.log('Policy click tracked:', data);
+//             })
+//             .catch((error) => {
+//                 console.error('Error tracking click:', error);
+//             });
+//         };
 
 
-/// this oneeeee ::::
-const trackPolicyDownload = (policyId) => {
-    console.log("Tracking policy download for:", policyId); // Debugging
+// /// this oneeeee ::::
+// const trackPolicyDownload = (policyId) => {
+//     console.log("Tracking policy download for:", policyId); // Debugging
  
-    fetch('/track-download', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ policyId }),
-})
-.then(response => {
-    if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return response.json().catch(() => ({ message: "Non-JSON response received" }));
-})
-.then(data => console.log('Policy download tracked:', data))
-.catch(error => console.error('Error tracking download:', error));
+//     fetch('/track-download', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify({ policyId }),
+// })
+// .then(response => {
+//     if (!response.ok) {
+//         throw new Error(`HTTP error! Status: ${response.status}`);
+//     }
+//     return response.json().catch(() => ({ message: "Non-JSON response received" }));
+// })
+// .then(data => console.log('Policy download tracked:', data))
+// .catch(error => console.error('Error tracking download:', error));
  
-};
+// };
 
 
 
@@ -571,16 +571,116 @@ const trackPolicyDownload = (policyId) => {
             
 
 
-           document.querySelectorAll('.delete-button').forEach(button => {
+    //        document.querySelectorAll('.delete-button').forEach(button => {
+    // button.addEventListener('click', async function (event) {
+    //     event.preventDefault();
+    //     const filename = this.getAttribute('data-filename');
+    //     const confirmDelete = confirm(`Are you sure you want to delete ${filename}?`);
+        
+    //     if (confirmDelete) {
+    //         try {
+    //             const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, { 
+    //                 method: 'DELETE' 
+    //             });
+
+    //             if (response.ok) {
+    //                 alert(`${filename} deleted successfully`);
+    //                 this.closest('li').remove();
+    //             } else {
+    //                 const errorMsg = await response.json();
+    //                 alert(`Failed to delete the file: ${errorMsg.message}`);
+    //             }
+    //         } catch (error) {
+    //             console.error("Error deleting policy:", error);
+    //             alert("Failed to delete the policy. Please try again.");
+    //         }
+    //     }
+    // });
+//});
+
+
+document.querySelectorAll('.view-button').forEach(button => {
+    button.addEventListener('click', async function (event) {
+        event.preventDefault(); // Prevent default behavior (e.g., if it's a link)
+
+        const filename = this.getAttribute('data-filename');
+        const policyUrl = this.getAttribute('href');  // Getting the URL of the policy
+
+        try {
+            // Send a request to track the policy view
+            const response = await fetch('/track-policy-click', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    policyId: filename,  // Send policy filename or ID
+                    actionType: 'VIEW',  // Action type is 'VIEW'
+                }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                alert(`You are now viewing: ${filename}`);
+                window.open(policyUrl, '_blank');  // Open the policy in a new tab
+            } else {
+                const errorMsg = await response.json();
+                alert(`Failed to track view for the file: ${errorMsg.message}`);
+            }
+        } catch (error) {
+            console.error("Error tracking policy view:", error);
+            alert("Failed to track the view. Please try again.");
+        }
+    });
+});
+
+// Tracking click function (if needed elsewhere)
+const trackPolicyClick = (filename) => {
+    fetch('/track-policy-click', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ filename: filename }),
+    })
+    .then((response) => response.json())
+    .then((data) => {
+        console.log('Policy click tracked:', data);
+    })
+    .catch((error) => {
+        console.error('Error tracking click:', error);
+    });
+};
+
+// Tracking download function (if needed elsewhere)
+const trackPolicyDownload = (policyId) => {
+    console.log("Tracking policy download for:", policyId); // Debugging
+
+    fetch('/track-download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ policyId }),
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json().catch(() => ({ message: "Non-JSON response received" }));
+    })
+    .then(data => console.log('Policy download tracked:', data))
+    .catch(error => console.error('Error tracking download:', error));
+};
+
+document.querySelectorAll('.delete-button').forEach(button => {
     button.addEventListener('click', async function (event) {
         event.preventDefault();
         const filename = this.getAttribute('data-filename');
         const confirmDelete = confirm(`Are you sure you want to delete ${filename}?`);
-        
+
         if (confirmDelete) {
             try {
-                const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, { 
-                    method: 'DELETE' 
+                const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, {
+                    method: 'DELETE',
                 });
 
                 if (response.ok) {
@@ -597,6 +697,7 @@ const trackPolicyDownload = (policyId) => {
         }
     });
 });
+
 
         });
     </script>

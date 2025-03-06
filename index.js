@@ -308,6 +308,18 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
 });
  
 
+// Example backend route for tracking clicks
+app.post('/track-policy-click', (req, res) => {
+    const { policyId, actionType } = req.body;
+    if (actionType === 'VIEW') {
+        logUserActivity('VIEW', req.user, policyId);
+    } else if (actionType === 'CLICK') {
+        logUserActivity('CLICK', req.user, policyId);
+    }
+    res.status(200).json({ message: `${actionType} tracked successfully` });
+});
+
+
 app.post('/track-download', mockUserAuth, (req, res) => {
     console.log("Track-download route triggered!");
     console.log("Request body:", req.body);
@@ -818,21 +830,50 @@ app.post('/track-download', mockUserAuth, (req, res) => {
 
 
 // Route to track policy clicks
+// app.post('/track-policy-click', mockUserAuth, (req, res) => {
+//     console.log("Track-policy-click route triggered!");
+//     console.log("Request body:", req.body);
+//     console.log("User:", req.user);
+
+//     const { policyId } = req.body;
+//     const user = req.user;
+
+//     if (!policyId) {
+//         return res.status(400).json({ message: "Policy ID is required" });
+//     }
+
+//     logUserActivity('CLICK', user, policyId); // Log click event
+//     console.log("User click tracked successfully!");
+//     res.status(200).json({ message: "User click tracked successfully" });
+// });
+
+
+// Route to track policy clicks (and views)
 app.post('/track-policy-click', mockUserAuth, (req, res) => {
     console.log("Track-policy-click route triggered!");
     console.log("Request body:", req.body);
     console.log("User:", req.user);
 
-    const { policyId } = req.body;
+    const { policyId, actionType } = req.body; // Get action type (view or click)
     const user = req.user;
 
-    if (!policyId) {
-        return res.status(400).json({ message: "Policy ID is required" });
+    if (!policyId || !actionType) {
+        return res.status(400).json({ message: "Policy ID and action type are required" });
     }
 
-    logUserActivity('CLICK', user, policyId); // Log click event
-    console.log("User click tracked successfully!");
-    res.status(200).json({ message: "User click tracked successfully" });
+    if (actionType === "VIEW") {
+        // If it's a view action, log that the user viewed the policy
+        logUserActivity('VIEW', user, policyId); // Log view event
+        console.log("User view tracked successfully!");
+    } else if (actionType === "CLICK") {
+        // If it's a click action, log that the user clicked on the policy
+        logUserActivity('CLICK', user, policyId); // Log click event
+        console.log("User click tracked successfully!");
+    } else {
+        return res.status(400).json({ message: "Invalid action type" });
+    }
+
+    res.status(200).json({ message: `User ${actionType} tracked successfully` });
 });
 
 

@@ -46,3 +46,50 @@
 [3/6/2025, 2:44:22 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
 [3/6/2025, 2:52:15 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
 [3/6/2025, 2:52:15 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 3:47:43 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 3:47:43 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 3:50:39 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 3:50:39 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 3:59:15 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 3:59:15 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 3:59:19 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 3:59:19 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 3:59:19 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 3:59:19 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+2025-03-06 15:59:19 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+[3/6/2025, 4:02:55 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:02:55 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:02:59 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:02:59 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:02:59 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:02:59 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:03:05 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:03:05 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:03:05 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:03:05 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:03:56 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 4:03:56 PM] ACTION: DOWNLOAD, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 4:03:56 PM] ACTION: DOWNLOAD, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 4:03:56 PM] ACTION: CLICK, UserName: unknown_user, POLICY_ID: har.pdf
+[3/6/2025, 4:04:29 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:04:29 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:04:33 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:04:33 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:04:33 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:04:33 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:33:25 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:33:25 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:33:29 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:33:29 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:33:29 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:33:29 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+2025-03-06 16:33:29 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+[3/6/2025, 4:36:33 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:36:33 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:46:22 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:46:22 PM] ACTION: LOGIN, UserName: [object Object], POLICY_ID: Success - Logged In
+[3/6/2025, 4:46:26 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:46:26 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:46:26 PM] ACTION: DOWNLOAD, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+[3/6/2025, 4:46:26 PM] ACTION: CLICK, UserName: communications@shivalikbank.com, POLICY_ID: har.pdf
+2025-03-06 16:46:26 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
