@@ -778,7 +778,7 @@ if (!Array.isArray(users)) {
         console.log("✅ Logging in user:", req.session.user); // Debugging
 
         // Log user activity
-        logUserActivity("LOGIN", { email: username, userType }, "Success - Logged In");
+        logUserActivity("LOGIN", { email: req.body.username, userType }, "Success - Logged In");
 
         // Send response
         res.status(200).json({ message: "Login successful", user: req.session.user });
