@@ -600,12 +600,23 @@ const handleLogin = (username, password) => {
 
 
 // Adding event listeners for download buttons
+// document.querySelectorAll('.download-link').forEach(button => {
+//     button.addEventListener('click', function (event) {
+//         const policyId = this.getAttribute('data-policy-id');  // Get the unique policy ID
+
+//         // Track the download
+//         trackPolicyDownload(policyId);
+//     });
+// });
+
 document.querySelectorAll('.download-link').forEach(button => {
     button.addEventListener('click', function (event) {
-        const policyId = this.getAttribute('data-policy-id');  // Get the unique policy ID
-
-        // Track the download
-        trackPolicyDownload(policyId);
+        const policyId = this.getAttribute('data-filename');  // e.g., "Hardik-Resume-New.pdf"
+        const userId = 'ID1741331579847';  // The ID you get from your session
+        const username = 'aryaman@shivalikbank.com';  // The username from your session
+        
+        // Call the function to track the download
+        trackPolicyDownload(policyId, userId, username);
     });
 });
 
@@ -649,41 +660,76 @@ document.querySelectorAll('.view-button').forEach(button => {
 });
 
 // Tracking click function (if needed elsewhere)
-const trackPolicyClick = (filename) => {
-    fetch('/track-policy-click', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ filename: filename }),
-    })
-    .then((response) => response.json())
-    .then((data) => {
-        console.log('Policy click tracked:', data);
-    })
-    .catch((error) => {
-        console.error('Error tracking click:', error);
-    });
-};
+// const trackPolicyClick = (filename) => {
+//     fetch('/track-policy-click', {
+//         method: 'POST',
+//         headers: {
+//             'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify({ filename: filename }),
+//     })
+//     .then((response) => response.json())
+//     .then((data) => {
+//         console.log('Policy click tracked:', data);
+//     })
+//     .catch((error) => {
+//         console.error('Error tracking click:', error);
+//     });
+// };
 
 // Tracking download function
-const trackPolicyDownload = (policyId) => {
-    console.log("Tracking policy download for:", policyId); // Debugging
+// const trackPolicyDownload = (policyId) => {
+//     console.log("Tracking policy download for:", policyId); // Debugging
 
+//     fetch('/track-download', {
+//         method: 'POST',
+//         headers: { 'Content-Type': 'application/json' },
+//         body: JSON.stringify({ policyId }),  // Send unique policy ID
+//     })
+//     .then(response => {
+//         if (!response.ok) {
+//             throw new Error(`HTTP error! Status: ${response.status}`);
+//         }
+//         return response.json().catch(() => ({ message: "Non-JSON response received" }));
+//     })
+//     .then(data => console.log('Policy download tracked:', data))
+//     .catch(error => console.error('Error tracking download:', error));
+// };
+
+
+// Example of tracking a download
+const trackPolicyDownload = (policyId, userId, username) => {
     fetch('/track-download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ policyId }),  // Send unique policy ID
+        body: JSON.stringify({
+            userId: userId,        // Send user ID
+            username: username,    // Send username (or email)
+            policyId: policyId     // Send policy ID
+        })
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json().catch(() => ({ message: "Non-JSON response received" }));
-    })
-    .then(data => console.log('Policy download tracked:', data))
+    .then(response => response.json())
+    .then(data => console.log('Download tracked:', data))
     .catch(error => console.error('Error tracking download:', error));
 };
+
+// Example of tracking a click or view
+const trackPolicyClick = (policyId, userId, username, actionType) => {
+    fetch('/track-policy-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            userId: userId,        // Send user ID
+            username: username,    // Send username (or email)
+            policyId: policyId,    // Send policy ID
+            actionType: actionType // Send action type ('VIEW' or 'CLICK')
+        })
+    })
+    .then(response => response.json())
+    .then(data => console.log(`${actionType} tracked:`, data))
+    .catch(error => console.error('Error tracking click:', error));
+};
+
 
 document.querySelectorAll('.delete-button').forEach(button => {
     button.addEventListener('click', async function (event) {

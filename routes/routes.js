@@ -3,6 +3,11 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment'); // Make sure to include moment for date formatting
 const router = express.Router();
+// const { logUserActivity } = require('./models/userActivity'); // Import the logUserActivity function
+
+
+const app = express();
+app.use(express.json());  // To parse incoming JSON requests
 
 
 
@@ -63,7 +68,6 @@ router.post('/track-policy-click', async (req, res) => {
         return res.status(500).json({ message: 'Error tracking click' });
     }
 });
-
 
 
 

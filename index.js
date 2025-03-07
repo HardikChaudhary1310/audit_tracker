@@ -8,7 +8,7 @@ const session = require('express-session');
 const morgan = require('morgan');
 const path = require("path");
  
-const DownloadLogs = require('./models/DownloadLogs');
+// const DownloadLogs = require('./models/db');
  
 const logDir = path.join(__dirname, 'logs');
 const logFilePath1 = path.join(__dirname, 'logs', 'user_data.json');
@@ -18,6 +18,11 @@ const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 
 const usersFilePath = path.join(__dirname, 'logs', 'user_activity.json');
+
+
+// const db = require('./db');
+const { logUserActivity } = require('./models/userActivity'); // Import the logUserActivity function
+
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -60,7 +65,7 @@ const logUserActivity1 = (eventType, user, policyOrFilename, status) => {
 };
 
 
-const policyRoutes = require('./routes/policies');
+const policyRoutes = require('./routes/routes');
  
 const app = express();
 app.use(session({
@@ -268,26 +273,30 @@ const mockUserAuth = (req, res, next) => {
 };
 
 
-const logUserActivity = (action, user, policyId,userId) => {
+// const logUserActivity = (action, user, policyId,userId) => {
 
-    // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
-   // console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
-    const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}, UserID: ${userId}\n`;
+//     // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
+//    // console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
+//     const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}, UserID: ${userId}\n`;
 
-    fs.appendFile(logFilePath, logEntry, (err) => {
-        if (err) {
-            console.error("Error writing to log file:", err);
-        }
-        else {
-            console.log("User activity logged successfully:", logEntry);
-        }
+//     fs.appendFile(logFilePath, logEntry, (err) => {
+//         if (err) {
+//             console.error("Error writing to log file:", err);
+//         }
+//         else {
+//             console.log("User activity logged successfully:", logEntry);
+//         }
 
-          // Append to log file
-    fs.appendFileSync(logFilePath, logEntry, 'utf8');
-    console.log("User activity logged:", logEntry);
-    });
-};
+//           // Append to log file
+//     fs.appendFileSync(logFilePath, logEntry, 'utf8');
+//     console.log("User activity logged:", logEntry);
+//     });
+// };
  
+
+
+
+
 // Route to track policy clicks
 app.post('/track-policy-click', mockUserAuth, (req, res) => {
     const { filename } = req.body;
@@ -455,92 +464,205 @@ function saveUserToLog(userData) {
     }
 }
 
+// app.post("/signup", (req, res) => {
+//     const { username, password, confirmPassword } = req.body;
+//     console.log("Signup request received:", { username, password, confirmPassword });
+
+//     if (!isValidEmail(username)) {
+//         logUserActivity1("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+//         return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
+//     }
+
+//     if (!isValidPassword(password) || password !== confirmPassword) {
+//         logUserActivity1("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+//         return res.status(400).json({ message: "Invalid password or mismatch." });
+//     }
+   
+//     let users = [];
+//     if (fs.existsSync(usersFilePath)) {
+//         try {
+//             let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
+//             if (!rawData) {
+//                 users = [];
+//             } else {
+//                 try {
+//                     users = JSON.parse(rawData);
+//                 } catch (jsonError) {
+//                     console.error("❌ Invalid JSON in usersFilePath:", jsonError.message);
+//                     console.log("📂 Raw data:", rawData);
+//                     users = [];
+//                 }
+//             }
+//         } catch (error) {
+//             console.error("❌ Error reading user data:", error);
+//             users = [];
+//         }
+//     }
+
+//       // Check if user already exists in the database
+//       connection.query('SELECT * FROM users WHERE email = ?', [username], (err, results) => {
+//         if (err) {
+//             console.error("Error checking user existence:", err);
+//             return res.status(500).json({ message: "Error checking user existence." });
+//         }
+
+//         if (results.length > 0) {
+//             return res.status(400).json({ message: "User already exists. Please log in." });
+//         }
+
+
+//     // Check if user already exists
+//     if (users.find(user => user.username === username)) {
+//         return res.status(400).json({ message: "User already exists. Please log in." });
+//     }
+
+//     // Generate a verification token (valid for 1 hour)
+//     const token = jwt.sign({ username }, "SECRET_KEY");
+
+//     // ✅ **Hash the password before storing it**
+//     const hashedPassword = bcrypt.hashSync(password, 10);
+
+
+//     // Hash the password before storing it in the database
+//     bcrypt.hash(password, 10, (err, hashedPassword) => {
+//         if (err) {
+//             console.error("Error hashing password:", err);
+//             return res.status(500).json({ message: "Error during password hashing." });
+//         }
+
+
+//     // ✅ **Store only the hashed password**
+//     const newUser = {
+//         username,
+//         email: username,
+//         password: hashedPassword, // ✅ Store the hashed password
+//         verified: false,
+//         token
+//     };
+
+
+//             // Insert user data into MySQL database
+//             connection.query('INSERT INTO users SET ?', newUser, (err, results) => {
+//                 if (err) {
+//                     console.error("Error inserting new user:", err);
+//                     return res.status(500).json({ message: "Error during signup." });
+//                 }
+
+
+//     // ✅ **Save the updated users list**
+//     users.push(newUser);
+//     fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
+  
+//     const data = fs.readFileSync(usersFilePath, "utf8");
+//    // console.log(data, "adddddddddddddd");
+
+//     // **Verification Email**
+//     const verificationLink = `https://audit-tracker-1.onrender.com/verify-email?token=${token}`;
+//     console.log("🔑 Received token:", token);
+    
+
+//     const mailOptions = {
+//         from: "hardikchaudhary713@gmail.com",
+//         to: username,
+//         subject: "!!! Verify Your EmailId For Audit Tracker Portal!!!",
+//         text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username} \nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
+//     };
+
+//     transporter.sendMail(mailOptions, (error, info) => {
+//         if (error) {
+//             console.log("Error sending email:", error);
+//             return res.status(500).json({ message: "Error sending verification email." });
+//         }
+//         res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+   
+//     });
+//     // ✅ **Remove duplicate logging**
+//     logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+//     res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+
+// });
+
+
 app.post("/signup", (req, res) => {
     const { username, password, confirmPassword } = req.body;
     console.log("Signup request received:", { username, password, confirmPassword });
 
+    // Validate email format
     if (!isValidEmail(username)) {
-        logUserActivity1("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+        logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
         return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
     }
 
+    // Validate password
     if (!isValidPassword(password) || password !== confirmPassword) {
-        logUserActivity1("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+        logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
         return res.status(400).json({ message: "Invalid password or mismatch." });
     }
-   
-    let users = [];
-    if (fs.existsSync(usersFilePath)) {
-        try {
-            let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
-            if (!rawData) {
-                users = [];
-            } else {
-                try {
-                    users = JSON.parse(rawData);
-                } catch (jsonError) {
-                    console.error("❌ Invalid JSON in usersFilePath:", jsonError.message);
-                    console.log("📂 Raw data:", rawData);
-                    users = [];
-                }
+
+    // Check if user already exists in the database
+    connection.query('SELECT * FROM users WHERE email = ?', [username], (err, results) => {
+        if (err) {
+            console.error("Error checking user existence:", err);
+            return res.status(500).json({ message: "Error checking user existence." });
+        }
+
+        // If user exists, send response
+        if (results.length > 0) {
+            return res.status(400).json({ message: "User already exists. Please log in." });
+        }
+
+        // Hash the password before storing it
+        bcrypt.hash(password, 10, (err, hashedPassword) => {
+            if (err) {
+                console.error("Error hashing password:", err);
+                return res.status(500).json({ message: "Error during password hashing." });
             }
-        } catch (error) {
-            console.error("❌ Error reading user data:", error);
-            users = [];
-        }
-    }
 
-    // Check if user already exists
-    if (users.find(user => user.username === username)) {
-        return res.status(400).json({ message: "User already exists. Please log in." });
-    }
+            // Generate a verification token (valid for 1 hour)
+            const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
-    // Generate a verification token (valid for 1 hour)
-    const token = jwt.sign({ username }, "SECRET_KEY");
+            // Create new user object to be inserted into DB
+            const newUser = {
+                username,
+                email: username,
+                password: hashedPassword, // Store the hashed password
+                verified: false,
+                token
+            };
 
-    // ✅ **Hash the password before storing it**
-    const hashedPassword = bcrypt.hashSync(password, 10);
+            // Insert the new user into the database
+            connection.query('INSERT INTO users SET ?', newUser, (err, results) => {
+                if (err) {
+                    console.error("Error inserting new user:", err);
+                    return res.status(500).json({ message: "Error during signup." });
+                }
 
-    // ✅ **Store only the hashed password**
-    const newUser = {
-        username,
-        email: username,
-        password: hashedPassword, // ✅ Store the hashed password
-        verified: false,
-        token
-    };
+                // Send verification email
+                const verificationLink = `https://your-domain.com/verify-email?token=${token}`;
+                const mailOptions = {
+                    from: "your-email@example.com",
+                    to: username,
+                    subject: "Verify Your EmailId For Audit Tracker Portal",
+                    text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\nThis link will expire in 1 hour.`
+                };
 
-    // ✅ **Save the updated users list**
-    users.push(newUser);
-    fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2));
-  
-    const data = fs.readFileSync(usersFilePath, "utf8");
-   // console.log(data, "adddddddddddddd");
+                transporter.sendMail(mailOptions, (error, info) => {
+                    if (error) {
+                        console.log("Error sending email:", error);
+                        return res.status(500).json({ message: "Error sending verification email." });
+                    }
 
-    // **Verification Email**
-    const verificationLink = `https://audit-tracker-1.onrender.com/verify-email?token=${token}`;
-    console.log("🔑 Received token:", token);
-    
+                    // Log user activity and send final success response
+                    logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 
-    const mailOptions = {
-        from: "hardikchaudhary713@gmail.com",
-        to: username,
-        subject: "!!! Verify Your EmailId For Audit Tracker Portal!!!",
-        text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username} \nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log("Error sending email:", error);
-            return res.status(500).json({ message: "Error sending verification email." });
-        }
-        res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+                    // Respond to the client
+                    res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+                });
+            });
+        });
     });
-
-    // ✅ **Remove duplicate logging**
-    logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
-    res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
 });
+
 
 // Function to send the verification email
 function sendVerificationEmail(username, verificationLink) {
@@ -822,30 +944,146 @@ if (!Array.isArray(users)) {
     }
 });
 
-// Route to track policy downloads
-app.post('/track-download', mockUserAuth, (req, res) => {
-    console.log("Track-download route triggered!");
-    console.log("Request body:", req.body);
-    console.log("User:", req.user);
 
-    const { policyId } = req.body;
-    const user = req.user;
+app.post('/track-policy-download', (req, res) => {
+    const { userId, email, policyId } = req.body;
 
-    if (!policyId) {
-        console.log("Missing policyId");
-        return res.status(400).json({ message: "policyId is required" });
+    // Log the values before the query
+    console.log("Inserting into activities:", { userId, email, policyId });
+
+    db.beginTransaction((err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Transaction start error' });
+        }
+
+    // Insert activity into the 'activities' table
+    db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['DOWNLOAD', email, policyId, userId], (err, results) => {
+        if (err) {
+            console.error("Error during query:", err); // Log the error for better visibility
+            return res.status(500).json({ message: 'Error tracking activity' });
+        }
+
+        db.commit((err) => {
+            if (err) {
+                return db.rollback(() => {
+                    console.error(err);
+                    res.status(500).json({ message: 'Error committing transaction' });
+                });
+            }
+
+        // Log the results of the query
+        console.log("Insert successful. Results:", results);
+
+        res.status(200).json({ message: 'Activity logged successfully' });
+    });
+});
+});
+});   
+
+
+
+
+// Tracking policy view activity
+app.post('/track-policy-view', (req, res) => {
+    const { userId, email, policyId } = req.body;
+
+    // Insert activity into the 'activities' table
+    db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['VIEW', email, policyId, userId], (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error tracking activity' });
+        }
+        res.status(200).json({ message: 'Activity logged successfully' });
+    });
+});
+
+
+// Track download
+app.post('/track-download', (req, res) => {
+    const { userId, username, policyId } = req.body;
+
+    // Call logUserActivity function to log the event
+    logUserActivity(userId, username, 'DOWNLOAD', policyId);
+
+    res.status(200).json({ message: 'Download tracked successfully' });
+});
+
+// Track policy view or click
+app.post('/track-policy-click', (req, res) => {
+    const { userId, username, policyId, actionType } = req.body;
+
+    // Log the event (view or click)
+    logUserActivity(userId, username, actionType, policyId);
+
+    res.status(200).json({ message: `${actionType} tracked successfully` });
+});
+
+// Track policy view or click
+// app.post('/track-policy-click', (req, res) => {
+//     const { userId, username, policyId, actionType } = req.body;
+
+//     // Log the event (view or click)
+//     logUserActivity(userId, username, actionType, policyId);
+
+//      // Insert activity into the 'activities' table
+//      db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['VIEW', email, policyId, userId], (err, results) => {
+//         if (err) {
+//             return res.status(500).json({ message: 'Error tracking activity' });
+//         }
+
+//     res.status(200).json({ message: `${actionType} tracked successfully` });
+// });
+// }); 
+
+
+app.post('/track-policy-click', (req, res) => {
+    const { userId, username, policyId, actionType } = req.body;
+
+    // Ensure actionType is valid (VIEW or CLICK)
+    if (!['VIEW', 'CLICK'].includes(actionType)) {
+        return res.status(400).json({ message: 'Invalid action type' });
     }
 
-    // logUserActivity('DOWNLOAD', user, policyId);
-    console.log(`Tracking download for policy with ID: ${policyId}, User: ${user.username}`);
+    // Log the event in user_activity
+    logUserActivity(userId, username, actionType, policyId)
+        .then(() => {
+            // Insert the activity into the 'activities' table
+            db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', [actionType, username, policyId, userId], (err, results) => {
+                if (err) {
+                    return res.status(500).json({ message: 'Error tracking activity in activities table' });
+                }
 
-    logUserActivity('DOWNLOAD', user.email, policyId, user.id);
-
-    console.log("Download tracked successfully!");
-    res.status(200).json({ message: "Download tracked successfully" });
-    const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${user} | ${filename} | IP: ${policyId} | Status: SUCCESS\n`;
-             fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
+                res.status(200).json({ message: `${actionType} tracked successfully` });
+            });
+        })
+        .catch(err => {
+            res.status(500).json({ message: 'Error logging user activity' });
+        });
 });
+
+// Route to track policy downloads
+// app.post('/track-download', mockUserAuth, (req, res) => {
+//     console.log("Track-download route triggered!");
+//     console.log("Request body:", req.body);
+//     console.log("User:", req.user);
+
+//     const { policyId } = req.body;
+//     const user = req.user;
+
+//     if (!policyId) {
+//         console.log("Missing policyId");
+//         return res.status(400).json({ message: "policyId is required" });
+//     }
+
+//     // logUserActivity('DOWNLOAD', user, policyId);
+//     console.log(`Tracking download for policy with ID: ${policyId}, User: ${user.username}`);
+
+//     logUserActivity('DOWNLOAD', user.email, policyId, user.id);
+
+//     console.log("Download tracked successfully!");
+//     res.status(200).json({ message: "Download tracked successfully" });
+//     const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${user} | ${filename} | IP: ${policyId} | Status: SUCCESS\n`;
+//              fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
+// });
 
 
 
@@ -869,32 +1107,32 @@ app.post('/track-download', mockUserAuth, (req, res) => {
 
 
 // Route to track policy clicks (and views)
-app.post('/track-policy-click', mockUserAuth, (req, res) => {
-    console.log("Track-policy-click route triggered!");
-    console.log("Request body:", req.body);
-    console.log("User:", req.user);
+// app.post('/track-policy-click', mockUserAuth, (req, res) => {
+//     console.log("Track-policy-click route triggered!");
+//     console.log("Request body:", req.body);
+//     console.log("User:", req.user);
 
-    const { policyId, actionType } = req.body; // Get action type (view or click)
-    const user = req.user;
+//     const { policyId, actionType } = req.body; // Get action type (view or click)
+//     const user = req.user;
 
-    if (!policyId || !actionType) {
-        return res.status(400).json({ message: "Policy ID and action type are required" });
-    }
+//     if (!policyId || !actionType) {
+//         return res.status(400).json({ message: "Policy ID and action type are required" });
+//     }
 
-    if (actionType === "VIEW") {
-        // If it's a view action, log that the user viewed the policy
-        logUserActivity('VIEW', user.email, policyId); // Log view event
-        console.log("User view tracked successfully!");
-    } else if (actionType === "CLICK") {
-        // If it's a click action, log that the user clicked on the policy
-        logUserActivity('CLICK', user.email, policyId); // Log click event
-        console.log("User click tracked successfully!");
-    } else {
-        return res.status(400).json({ message: "Invalid action type" });
-    }
+//     if (actionType === "VIEW") {
+//         // If it's a view action, log that the user viewed the policy
+//         logUserActivity('VIEW', user.email, policyId); // Log view event
+//         console.log("User view tracked successfully!");
+//     } else if (actionType === "CLICK") {
+//         // If it's a click action, log that the user clicked on the policy
+//         logUserActivity('CLICK', user.email, policyId); // Log click event
+//         console.log("User click tracked successfully!");
+//     } else {
+//         return res.status(400).json({ message: "Invalid action type" });
+//     }
 
-    res.status(200).json({ message: `User ${actionType} tracked successfully` });
-});
+//     res.status(200).json({ message: `User ${actionType} tracked successfully` });
+// });
 
 
 // Login Route
@@ -1217,5 +1455,6 @@ app.listen(PORT, (err) => {
         console.log(`Server running at http://localhost:${PORT}`);
     }
 });
- 
+
+
 module.exports = app;
