@@ -208,18 +208,18 @@
                 Audit
                 <ul class="sub-policy-list">
                     <li>
-                        <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;">SSFB_ATM Opening on Holiday and After Banking Hours Policy_Ver_2.0.pdf</a>
+                        <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;" data-policy-id="12345">SSFB_ATM Opening on Holiday and After Banking Hours Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
-                            <a href="/public/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/public/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
+                            <a href="/public/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;" data-policy-id="12345">Download</a>
+                            <a href="/public/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf" data-policy-id="12345">View</a>
                         
                         </div>
                     </li>
                     <li>
-                        <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;">SSFB_Gunman Age Policy_Ver_2.0.pdf</a>
+                        <a href="/policies/audit/Hardik-Resume-New.pdf" class="sub-policy" download style="color: whitesmoke;" data-policy-id="54321">SSFB_Gunman Age Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
-                            <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
+                            <a href="/policies/audit/Hardik-Resume-New.pdf" class="download-link" download style="color: whitesmoke;" data-policy-id="54321">Download</a>
+                            <a href="/policies/audit/Hardik-Resume-New.pdf" class="view-button" style="color: whitesmoke;" data-filename="Hardik-Resume-New.pdf" data-policy-id="54321">View</a>
                         </div>
                     </li>
                 </ul>
@@ -228,17 +228,17 @@
                 Brand and Marketing
                 <ul class="sub-policy-list">
                     <li>
-                        <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;">SSFB_Security Drill at Branches and HO Policy_Ver_2.0.pdf</a>
+                        <a href="/policies/audit/My Resume.pdf" class="sub-policy" download style="color: whitesmoke;" data-policy-id="10000">SSFB_Security Drill at Branches and HO Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
-                            <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
+                            <a href="/policies/audit/My Resume.pdf" class="download-link" download style="color: whitesmoke;" data-policy-id="10000">Download</a>
+                            <a href="/policies/audit/My Resume.pdf" class="view-button" style="color: whitesmoke;" data-filename="My Resume.pdf" data-policy-id="10000">View</a>
                         </div>
                     </li>
                     <li>
-                        <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;">SSFB_Visiting Card Issuance Policy_Ver_2.0.pdf</a>
+                        <a href="/policies/audit/My Resume.pdf" class="sub-policy" download style="color: whitesmoke;" data-policy-id="10000">SSFB_Visiting Card Issuance Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
-                            <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;">Download</a>
-                            <a href="/policies/audit/har.pdf" class="delete-button" style="color: whitesmoke;" data-filename="har.pdf">View</a>
+                            <a href="/policies/audit/My Resume.pdf" class="download-link" download style="color: whitesmoke;" data-policy-id="10000">Download</a>
+                            <a href="/policies/audit/My Resume.pdf" class="view-button" style="color: whitesmoke;" data-filename="My Resume.pdf" data-policy-id="10000">View</a>
                         </div>
                     </li>
                 </ul>
@@ -599,22 +599,35 @@ const handleLogin = (username, password) => {
 //});
 
 
+// Adding event listeners for download buttons
+document.querySelectorAll('.download-link').forEach(button => {
+    button.addEventListener('click', function (event) {
+        const policyId = this.getAttribute('data-policy-id');  // Get the unique policy ID
+
+        // Track the download
+        trackPolicyDownload(policyId);
+    });
+});
+
+
 document.querySelectorAll('.view-button').forEach(button => {
     button.addEventListener('click', async function (event) {
         event.preventDefault(); // Prevent default behavior (e.g., if it's a link)
 
         const filename = this.getAttribute('data-filename');
-        const policyUrl = this.getAttribute('href');  // Getting the URL of the policy
+        const policyId = this.getAttribute('data-policy-id');  // Get the unique policy ID
+        const policyUrl = this.getAttribute('href');  // Get the URL of the policy
 
         try {
-            // Send a request to track the policy view
+            // Send a request to track the policy view with the unique ID
             const response = await fetch('/track-policy-click', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    policyId: filename,  // Send policy filename or ID
+                    policyId: policyId,  // Send unique policy ID
+                    filename: filename,  // Send policy filename
                     actionType: 'VIEW',  // Action type is 'VIEW'
                 }),
             });
@@ -653,14 +666,14 @@ const trackPolicyClick = (filename) => {
     });
 };
 
-// Tracking download function (if needed elsewhere)
+// Tracking download function
 const trackPolicyDownload = (policyId) => {
     console.log("Tracking policy download for:", policyId); // Debugging
 
     fetch('/track-download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ policyId }),
+        body: JSON.stringify({ policyId }),  // Send unique policy ID
     })
     .then(response => {
         if (!response.ok) {
