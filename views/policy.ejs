@@ -611,12 +611,20 @@ const handleLogin = (username, password) => {
 
 document.querySelectorAll('.download-link').forEach(button => {
     button.addEventListener('click', function (event) {
-        const policyId = this.getAttribute('data-filename');  // e.g., "Hardik-Resume-New.pdf"
+
+        event.preventDefault(); // Prevent default behavior (e.g., navigating to the link)
+
+        // Retrieve the policy ID, user ID, and username
+        const policyId = this.getAttribute('data-policy-id');  // Correctly retrieve the data-policy-id attribute
+       // const policyId = this.getAttribute('data-filename');  // e.g., "Hardik-Resume-New.pdf"
         const userId = 'ID1741331579847';  // The ID you get from your session
         const username = 'aryaman@shivalikbank.com';  // The username from your session
         
         // Call the function to track the download
         trackPolicyDownload(policyId, userId, username);
+        // Optionally, open the policy in a new tab after tracking
+        const policyUrl = this.getAttribute('href');  // Assuming the link has a URL to open
+        window.open(policyUrl, '_blank');
     });
 });
 

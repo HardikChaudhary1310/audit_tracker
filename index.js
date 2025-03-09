@@ -1001,10 +1001,16 @@ app.post('/track-policy-view', (req, res) => {
 app.post('/track-download', (req, res) => {
     const { userId, username, policyId } = req.body;
 
+      // Insert activity into the 'activities' table or your user_activity table
+      db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['DOWNLOAD', username, policyId, userId], (err, results) => {
+        if (err) {
+            return res.status(500).json({ message: 'Error tracking activity' });
+        }
     // Call logUserActivity function to log the event
     logUserActivity(userId, username, 'DOWNLOAD', policyId);
 
     res.status(200).json({ message: 'Download tracked successfully' });
+});
 });
 
 // Track policy view or click
