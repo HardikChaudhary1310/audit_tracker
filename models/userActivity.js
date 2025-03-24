@@ -1,20 +1,3 @@
-// Import mysql2
-const mysql = require('mysql2');
-
-// Create a connection pool for better connection management
-const pool = mysql.createPool({
-    host: 'localhost',         // Replace with your database host (e.g., 'localhost' or IP address)
-    user: 'root',              // Replace with your MySQL username
-    password: 'Hardik@12345', // Replace with your MySQL password
-    database: 'user_activity',
-    waitForConnections: true,
-    connectionLimit: 10,  // Adjust the limit based on your needs
-    queueLimit: 0
-});
-
-// Promisify the pool for async/await usage
-const promisePool = pool.promise();
-
 // models/userActivity.js
 const promisePool = require('./db');  // Import the shared database connection
 
