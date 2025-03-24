@@ -656,13 +656,28 @@ app.post("/signup", async (req, res) => {
                 sqlMessage: dbError.sqlMessage,
                 stack: dbError.stack
             });
+            
+            // Handle specific database errors
+            if (dbError.code === 'ECONNREFUSED') {
+                return res.status(503).json({ 
+                    message: "Database service is temporarily unavailable. Please try again later.",
+                    error: "Database connection refused"
+                });
+            }
+            
             await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
-            res.status(500).json({ message: "Error during signup. Please try again later." });
+            res.status(500).json({ 
+                message: "Error during signup. Please try again later.",
+                error: dbError.message
+            });
         }
     } catch (error) {
         console.error("Unexpected error during signup:", error);
         await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
-        res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
+        res.status(500).json({ 
+            message: "An unexpected error occurred. Please try again later.",
+            error: error.message
+        });
     }
 });
 
