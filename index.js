@@ -8,7 +8,7 @@ const session = require('express-session');
 const morgan = require('morgan');
 const path = require("path");
  
-// const DownloadLogs = require('./models/db');
+const promisePool = require('./models/db');
  
 const logDir = path.join(__dirname, 'logs');
 const logFilePath1 = path.join(__dirname, 'logs', 'user_data.json');
@@ -316,13 +316,15 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
         return res.status(400).send('Filename is required');
     }
  
-     // Log the action (view or click)
-    // logUserActivity(actionType, user, policyId);
-     logUserActivity(actionType, user.email, policyId, user.id);
-    logUserActivity('CLICK', user, filename);
-  //  logUserActivity('DOWNLOAD', user, policyId); // Log click event
-    console.log("track-policy-click",user);
-    // res.status(200).json({ message: "User click tracked" });
+    // Log the action with proper user information for both VIEW and CLICK
+    if (actionType === 'VIEW' || actionType === 'CLICK') {
+        logUserActivity(actionType, { 
+            email: user.email || user.username, 
+            userType: user.userType 
+        }, policyId, `Success - ${actionType}ed`);
+    }
+    
+    console.log("track-policy-click", user);
     res.status(200).json({ message: `${actionType} tracked successfully for ${filename}` });
 });
  
@@ -347,19 +349,22 @@ app.post('/track-download', mockUserAuth, (req, res) => {
     const { policyId } = req.body;
     const user = req.user;
   
- 
     if (!policyId) {
         console.log("Missing policyId");
         return res.status(400).json({ message: "policyId is required" });
     }
  
-     // Ensure username is set in the user object
-     const username = user.username || user.email || "unknown_user";  // Fallback to email if username is missing
+    // Ensure we have the user's email/username
+    const username = user.username || user.email;
+    if (!username) {
+        console.log("Missing username/email");
+        return res.status(400).json({ message: "User information is missing" });
+    }
 
-
-    // logUserActivity('DOWNLOAD', user, policyId);
     console.log(`Tracking download for policy with ID: ${policyId}, User: ${username}`);
-    logUserActivity('DOWNLOAD', username, policyId, user.id);
+    
+    // Log the download activity with proper user information
+    logUserActivity('DOWNLOAD', { email: username, userType: user.userType }, policyId, "Success - Downloaded");
 
     console.log("Download tracked successfully!");
     res.status(200).json({ message: "Download tracked successfully" });
@@ -600,67 +605,63 @@ app.post("/signup", (req, res) => {
     }
 
     // Check if user already exists in the database
-    connection.query('SELECT * FROM users WHERE email = ?', [username], (err, results) => {
-        if (err) {
-            console.error("Error checking user existence:", err);
-            return res.status(500).json({ message: "Error checking user existence." });
-        }
-
-        // If user exists, send response
-        if (results.length > 0) {
-            return res.status(400).json({ message: "User already exists. Please log in." });
-        }
-
-        // Hash the password before storing it
-        bcrypt.hash(password, 10, (err, hashedPassword) => {
-            if (err) {
-                console.error("Error hashing password:", err);
-                return res.status(500).json({ message: "Error during password hashing." });
+    promisePool.query('SELECT * FROM users WHERE email = ?', [username])
+        .then(([results]) => {
+            // If user exists, send response
+            if (results.length > 0) {
+                return res.status(400).json({ message: "User already exists. Please log in." });
             }
 
-            // Generate a verification token (valid for 1 hour)
-            const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
-
-            // Create new user object to be inserted into DB
-            const newUser = {
-                username,
-                email: username,
-                password: hashedPassword, // Store the hashed password
-                verified: false,
-                token
-            };
-
-            // Insert the new user into the database
-            connection.query('INSERT INTO users SET ?', newUser, (err, results) => {
+            // Hash the password before storing it
+            bcrypt.hash(password, 10, (err, hashedPassword) => {
                 if (err) {
-                    console.error("Error inserting new user:", err);
-                    return res.status(500).json({ message: "Error during signup." });
+                    console.error("Error hashing password:", err);
+                    return res.status(500).json({ message: "Error during password hashing." });
                 }
 
-                // Send verification email
-                const verificationLink = `https://your-domain.com/verify-email?token=${token}`;
-                const mailOptions = {
-                    from: "your-email@example.com",
-                    to: username,
-                    subject: "Verify Your EmailId For Audit Tracker Portal",
-                    text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\nThis link will expire in 1 hour.`
+                // Create new user object to be inserted into DB
+                const newUser = {
+                    username,
+                    email: username,
+                    password: hashedPassword, // Store the hashed password
+                    verified: false,
+                    userType: username === 'admin@shivalikbank.com' ? 'admin' : 'user' // Set userType based on email
                 };
 
-                transporter.sendMail(mailOptions, (error, info) => {
-                    if (error) {
-                        console.log("Error sending email:", error);
-                        return res.status(500).json({ message: "Error sending verification email." });
-                    }
+                // Insert the new user into the database
+                promisePool.query('INSERT INTO users SET ?', newUser)
+                    .then(() => {
+                        // Generate token for email verification
+                        const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
-                    // Log user activity and send final success response
-                    logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+                        // Send verification email
+                        const verificationLink = `https://your-domain.com/verify-email?token=${token}`;
+                        const mailOptions = {
+                            from: "your-email@example.com",
+                            to: username,
+                            subject: "Verify Your EmailId For Audit Tracker Portal",
+                            text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\nThis link will expire in 1 hour.`
+                        };
 
-                    // Respond to the client
-                    res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
-                });
+                        transporter.sendMail(mailOptions, (error, info) => {
+                            if (error) {
+                                console.log("Error sending email:", error);
+                                return res.status(500).json({ message: "Error sending verification email." });
+                            }
+
+                            // Log user activity and send final success response
+                            logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+
+                            // Respond to the client
+                            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+                        });
+                    })
+                    .catch(err => {
+                        console.error("Error inserting new user:", err);
+                        return res.status(500).json({ message: "Error during signup." });
+                    });
             });
         });
-    });
 });
 
 
@@ -684,12 +685,7 @@ function sendVerificationEmail(username, verificationLink) {
 }
 app.get("/verify-email", (req, res) => {
     const { token } = req.query;
-  // const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: "1h" });
-
     console.log("🔹 Received token for verification:", token);
-
-      // ✅ Read user data from file
-      let users = [];
 
     if (!token) {
         return res.status(400).json({ message: "Invalid or missing verification token." });
@@ -697,84 +693,41 @@ app.get("/verify-email", (req, res) => {
 
     try {
         console.log("🔑 Decoding token:", token);
-        const decoded = jwt.verify(token, "SECRET_KEY");  // Ensure you use the correct secret key
+        const decoded = jwt.verify(token, "SECRET_KEY");
         console.log("✅ Token Decoded:", decoded);
 
-
-         // ✅ Ensure username exists in decoded token
         if (!decoded.username) {
-            console.error("❌ Verification Error: Username ");
+            console.error("❌ Verification Error: Username missing");
             return res.status(400).json({ message: "Invalid token structure." });
         }
 
-        const username1 = decoded.username;
-        console.log("✅ Extracted Username:", username1);
+        const username = decoded.username;
+        console.log("✅ Extracted Username:", username);
 
+        // Update user verification status in database
+        promisePool.query('UPDATE users SET verified = true WHERE email = ?', [username])
+            .then(([results]) => {
+                if (results.affectedRows === 0) {
+                    console.error("❌ User not found for verification");
+                    return res.status(404).json({ message: "User not found." });
+                }
 
-
-      
-      
-        // Read user data from file
-        let users = [];
-        if (fs.existsSync(usersFilePath)) {
-            try {
-                let rawData = fs.readFileSync(usersFilePath, "utf8").trim();
-                users = rawData ? JSON.parse(rawData) : [];
-               
-            } catch (error) {
-                console.error("❌ Error reading user data:", error);
-                return res.status(500).json({ message: "Server error. Please try again later." });
-            }
-        }
-        else {
-            console.error("❌ users.json file not found.");
-            return res.status(500).json({ message: "User data file missing." });
-        }
-
-        if (!Array.isArray(users)) {
-            console.error("❌ Error: users.json is not an array!");
-            return res.status(500).json({ message: "Invalid user data format." });
-        }
-
-        console.log("All users:", users);
-        // 🔍 Find user by email
-        const userIndex = users.findIndex(user => user.username === username1);
-        console.log("🔍 User found at index:", userIndex);
-
-        if (userIndex === -1) {
-            console.log("❌ User not found for verification.");
-            return res.status(404).json({ message: "User not found." });
-        }
-
-        // ✅ Check if already verified
-        if (users[userIndex].verified) {
-            console.log(`✅ User "${username1}" is already verified.`);
-            return res.status(200).send(`
-                <h2>Verify Your EmailID By Clicking Below Link!!!</h2>
-                <p>You can now <a href="https://audit-tracker-1.onrender.com">log in</a>.</p>
-            `);
-        }
-
-        // ✅ Update verification status
-        users[userIndex].verified = true;
-
-        // ✅ Save updated user data back to file
-        fs.writeFileSync(usersFilePath, JSON.stringify(users, null, 2), "utf8");
-        console.log(`✅ Email verified successfully for: ${username1}`);
-
-        // 🔄 Read the file again to verify
-        const updatedData = fs.readFileSync(usersFilePath, "utf8");
-        console.log("📂 Updated File Content:\n", updatedData);
-
-        return res.status(200).send(`
-            <h2>Verify Your EmailID By Clicking Below Link!!!</h2>
-            <p>You can now <a href="https://audit-tracker-1.onrender.com">log in</a>.</p>
-        `);
+                console.log(`✅ Email verified successfully for: ${username}`);
+                return res.status(200).send(`
+                    <h2>Email Verified Successfully!</h2>
+                    <p>Your email has been verified. You can now <a href="https://your-domain.com">log in</a>.</p>
+                `);
+            })
+            .catch(err => {
+                console.error("❌ Database Error:", err);
+                return res.status(500).json({ message: "Error updating verification status." });
+            });
     } catch (error) {
         console.error("❌ Verification Error:", error.message);
         return res.status(400).send(`
             <h2>Invalid or Expired Token</h2>
             <p>The verification link may have expired or is invalid.</p>
+            <p>Please try signing up again or contact support.</p>
         `);
     }
 });
@@ -878,65 +831,59 @@ app.post("/login", (req, res) => {
 
         console.log("✅ Extracted Username (Email):", username);
 
-        // Fetch users from log file
-        const users = JSON.parse(fs.readFileSync(usersFilePath, "utf8").trim());
-        console.log("📂 Loaded users:", users);
-        console.log("✅ User Verification Status:", users?.verified);
+        // Check user in database
+        promisePool.query('SELECT * FROM users WHERE email = ?', [username])
+            .then(([results]) => {
+                if (results.length === 0) {
+                    logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - User Not Found");
+                    return res.status(401).json({ message: "User not found." });
+                }
 
-        // Ensure users is an array before using .some()
-if (!Array.isArray(users)) {
-    console.error("❌ Users data is not an array:", users);
-    return res.status(500).json({ message: "Invalid user data format." });
-}
+                const user = results[0];
+                console.log("🔍 Found User:", user);
 
+                // Check if user is verified
+                if (!user.verified) {
+                    console.log("❌ User is not verified.");
+                    return res.status(403).json({ message: "Please verify your email before logging in. Check your inbox for the verification link." });
+                }
 
-        // Find user by email
-        const user = users.find(u => u.email === username || u.username === username);
-        if (!user) {
-            logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - User Not Found");
-            return res.status(401).json({ message: "User not found." });
-        }
+                // Compare password using bcrypt
+                bcrypt.compare(password, user.password, (err, isMatch) => {
+                    if (err) {
+                        console.error("Error comparing passwords:", err);
+                        return res.status(500).json({ message: "Error during login." });
+                    }
 
-        console.log("🔍 Found User:", user);
-        console.log("✅ User Verification Status Before Check:", user.verified);
-        // Check if user is verified
-        if (!user.verified) {
-            console.log("❌ User is not verified.");
-            return res.status(403).json({ message: "User not verified! Please verify your email first!!!" });
-        }
-        console.log("🔍 Checking user verification status:", user);
+                    if (!isMatch) {
+                        console.log("❌ Passwords do NOT match!");
+                        logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - Incorrect Password");
+                        return res.status(401).json({ message: "Invalid credentials." });
+                    }
 
-        // Debugging stored and entered password
-        console.log("🔍 Stored Password:", user.password);
-        console.log("🔑 Entered Password:", password);
+                    // Define userType dynamically
+                    const userType = username === 'admin@shivalikbank.com' ? 'admin' : 'user';
 
-        // Compare password using bcrypt
-        const isMatch = bcrypt.compareSync(password, user.password);
-        console.log("🔎 Password Match Result:", isMatch);
-        if (!isMatch) {
-            console.log("❌ Passwords do NOT match!");
-            logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - Incorrect Password");
-            return res.status(401).json({ message: "Invalid credentials." });
-        }
+                    // Save user in session
+                    req.session.user = { 
+                        id: user.id,
+                        username: user.email,
+                        userType: userType
+                    };
 
-        // Define userType dynamically
-        const userType = username === 'admin@shivalikbank.com' ? 'admin' : 'user';
+                    console.log("✅ Logging in user:", req.session.user);
 
-        // Save user in session
-        req.session.user = { 
-            id: 'ID' + Date.now(), 
-            username: user.email || user.username, 
-            userType: user.email === 'admin@shivalikbank.com' ? 'admin' : 'user'
-        };
+                    // Log user activity
+                    logUserActivity("LOGIN", { email: user.email, userType: userType }, "Success - Logged In");
 
-        console.log("✅ Logging in user:", req.session.user); // Debugging
-
-        // Log user activity
-        logUserActivity("LOGIN", { email: req.session.user.username, userType: req.session.user.userType }, "Success - Logged In");
-
-        // Send response
-        res.status(200).json({ message: "Login successful", user: req.session.user });
-
+                    // Send response
+                    res.status(200).json({ message: "Login successful", user: req.session.user });
+                });
+            })
+            .catch(err => {
+                console.error("Database error:", err);
+                return res.status(500).json({ message: "Server error." });
+            });
     } catch (error) {
         console.error("Login error:", error);
         logUserActivity("LOGIN", { email: req.body.username || "Unknown", userType: "Unknown" }, "Failed - Server Error");
