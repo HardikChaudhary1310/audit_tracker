@@ -16,7 +16,7 @@
 // db.js
 const mysql = require('mysql2');
 
-// Get database configuration from environment variables or use defaults
+// Get database configuration from environment variables
 const dbConfig = {
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -24,7 +24,10 @@ const dbConfig = {
     database: process.env.DB_NAME || 'user_activity',
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
+    ssl: process.env.NODE_ENV === 'production' ? {
+        rejectUnauthorized: false
+    } : false
 };
 
 // Create a connection pool
