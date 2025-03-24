@@ -16,7 +16,7 @@ const pool = mysql.createPool({
 const promisePool = pool.promise();
 
 // models/userActivity.js
-const db = require('./db');  // Import the database connection
+const promisePool = require('./db');  // Import the shared database connection
 
 const logUserActivity = async(actionType, userData, policyId, status) => {
     try {
