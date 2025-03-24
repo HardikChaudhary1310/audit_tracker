@@ -649,7 +649,13 @@ app.post("/signup", async (req, res) => {
 
             res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
         } catch (dbError) {
-            console.error("Database error during signup:", dbError);
+            console.error("Database error during signup:", {
+                code: dbError.code,
+                errno: dbError.errno,
+                sqlState: dbError.sqlState,
+                sqlMessage: dbError.sqlMessage,
+                stack: dbError.stack
+            });
             await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
             res.status(500).json({ message: "Error during signup. Please try again later." });
         }
