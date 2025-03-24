@@ -596,13 +596,13 @@ app.post("/signup", async (req, res) => {
 
         // Validate email format
         if (!isValidEmail(username)) {
-            logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+            await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Invalid Email");
             return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
         }
 
         // Validate password
         if (!isValidPassword(password) || password !== confirmPassword) {
-            logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+            await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Invalid Password");
             return res.status(400).json({ message: "Invalid password or mismatch." });
         }
 
@@ -611,6 +611,7 @@ app.post("/signup", async (req, res) => {
             const [results] = await promisePool.query('SELECT * FROM users WHERE email = ?', [username]);
             
             if (results.length > 0) {
+                await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - User Exists");
                 return res.status(400).json({ message: "User already exists. Please log in." });
             }
 
@@ -643,18 +644,18 @@ app.post("/signup", async (req, res) => {
 
             await transporter.sendMail(mailOptions);
 
-            // Log user activity
-            logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+            // Log successful signup
+            await logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 
             res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
         } catch (dbError) {
             console.error("Database error during signup:", dbError);
-            logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
+            await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
             res.status(500).json({ message: "Error during signup. Please try again later." });
         }
     } catch (error) {
         console.error("Unexpected error during signup:", error);
-        logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
+        await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
         res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
     }
 });
