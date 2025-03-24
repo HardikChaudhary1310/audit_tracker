@@ -588,80 +588,74 @@ function saveUserToLog(userData) {
 // });
 
 
-app.post("/signup", (req, res) => {
-    const { username, password, confirmPassword } = req.body;
-    console.log("Signup request received:", { username, password, confirmPassword });
+app.post("/signup", async (req, res) => {
+    try {
+        const { username, password, confirmPassword } = req.body;
+        console.log("Signup request received:", { username, password, confirmPassword });
 
-    // Validate email format
-    if (!isValidEmail(username)) {
-        logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
-        return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
-    }
+        // Validate email format
+        if (!isValidEmail(username)) {
+            logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+            return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
+        }
 
-    // Validate password
-    if (!isValidPassword(password) || password !== confirmPassword) {
-        logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
-        return res.status(400).json({ message: "Invalid password or mismatch." });
-    }
+        // Validate password
+        if (!isValidPassword(password) || password !== confirmPassword) {
+            logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED");
+            return res.status(400).json({ message: "Invalid password or mismatch." });
+        }
 
-    // Check if user already exists in the database
-    promisePool.query('SELECT * FROM users WHERE email = ?', [username])
-        .then(([results]) => {
-            // If user exists, send response
+        try {
+            // Check if user already exists in the database
+            const [results] = await promisePool.query('SELECT * FROM users WHERE email = ?', [username]);
+            
             if (results.length > 0) {
                 return res.status(400).json({ message: "User already exists. Please log in." });
             }
 
-            // Hash the password before storing it
-            bcrypt.hash(password, 10, (err, hashedPassword) => {
-                if (err) {
-                    console.error("Error hashing password:", err);
-                    return res.status(500).json({ message: "Error during password hashing." });
-                }
+            // Hash the password
+            const hashedPassword = await bcrypt.hash(password, 10);
 
-                // Create new user object to be inserted into DB
-                const newUser = {
-                    username,
-                    email: username,
-                    password: hashedPassword, // Store the hashed password
-                    verified: false,
-                    userType: username === 'admin@shivalikbank.com' ? 'admin' : 'user' // Set userType based on email
-                };
+            // Create new user object
+            const newUser = {
+                username,
+                email: username,
+                password: hashedPassword,
+                verified: false,
+                userType: username === 'admin@shivalikbank.com' ? 'admin' : 'user'
+            };
 
-                // Insert the new user into the database
-                promisePool.query('INSERT INTO users SET ?', newUser)
-                    .then(() => {
-                        // Generate token for email verification
-                        const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
+            // Insert the new user
+            await promisePool.query('INSERT INTO users SET ?', newUser);
 
-                        // Send verification email
-                        const verificationLink = `https://your-domain.com/verify-email?token=${token}`;
-                        const mailOptions = {
-                            from: "your-email@example.com",
-                            to: username,
-                            subject: "Verify Your EmailId For Audit Tracker Portal",
-                            text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\nThis link will expire in 1 hour.`
-                        };
+            // Generate token for email verification
+            const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
-                        transporter.sendMail(mailOptions, (error, info) => {
-                            if (error) {
-                                console.log("Error sending email:", error);
-                                return res.status(500).json({ message: "Error sending verification email." });
-                            }
+            // Send verification email
+            const verificationLink = `${process.env.APP_URL || 'https://your-domain.com'}/verify-email?token=${token}`;
+            const mailOptions = {
+                from: "hardikchaudhary713@gmail.com",
+                to: username,
+                subject: "Verify Your EmailId For Audit Tracker Portal",
+                text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\nThis link will expire in 1 hour.`
+            };
 
-                            // Log user activity and send final success response
-                            logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+            await transporter.sendMail(mailOptions);
 
-                            // Respond to the client
-                            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
-                        });
-                    })
-                    .catch(err => {
-                        console.error("Error inserting new user:", err);
-                        return res.status(500).json({ message: "Error during signup." });
-                    });
-            });
-        });
+            // Log user activity
+            logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
+
+            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+        } catch (dbError) {
+            console.error("Database error during signup:", dbError);
+            logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
+            res.status(500).json({ message: "Error during signup. Please try again later." });
+        }
+    } catch (error) {
+        console.error("Unexpected error during signup:", error);
+        logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
+        res.status(500).json({ message: "An unexpected error occurred. Please try again later." });
+    }
 });
 
 
