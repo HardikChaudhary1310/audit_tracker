@@ -97,6 +97,12 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
+// Ensure JSON responses
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+    next();
+});
+
 const PORT = process.env.PORT || 3001;
  
 const USER_DATA_FILE = "user_data.json"; // Ensure this variable is declared
