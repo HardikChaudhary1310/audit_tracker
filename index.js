@@ -14,26 +14,20 @@ const promisePool = require('./models/db');
 const logDir = path.join(__dirname, 'logs');
 const logFilePath1 = path.join(__dirname, 'logs', 'user_data.json');
 
-
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 
 const usersFilePath = path.join(__dirname, 'logs', 'user_activity.json');
 
-
-// const db = require('./db');
-const { logUserActivity } = require('./models/userActivity'); // Import the logUserActivity function
-
+const { logUserActivity } = require('./models/userActivity');
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: "hardikchaudhary713@gmail.com",  // Use a sender email (e.g., your company's email)
-        pass: "atxj ijbl xuxt gwfe",     // Use an App Password (not your real password)
+        user: "hardikchaudhary713@gmail.com",
+        pass: "atxj ijbl xuxt gwfe",
     },
 });
-
-
 
 if (!fs.existsSync(logDir)) {
     fs.mkdirSync(logDir, { recursive: true });
@@ -65,7 +59,6 @@ const logUserActivity1 = (eventType, user, policyOrFilename, status) => {
     }
 };
 
-
 const policyRoutes = require('./routes/routes');
  
 const app = express();
@@ -86,7 +79,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: { 
-        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true, 
         maxAge: 14400000 
     }
@@ -104,7 +97,7 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
  
 const USER_DATA_FILE = "user_data.json"; // Ensure this variable is declared
 
