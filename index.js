@@ -102,7 +102,18 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
  
 app.set("views", path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
-app.use(cors());
+app.use(cors({
+    origin: ['https://audit-tracker-w4p6.onrender.com', 'http://localhost:3000'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
+
+// Ensure JSON responses
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json');
+    next();
+});
  
  
  
@@ -634,7 +645,7 @@ app.post("/signup", async (req, res) => {
             const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
             // Send verification email
-            const verificationLink = `${process.env.APP_URL || 'https://audit-tracker-w4p6.onrender.com/'}/verify-email?token=${token}`;
+            const verificationLink = `${process.env.APP_URL || 'https://audit-tracker-w4p6.onrender.com'}/verify-email?token=${token}`;
             const mailOptions = {
                 from: "hardikchaudhary713@gmail.com",
                 to: username,
@@ -647,7 +658,7 @@ app.post("/signup", async (req, res) => {
             // Log successful signup
             await logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 
-            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+            return res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
         } catch (dbError) {
             console.error("Database error during signup:", {
                 code: dbError.code,
@@ -666,7 +677,7 @@ app.post("/signup", async (req, res) => {
             }
             
             await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
-            res.status(500).json({ 
+            return res.status(500).json({ 
                 message: "Error during signup. Please try again later.",
                 error: dbError.message
             });
@@ -674,7 +685,7 @@ app.post("/signup", async (req, res) => {
     } catch (error) {
         console.error("Unexpected error during signup:", error);
         await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
-        res.status(500).json({ 
+        return res.status(500).json({ 
             message: "An unexpected error occurred. Please try again later.",
             error: error.message
         });

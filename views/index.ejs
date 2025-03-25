@@ -411,19 +411,18 @@ background-position: left;
             }
 
             if (isValid) {
-                const formData = {
-                    username: email,
-                    password,
-                    confirmPassword: !isLogin ? confirmPassword : undefined,
-                };
-
-                // Send POST request for login/signup
-                const response = await fetch(isLogin ? '/login' : '/signup', {
+                const response = await fetch(isLogin ? 'https://audit-tracker-w4p6.onrender.com/login' : 'https://audit-tracker-w4p6.onrender.com/signup', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        'Accept': 'application/json'
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify({
+                        username: email,
+                        password: password,
+                        confirmPassword: isLogin ? undefined : confirmPassword
+                    }),
+                    credentials: 'include' // Include cookies for session management
                 });
 
                 if (!response.ok) {
