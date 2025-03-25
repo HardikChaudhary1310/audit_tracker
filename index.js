@@ -662,13 +662,7 @@ app.post("/signup", async (req, res) => {
 
             return res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
         } catch (dbError) {
-            console.error("Database error during signup:", {
-                code: dbError.code,
-                errno: dbError.errno,
-                sqlState: dbError.sqlState,
-                sqlMessage: dbError.sqlMessage,
-                stack: dbError.stack
-            });
+            console.error("Database error during signup:", dbError);
             
             // Handle specific database errors
             if (dbError.code === 'ECONNREFUSED') {
