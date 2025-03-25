@@ -660,7 +660,12 @@ app.post("/signup", async (req, res) => {
             // Log successful signup
             await logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 
-            return res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+            // Set proper headers
+            res.setHeader('Content-Type', 'application/json');
+            return res.status(200).json({ 
+                message: "Signup successful! Check your email to verify your account.",
+                success: true
+            });
         } catch (dbError) {
             console.error("Database error during signup:", dbError);
             

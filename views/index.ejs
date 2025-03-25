@@ -347,8 +347,8 @@ background-position: left;
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
-        document.getElementById('form').addEventLi   s tener('submit',   a s y n c f u nction(e) {
-ault();
+            document.getElementById('form').addEve n tListener('submit ' , asy n c function (e) {
+                  entDefault();
 
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
@@ -382,7 +382,7 @@ ault();
 
             if (isValid) {
                 try {
-                                       esponse = await fetch(this.action, {
+                               esponse = await fetch(this.action, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -396,14 +396,13 @@ ault();
                         credentials: 'include'
                     });
 
+                const data = await response.json();
+
                     if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.message || 'An error occurred');
+                        throw new Error(data.message || 'An error occurred');
                     }
 
-                    const data = await response.json();
-
-                                ) {
+                if (<%= !isSignup %>) {
                         alert("Login Successful! Redirecting...");
                         window.location.href = "/home";
                     } else {
