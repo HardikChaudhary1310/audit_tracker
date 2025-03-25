@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <title>Login and Sign-Up</title>
+    <title>
+        <%= title %>
+    </title>
     <style>
         /* General Reset */
         * {
@@ -278,32 +280,21 @@ background-position: left;
 <body>
     <div class="container" id="container">
         <div class="form-container">
-            <h3 id="formTitle">Sign In</h3>
+            <h3 id="formTitle">
+                <%= isSignup ? 'Sign Up' : 'Sign In' %>
+            </h3>
 
-
-            <!-- <div class="social-login">
-               <button title="Google"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" alt="Google"></button>
-                <button title="Facebook"><b><img src="#" alt="F"></b></button>&nbsp;&nbsp;
-                <button title="GitHub"><b><img src="#" alt="GH"></b></button>&nbsp;&nbsp;
-                <button title="LinkedIn"><b><img src="#" alt="In"></b></button>&nbsp;&nbsp;
-              
-
-              <button title="Google">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-twitter"></i></a>
-            </button>&nbsp;
-            <button title="Facebook">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-instagram"></i></a>
-            </button>&nbsp;
-            <button title="GitHub">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-youtube"></i></a>
-            </button>&nbsp;
-            <button title="LinkedIn">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-linkedin"></i></a>           
-             </button>
+            <% if (error) { %>
+                <div class="alert alert-danger">
+                    <%= error %>
+                </div>
+                <% } %>
             
-        </div>  
-    -->
-
+            <% if (success) { %>
+                <div class="alert alert-success">
+                    <%= success %>
+                </div>
+                <% } %>
 
             <form id="form" onsubmit="handleSubmit(event)">
                 <div class="input-group">
@@ -317,60 +308,42 @@ background-position: left;
                     <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
                     <div class="error" id="passwordError"></div>
                 </div>
-                <div id="confirmPasswordGroup" class="input-group password-wrapper" style="display: none;">
+                <div id="confirmPasswordGroup" class="input-group password-wrapper"
+                    style="display: <%= isSignup ? 'block' : 'none' %>;">
                     <label for="confirmPassword">Confirm Password</label>
                     <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
                     <span class="toggle-password" onclick="togglePassword('confirmPassword')">👁️</span>
                     <div class="error" id="confirmPasswordError"></div>
                 </div>
-                <button type="submit">Submit</button>
+                <button type="submit">
+                    <%= isSignup ? 'Sign Up' : 'Sign In' %>
+                </button>
             </form>
             <div class="signup-link">
-                <span id="toggleLink">Don't have an account? <a href="javascript:void(0);" onclick="toggleForm()">Sign Up</a></span>
+                <span id="toggleLink">
+                    <%= isSignup ? 'Already have an account?' : "Don't have an account?" %>
+                        <a href="<%= isSignup ? '/' : '/signup' %>">
+                            <%= isSignup ? 'Sign In' : 'Sign Up' %>
+                        </a>
+                </span>
             </div>
         </div>
         <div class="overlay-container" id="overlayContainer">
-            <h3 id="overlayTitle">Hi, Friend!</h3>
-            <p id="overlayText">Register with your personal details to use all site features</p>
-            <button id="overlayButton" onclick="toggleForm()">Sign Up</button>
+            <h3 id="overlayTitle">
+                <%= isSignup ? 'Welcome Back!' : 'Hi, Friend!' %>
+            </h3>
+            <p id="overlayText">
+                <%= isSignup ? 'To keep connected with us, please login with your personal info!'
+                    : 'Register with your personal details to use all site features' %>
+            </p>
+            <button id="overlayButton" onclick="window.location.href='<%= isSignup ? '/' : '/signup' %>'">
+                <%= isSignup ? 'Sign In' : 'Sign Up' %>
+            </button>
         </div>
     </div>
 
     <script>
-        let isLogin = true;
-
-        function toggleForm() {
-            const container = document.getElementById("container");
-            const formTitle = document.getElementById("formTitle");
-            const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
-            const toggleLink = document.getElementById("toggleLink");
-            const overlayTitle = document.getElementById("overlayTitle");
-            const overlayText = document.getElementById("overlayText");
-            const overlayButton = document.getElementById("overlayButton");
-            const overlayContainer = document.getElementById("overlayContainer");
-
-            isLogin = !isLogin;
-
-            if (isLogin) {
-                container.classList.remove("sign-up-mode");
-                formTitle.textContent = "Sign In";
-                confirmPasswordGroup.style.display = "none";
-                toggleLink.innerHTML = "Don't have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign Up</a>";
-                overlayTitle.textContent = "Hi, Friends!";
-                overlayText.textContent = "Register with your personal details to use all site features!";
-                overlayButton.textContent = "Sign Up";
-                overlayContainer.classList.remove("active");
-            } else {
-                container.classList.add("sign-up-mode");
-                formTitle.textContent = "Sign Up";
-                confirmPasswordGroup.style.display = "block";
-                toggleLink.innerHTML = "Already have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign In</a>";
-                overlayTitle.textContent = "Welcome Back!";
-                overlayText.textContent = "To keep connected with us, please login with your personal info!";
-                overlayButton.textContent = "Sign In";
-                overlayContainer.classList.add("active");
-            }
-        }
+        let isLogin = <%= !isSignup %>;
 
         function togglePassword(id) {
             const input = document.getElementById(id);
@@ -378,7 +351,7 @@ background-position: left;
         }
 
         async function handleSubmit(event) {
-            event.preventDefault();  // Prevent form from submitting normally
+            event.prev  entDefault();
 
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
@@ -412,7 +385,7 @@ background-position: left;
 
             if (isValid) {
                 try {
-                    const response = await fetch(isLogin ? 'https://audit-tracker-w4p6.onrender.com/login' : 'https://audit-tracker-w4p6.onrender.com/signup', {
+                    const response = await fetch(isLogin ? '/login' : '/signup', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -435,10 +408,10 @@ background-position: left;
 
                     if (isLogin) {
                         alert("Login Successful! Redirecting...");
-                        window.location.href = "https://audit-tracker-w4p6.onrender.com/home";
+                        window.location.href = "/home";
                     } else {
                         alert("Signup Successful! Please check your email for verification.");
-                        window.location.href = "https://audit-tracker-w4p6.onrender.com/";
+                        window.location.href = "/";
                     }
                 } catch (error) {
                     console.error('Error:', error);

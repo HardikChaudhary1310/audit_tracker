@@ -1257,6 +1257,15 @@ app.get("/", (req, res) => {
     });
 });
  
+app.get("/signup", (req, res) => {
+    res.render("index", { 
+        title: "Signup",
+        error: null,
+        success: null,
+        isSignup: true
+    });
+});
+
 app.get("/home", (req, res) => {
     res.render("home", { 
         title: "Home",
