@@ -1253,7 +1253,8 @@ app.get("/", (req, res) => {
     res.render("index", { 
         title: "Login/Signup",
         error: null,
-        success: null
+        success: null,
+        isSignup: false
     });
 });
  

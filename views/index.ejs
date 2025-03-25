@@ -308,8 +308,7 @@ background-position: left;
                     <span class="toggle-password" onclick="togglePassword('password')">👁️</span>
                     <div class="error" id="passwordError"></div>
                 </div>
-                <div id="confirmPasswordGroup" class="input-group password-wrapper"
-                    style="display: <%= isSignup ? 'block' : 'none' %>;">
+                <div id="confirmPasswordGroup" class="input-group password-wrapper" style="display: <%= isSignup ? 'block' : 'none' %>">
                     <label for="confirmPassword">Confirm Password</label>
                     <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm your password">
                     <span class="toggle-password" onclick="togglePassword('confirmPassword')">👁️</span>
@@ -343,7 +342,7 @@ background-position: left;
     </div>
 
     <script>
-        let isLogin = <%= !isSignup %>;
+        const isLogin = <%= !isSignup %>;
 
         function togglePassword(id) {
             const input = document.getElementById(id);
@@ -351,7 +350,7 @@ background-position: left;
         }
 
         async function handleSubmit(event) {
-            event.prev  entDefault();
+            event.pr  eventDefault();
 
             const email = document.getElementById("email").value.trim();
             const password = document.getElementById("password").value.trim();
