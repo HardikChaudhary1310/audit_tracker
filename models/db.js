@@ -25,10 +25,15 @@ const dbConfig = {
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0,
+    port: process.env.DB_PORT || 3306,
     // Add SSL configuration for production
     ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: false
-    } : undefined
+        rejectUnauthorized: false,
+        ca: process.env.MYSQL_CERT // Add CA certificate if provided by Render
+    } : undefined,
+    // Add connection timeout and retry settings
+    connectTimeout: 30000, // 30 seconds
+    acquireTimeout: 30000 // 30 seconds
 };
 
 // Log database configuration (excluding sensitive info)
@@ -37,7 +42,8 @@ console.log('Database configuration:', {
     user: dbConfig.user,
     database: dbConfig.database,
     environment: process.env.NODE_ENV || 'development',
-    ssl: dbConfig.ssl ? 'enabled' : 'disabled'
+    ssl: dbConfig.ssl ? 'enabled' : 'disabled',
+    port: dbConfig.port
 });
 
 // Create connection pool
@@ -52,6 +58,11 @@ const testConnection = async (retries = 5, delay = 2000) => {
         try {
             const connection = await promisePool.getConnection();
             console.log('✅ Database connection successful!');
+            
+            // Test a simple query
+            await connection.query('SELECT 1');
+            console.log('✅ Database query successful!');
+            
             connection.release();
             return true;
         } catch (err) {
@@ -61,7 +72,8 @@ const testConnection = async (retries = 5, delay = 2000) => {
                 sqlState: err.sqlState,
                 sqlMessage: err.sqlMessage,
                 host: dbConfig.host,
-                database: dbConfig.database
+                database: dbConfig.database,
+                port: dbConfig.port
             });
             
             if (i < retries - 1) {
@@ -78,12 +90,17 @@ const testConnection = async (retries = 5, delay = 2000) => {
 testConnection().then(success => {
     if (!success) {
         console.error('❌ Failed to connect to database after multiple attempts. Please check:');
-        console.error('1. Database server is running');
+        console.error('1. Database server is running and accessible');
         console.error('2. Database credentials are correct');
-        console.error('3. Database exists');
-        console.error('4. Network/firewall allows connection');
-        console.error('5. Environment variables are set correctly');
-        // Don't exit the process, let the application handle reconnection
+        console.error('3. Database exists and is properly configured');
+        console.error('4. Network/firewall allows connection to port', dbConfig.port);
+        console.error('5. Environment variables are set correctly:');
+        console.error('   - DB_HOST');
+        console.error('   - DB_USER');
+        console.error('   - DB_PASSWORD');
+        console.error('   - DB_NAME');
+        console.error('   - DB_PORT');
+        console.error('6. SSL configuration is correct for production');
     }
 });
 
