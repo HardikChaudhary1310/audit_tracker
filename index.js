@@ -69,14 +69,40 @@ const logUserActivity1 = (eventType, user, policyOrFilename, status) => {
 const policyRoutes = require('./routes/routes');
  
 const app = express();
+
+// Configure Express
+app.set("views", path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
+
+// Session configuration
 app.use(session({
     secret: 'shivalikbank',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false, httpOnly: true, maxAge: 14400000 }
-  }));
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        httpOnly: true, 
+        maxAge: 14400000 
+    }
+}));
 
-  app.use(morgan('dev'));
+// CORS configuration
+app.use(cors({
+    origin: [
+        'https://audit-tracker-w4p6.onrender.com',
+        'https://audit-tracker-1.onrender.com',
+        'http://localhost:3000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
 
 const PORT = 3001;
  
@@ -92,33 +118,6 @@ if (!fs.existsSync(USER_DATA_FILE)) {
  
 //const policyRoutes = require('./routes/policies');
 app.use('/api', policyRoutes);
- 
- 
-app.use(express.json()); // Middleware to parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
- 
- 
-
- 
-app.set("views", path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.use(cors({
-    origin: [
-        'https://audit-tracker-w4p6.onrender.com',
-        'https://audit-tracker-1.onrender.com',
-        'http://localhost:3000'
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-}));
-
-// Ensure JSON responses
-app.use((req, res, next) => {
-    res.setHeader('Content-Type', 'application/json');
-    next();
-});
- 
  
  
 // Store user data in an array
@@ -1258,23 +1257,39 @@ function logUserAction(username, password, type, status) {
  
 // Home route
 app.get("/", (req, res) => {
-    res.render("index");
+    res.render("index", { 
+        title: "Login/Signup",
+        error: null,
+        success: null
+    });
 });
  
 app.get("/home", (req, res) => {
-    res.render("home");
+    res.render("home", { 
+        title: "Home",
+        user: req.session.user
+    });
 });
  
 app.get("/policy", (req, res) => {
-    res.render("policy");
+    res.render("policy", { 
+        title: "Policy",
+        userEmail: req.session.username || ""
+    });
 });
  
 app.get("/manuals", (req, res) => {
-    res.render("manuals");
+    res.render("manuals", { 
+        title: "Manuals",
+        user: req.session.user
+    });
 });
  
 app.get("/circular", (req, res) => {
-    res.render("circular");
+    res.render("circular", { 
+        title: "Circular",
+        user: req.session.user
+    });
 });
  
 // Signup Route
