@@ -27,7 +27,7 @@ const dbConfig = {
     queueLimit: 0,
     // Add SSL configuration for production
     ssl: process.env.NODE_ENV === 'production' ? {
-        rejectUnauthorized: true
+        rejectUnauthorized: false
     } : undefined
 };
 
@@ -36,6 +36,7 @@ console.log('Database configuration:', {
     host: dbConfig.host,
     user: dbConfig.user,
     database: dbConfig.database,
+    environment: process.env.NODE_ENV || 'development',
     ssl: dbConfig.ssl ? 'enabled' : 'disabled'
 });
 
@@ -45,26 +46,28 @@ const pool = mysql.createPool(dbConfig);
 // Wrap pool with promise API
 const promisePool = pool.promise();
 
-// Test connection function
-const testConnection = async (retries = 3, delay = 1000) => {
+// Test connection function with better error handling
+const testConnection = async (retries = 5, delay = 2000) => {
     for (let i = 0; i < retries; i++) {
         try {
             const connection = await promisePool.getConnection();
-            console.log('Database connection successful!');
+            console.log('✅ Database connection successful!');
             connection.release();
             return true;
         } catch (err) {
-            console.error(`Database connection attempt ${i + 1} failed:`, {
+            console.error(`❌ Database connection attempt ${i + 1}/${retries} failed:`, {
                 code: err.code,
                 errno: err.errno,
                 sqlState: err.sqlState,
-                sqlMessage: err.sqlMessage
+                sqlMessage: err.sqlMessage,
+                host: dbConfig.host,
+                database: dbConfig.database
             });
             
             if (i < retries - 1) {
-                console.log(`Retrying in ${delay}ms...`);
+                console.log(`⏳ Retrying in ${delay/1000} seconds...`);
                 await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2; // Exponential backoff
+                delay *= 1.5; // Exponential backoff
             }
         }
     }
@@ -74,8 +77,13 @@ const testConnection = async (retries = 3, delay = 1000) => {
 // Test connection on startup
 testConnection().then(success => {
     if (!success) {
-        console.error('Failed to connect to database after multiple attempts');
-        process.exit(1);
+        console.error('❌ Failed to connect to database after multiple attempts. Please check:');
+        console.error('1. Database server is running');
+        console.error('2. Database credentials are correct');
+        console.error('3. Database exists');
+        console.error('4. Network/firewall allows connection');
+        console.error('5. Environment variables are set correctly');
+        // Don't exit the process, let the application handle reconnection
     }
 });
 
