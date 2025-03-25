@@ -634,7 +634,7 @@ app.post("/signup", async (req, res) => {
             const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
             // Send verification email
-            const verificationLink = `${process.env.APP_URL || 'https://your-domain.com'}/verify-email?token=${token}`;
+            const verificationLink = `${process.env.APP_URL || 'https://audit-tracker-w4p6.onrender.com/'}/verify-email?token=${token}`;
             const mailOptions = {
                 from: "hardikchaudhary713@gmail.com",
                 to: username,
@@ -687,7 +687,7 @@ function sendVerificationEmail(username, verificationLink) {
     const mailOptions = {
         from: "hardikchaudhary713@gmail.com",
         to: username,
-        subject: "Verify Your EmailId For Audit Trcaker Portal!!!",
+        subject: "Verify Your EmailId For Audit Tracker Portal!!!",
         text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
     };
 
@@ -732,7 +732,7 @@ app.get("/verify-email", (req, res) => {
                 console.log(`✅ Email verified successfully for: ${username}`);
                 return res.status(200).send(`
                     <h2>Email Verified Successfully!</h2>
-                    <p>Your email has been verified. You can now <a href="https://your-domain.com">log in</a>.</p>
+                    <p>Your email has been verified. You can now <a href="https://audit-tracker-w4p6.onrender.com/">log in</a>.</p>
                 `);
             })
             .catch(err => {
