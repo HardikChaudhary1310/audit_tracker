@@ -411,34 +411,38 @@ background-position: left;
             }
 
             if (isValid) {
-                const response = await fetch(isLogin ? 'https://audit-tracker-w4p6.onrender.com/login' : 'https://audit-tracker-w4p6.onrender.com/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: email,
-                        password: password,
-                        confirmPassword: isLogin ? undefined : confirmPassword
-                    }),
-                    credentials: 'include' // Include cookies for session management
-                });
+                try {
+                    const response = await fetch(isLogin ? 'https://audit-tracker-w4p6.onrender.com/login' : 'https://audit-tracker-w4p6.onrender.com/signup', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            username: email,
+                            password: password,
+                            confirmPassword: isLogin ? undefined : confirmPassword
+                        }),
+                        credentials: 'include'
+                    });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    alert(`Error: ${errorData.message}`);
-                    return;
-                }
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'An error occurred');
+                    }
 
-                const data = await response.json();
+                    const data = await response.json();
 
-                if (isLogin) {
-                    alert("Login Successful! Redirecting...");
-                    window.location.href = "/home";  // Redirect to the home page
-                } else {
-                    alert("Signup Successful! Redirecting...");
-                    window.location.href = "/home";  // Redirect to home page after signup
+                    if (isLogin) {
+                        alert("Login Successful! Redirecting...");
+                        window.location.href = "https://audit-tracker-w4p6.onrender.com/home";
+                    } else {
+                        alert("Signup Successful! Please check your email for verification.");
+                        window.location.href = "https://audit-tracker-w4p6.onrender.com/";
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message || 'An error occurred. Please try again.');
                 }
             } else {
                 alert("Please correct the errors before submitting.");

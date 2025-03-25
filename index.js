@@ -103,7 +103,11 @@ app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
 app.set("views", path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(cors({
-    origin: ['https://audit-tracker-w4p6.onrender.com', 'http://localhost:3000'],
+    origin: [
+        'https://audit-tracker-w4p6.onrender.com',
+        'https://audit-tracker-1.onrender.com',
+        'http://localhost:3000'
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
