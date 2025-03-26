@@ -69,14 +69,40 @@ const logUserActivity1 = (eventType, user, policyOrFilename, status) => {
 const policyRoutes = require('./routes/routes');
  
 const app = express();
+
+// Configure Express
+app.set("views", path.join(__dirname, 'views'));
+app.set('view engine', 'ejs');
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
+
+// Session configuration
 app.use(session({
     secret: 'shivalikbank',
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false, httpOnly: true, maxAge: 14400000 }
-  }));
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+        httpOnly: true, 
+        maxAge: 14400000 
+    }
+}));
 
-  app.use(morgan('dev'));
+// CORS configuration
+app.use(cors({
+    origin: [
+        'https://audit-tracker-w4p6.onrender.com',
+        'https://audit-tracker-1.onrender.com',
+        'http://localhost:3000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+}));
 
 const PORT = 3001;
  
@@ -92,18 +118,6 @@ if (!fs.existsSync(USER_DATA_FILE)) {
  
 //const policyRoutes = require('./routes/policies');
 app.use('/api', policyRoutes);
- 
- 
-app.use(express.json()); // Middleware to parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded data
- 
- 
-
- 
-app.set("views", path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-app.use(cors());
- 
  
  
 // Store user data in an array
@@ -634,7 +648,7 @@ app.post("/signup", async (req, res) => {
             const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
             // Send verification email
-            const verificationLink = `${process.env.APP_URL || 'https://your-domain.com'}/verify-email?token=${token}`;
+            const verificationLink = `${process.env.APP_URL || 'https://audit-tracker-w4p6.onrender.com'}/verify-email?token=${token}`;
             const mailOptions = {
                 from: "hardikchaudhary713@gmail.com",
                 to: username,
@@ -647,7 +661,7 @@ app.post("/signup", async (req, res) => {
             // Log successful signup
             await logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 
-            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+            return res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
         } catch (dbError) {
             console.error("Database error during signup:", {
                 code: dbError.code,
@@ -666,7 +680,7 @@ app.post("/signup", async (req, res) => {
             }
             
             await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
-            res.status(500).json({ 
+            return res.status(500).json({ 
                 message: "Error during signup. Please try again later.",
                 error: dbError.message
             });
@@ -674,7 +688,7 @@ app.post("/signup", async (req, res) => {
     } catch (error) {
         console.error("Unexpected error during signup:", error);
         await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
-        res.status(500).json({ 
+        return res.status(500).json({ 
             message: "An unexpected error occurred. Please try again later.",
             error: error.message
         });
@@ -687,7 +701,7 @@ function sendVerificationEmail(username, verificationLink) {
     const mailOptions = {
         from: "hardikchaudhary713@gmail.com",
         to: username,
-        subject: "Verify Your EmailId For Audit Trcaker Portal!!!",
+        subject: "Verify Your EmailId For Audit Tracker Portal!!!",
         text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
     };
 
@@ -732,7 +746,7 @@ app.get("/verify-email", (req, res) => {
                 console.log(`✅ Email verified successfully for: ${username}`);
                 return res.status(200).send(`
                     <h2>Email Verified Successfully!</h2>
-                    <p>Your email has been verified. You can now <a href="https://your-domain.com">log in</a>.</p>
+                    <p>Your email has been verified. You can now <a href="https://audit-tracker-w4p6.onrender.com/">log in</a>.</p>
                 `);
             })
             .catch(err => {
@@ -1243,23 +1257,39 @@ function logUserAction(username, password, type, status) {
  
 // Home route
 app.get("/", (req, res) => {
-    res.render("index");
+    res.render("index", { 
+        title: "Login/Signup",
+        error: null,
+        success: null
+    });
 });
  
 app.get("/home", (req, res) => {
-    res.render("home");
+    res.render("home", { 
+        title: "Home",
+        user: req.session.user
+    });
 });
  
 app.get("/policy", (req, res) => {
-    res.render("policy");
+    res.render("policy", { 
+        title: "Policy",
+        userEmail: req.session.username || ""
+    });
 });
  
 app.get("/manuals", (req, res) => {
-    res.render("manuals");
+    res.render("manuals", { 
+        title: "Manuals",
+        user: req.session.user
+    });
 });
  
 app.get("/circular", (req, res) => {
-    res.render("circular");
+    res.render("circular", { 
+        title: "Circular",
+        user: req.session.user
+    });
 });
  
 // Signup Route
