@@ -18,7 +18,7 @@ const logDir = path.join(__dirname, 'logs');
 const logFilePath1 = path.join(__dirname, 'logs', 'user_data.json');
 
 const { logUserActivity } = require('./models/userActivity');
-const { isValidEmail, isValidPassword } = require("./utils/validation");
+// const { isValidEmail, isValidPassword } = require("./utils/validation");
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -34,7 +34,7 @@ if (!fs.existsSync(logDir)) {
 
 const logUserActivity1 = (eventType, user, policyOrFilename, status) => {
     const timestamp = new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" }); // Standard timestamp format
-    
+
     // Debugging: Check what is undefined
     console.log("Logging activity for:", { eventType, user, policyOrFilename, status });
 
@@ -130,7 +130,7 @@ function readUserActivityLog() {
 
     try {
         const logData = fs.readFileSync(logFilePath, "utf8").trim();
-        
+
         if (!logData) {
             console.warn("⚠️ Log file is empty. Returning empty array.");
             return []; // Return empty array if file is empty
@@ -214,15 +214,15 @@ let data = [];
 // Log user actions (Signup/Login/Failure)
 function logUserAction(username, password, type, status) {
     const timestamp = moment().format("YYYY-MM-DD HH:mm:ss");
- 
+
     const userLog = {
         username,
-        password: type === 'signup' ? bcrypt.hashSync(password, 10) : password,  
+        password: type === 'signup' ? bcrypt.hashSync(password, 10) : password,
         timestamp,
         type,
         status
     };
- 
+
     userData.push(userLog);
     data.push(userData);
 }
@@ -230,7 +230,7 @@ function logUserAction(username, password, type, status) {
 const mockUserAuth = (req, res, next) => {
     console.log("Session Data Before Middleware:", req.session?.user); // Debugging
 
-    const user = req.session?.user || req.user || {};  
+    const user = req.session?.user || req.user || {};
 
     req.user = {
         id: user.id || 'ID' + Date.now(),
@@ -247,7 +247,7 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
     const { filename } = req.body;
     const { policyId, actionType } = req.body;
     const user = req.user;
-  
+
     if (!policyId || !actionType || !filename) {
         return res.status(400).send('Policy ID and Action Type are required');
     }
@@ -260,15 +260,15 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
     if (!filename) {
         return res.status(400).send('Filename is required');
     }
- 
+
     // Log the action with proper user information for both VIEW and CLICK
     if (actionType === 'VIEW' || actionType === 'CLICK') {
-        logUserActivity(actionType, { 
-            email: user.email || user.username, 
-            userType: user.userType 
+        logUserActivity(actionType, {
+            email: user.email || user.username,
+            userType: user.userType
         }, policyId, `Success - ${actionType}ed`);
     }
-    
+
     console.log("track-policy-click", user);
     res.status(200).json({ message: `${actionType} tracked successfully for ${filename}` });
 });
@@ -277,15 +277,15 @@ app.post('/track-download', mockUserAuth, (req, res) => {
     console.log("Track-download route triggered!");
     console.log("Request body:", req.body);
     console.log("User:", req.user);
- 
+
     const { policyId } = req.body;
     const user = req.user;
-  
+
     if (!policyId) {
         console.log("Missing policyId");
         return res.status(400).json({ message: "policyId is required" });
     }
- 
+
     // Ensure we have the user's email/username
     const username = user.username || user.email;
     if (!username) {
@@ -294,7 +294,7 @@ app.post('/track-download', mockUserAuth, (req, res) => {
     }
 
     console.log(`Tracking download for policy with ID: ${policyId}, User: ${username}`);
-    
+
     // Log the download activity with proper user information
     logUserActivity('DOWNLOAD', { email: username, userType: user.userType }, policyId, "Success - Downloaded");
 
@@ -322,7 +322,7 @@ app.post("/signup", async (req, res) => {
         try {
             // Check if user already exists in the database
             const [results] = await promisePool.query('SELECT * FROM users WHERE email = ?', [username]);
-            
+
             if (results.length > 0) {
                 await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - User Exists");
                 return res.status(400).json({ message: "User already exists. Please log in." });
@@ -362,23 +362,23 @@ app.post("/signup", async (req, res) => {
 
             // Set proper headers
             res.setHeader('Content-Type', 'application/json');
-            return res.status(200).json({ 
+            return res.status(200).json({
                 message: "Signup successful! Check your email to verify your account.",
                 success: true
             });
         } catch (dbError) {
             console.error("Database error during signup:", dbError);
-            
+
             // Handle specific database errors
             if (dbError.code === 'ECONNREFUSED') {
-                return res.status(503).json({ 
+                return res.status(503).json({
                     message: "Database service is temporarily unavailable. Please try again later.",
                     error: "Database connection refused"
                 });
             }
-            
+
             await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Database Error");
-            return res.status(500).json({ 
+            return res.status(500).json({
                 message: "Error during signup. Please try again later.",
                 error: dbError.message
             });
@@ -386,7 +386,7 @@ app.post("/signup", async (req, res) => {
     } catch (error) {
         console.error("Unexpected error during signup:", error);
         await logUserActivity("SIGNUP", { email: username, userType: "N/A" }, "N/A", "FAILED - Server Error");
-        return res.status(500).json({ 
+        return res.status(500).json({
             message: "An unexpected error occurred. Please try again later.",
             error: error.message
         });
@@ -515,7 +515,7 @@ app.post("/login", (req, res) => {
                     const userType = username === 'admin@shivalikbank.com' ? 'admin' : 'user';
 
                     // Save user in session
-                    req.session.user = { 
+                    req.session.user = {
                         id: user.id,
                         username: user.email,
                         userType: userType
@@ -552,26 +552,28 @@ app.post('/track-policy-download', (req, res) => {
             return res.status(500).json({ message: 'Transaction start error' });
         }
 
-    // Insert activity into the 'activities' table
-    db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['DOWNLOAD', email, policyId, userId], (err, results) => {
-        if (err) {
-            console.error("Error during query:", err); // Log the error for better visibility
-            return res.status(500).json({ message: 'Error tracking activity' });
-        }
-
-        db.commit((err) => {
+        // Insert activity into the 'activities' table
+        db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['DOWNLOAD', email, policyId, userId], (err, results) => {
             if (err) {
-                return db.rollback(() => {
-                    console.error(err);
-                    res.status(500).json({ message: 'Error committing transaction' });
-                });
+                console.error("Error during query:", err); // Log the error for better visibility
+                return res.status(500).json({ message: 'Error tracking activity' });
             }
 
-        // Log the results of the query
-        console.log("Insert successful. Results:", results);
+            db.commit((err) => {
+                if (err) {
+                    return db.rollback(() => {
+                        console.error(err);
+                        res.status(500).json({ message: 'Error committing transaction' });
+                    });
+                }
 
-        res.status(200).json({ message: 'Activity logged successfully' });
-    });
+                // Log the results of the query
+                console.log("Insert successful. Results:", results);
+
+                res.status(200).json({ message: 'Activity logged successfully' });
+            });
+        })
+    })
 });
 
 // Tracking policy view activity
@@ -591,15 +593,16 @@ app.post('/track-policy-view', (req, res) => {
 app.post('/track-download', (req, res) => {
     const { userId, username, policyId } = req.body;
 
-      // Insert activity into the 'activities' table or your user_activity table
-      db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['DOWNLOAD', username, policyId, userId], (err, results) => {
+    // Insert activity into the 'activities' table or your user_activity table
+    db.query('INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', ['DOWNLOAD', username, policyId, userId], (err, results) => {
         if (err) {
             return res.status(500).json({ message: 'Error tracking activity' });
         }
-    // Call logUserActivity function to log the event
-    logUserActivity(userId, username, 'DOWNLOAD', policyId);
+        // Call logUserActivity function to log the event
+        logUserActivity(userId, username, 'DOWNLOAD', policyId);
 
-    res.status(200).json({ message: 'Download tracked successfully' });
+        res.status(200).json({ message: 'Download tracked successfully' });
+    })
 });
 
 // Track policy view or click
@@ -652,44 +655,44 @@ app.get('/download-policy/:filename', mockUserAuth, (req, res) => {
             console.error('Error accessing file:', err);
             return res.status(404).send('File not found');
         }
- 
+
         res.sendFile(filePath, (err) => {
             if (err) {
                 console.error('Error sending file:', err);
                 return res.status(500).send('Error sending file');
             }
- 
+
             logUserActivity('DOWNLOAD', user, policyId);
             console.log("Download tracked successfully!");
             res.status(200).json({ message: "Download tracked successfully" });
             // *Log user details*
-             const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${req.user} | ${filename} | IP: ${req.ip} | Status: SUCCESS\n`;
-             fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
+            const logEntry = `${new Date().toISOString()} | DOWNLOAD | ${req.user} | ${filename} | IP: ${req.ip} | Status: SUCCESS\n`;
+            fs.appendFileSync(path.join(__dirname, 'logs', 'user_activity.log'), logEntry);
         });
     });
 });
 
 app.delete('/delete-policy/:filename', mockUserAuth, (req, res) => {
     console.log('DELETE request received:', req.params.filename); // Debugging
- 
+
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const filePath = path.join(__dirname, 'public', 'policies', 'audit', decodedFilename);
- 
+
     console.log('File Path:', filePath); // Debugging
- 
+
     // Check if file exists before deleting
     if (!fs.existsSync(filePath)) {
         console.error('File not found:', filePath);
         return res.status(404).json({ message: 'File not found' });
     }
- 
+
     fs.unlink(filePath, (err) => {
         if (err) {
             console.error('Error deleting file:', err);
             return res.status(500).json({ message: 'Error deleting file' });
         }
- 
+
         console.log('File deleted successfully');
         res.json({ message: 'File deleted successfully' });
     });
@@ -697,7 +700,7 @@ app.delete('/delete-policy/:filename', mockUserAuth, (req, res) => {
 
 // Home route
 app.get("/", (req, res) => {
-    res.render("index", { 
+    res.render("index", {
         title: "Login/Signup",
         error: null,
         success: null,
@@ -706,7 +709,7 @@ app.get("/", (req, res) => {
 });
 
 app.get("/signup", (req, res) => {
-    res.render("index", { 
+    res.render("index", {
         title: "Signup",
         error: null,
         success: null,
@@ -715,28 +718,28 @@ app.get("/signup", (req, res) => {
 });
 
 app.get("/home", (req, res) => {
-    res.render("home", { 
+    res.render("home", {
         title: "Home",
         user: req.session.user
     });
 });
 
 app.get("/policy", (req, res) => {
-    res.render("policy", { 
+    res.render("policy", {
         title: "Policy",
         userEmail: req.session.username || ""
     });
 });
 
 app.get("/manuals", (req, res) => {
-    res.render("manuals", { 
+    res.render("manuals", {
         title: "Manuals",
         user: req.session.user
     });
 });
 
 app.get("/circular", (req, res) => {
-    res.render("circular", { 
+    res.render("circular", {
         title: "Circular",
         user: req.session.user
     });
@@ -749,7 +752,7 @@ app.get("/viewData", (req, res) => {
     try {
         // Read log file
         const logData = fs.readFileSync(logFilePath1, "utf8");
-        
+
         // Convert log data to JSON format
         const users = logData
             .trim()
