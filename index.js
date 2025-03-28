@@ -241,24 +241,31 @@ function logUserAction(username, password, type, status) {
 }
  
 
+// const mockUserAuth = (req, res, next) => {
+//     // Assuming user data is stored in session (or from JWT)
+//     console.log("Session Data Before Middleware:", req.session?.user); // Debugging
+
+//     const user = req.session?.user || req.user || {};  
+
+//     req.user = {
+//         id: user.id || 'ID' + Date.now(),
+//         email: user.email || 'unknown_user',
+//         password: user.password || 'mockPassword123', // Avoid storing raw passwords in req.user
+//         userType: user.email === 'admin@shivalikbank.com' ? 'admin' : user.userType || 'user',
+//     };
+
+//     next();
+// };
+
 const mockUserAuth = (req, res, next) => {
     console.log("Session Data Before Middleware:", req.session?.user); // Debugging
 
-    // Always prioritize session data for security
-    const sessionUser = req.session?.user;
-    console.log("Session user data:", sessionUser);
-    
-    if (!sessionUser) {
-        console.log("No session user found - redirecting to login");
-        return res.status(401).json({ message: "Please log in to continue" });
-    }
-    
-    // Set user from session - ignore request body data for security
+    const user = req.session?.user || req.user || {};  
+
     req.user = {
-        id: sessionUser.id,
-        email: sessionUser.email || sessionUser.username,
-        username: sessionUser.username || sessionUser.email,
-        userType: sessionUser.userType
+        id: user.id || 'ID' + Date.now(),
+        email: user.username || user.email || 'unknown_user', // Ensure username maps correctly
+        userType: user.username === 'admin@shivalikbank.com' ? 'admin' : user.userType || 'user',
     };
 
     console.log("User After Middleware:", req.user); // Debugging
@@ -266,76 +273,101 @@ const mockUserAuth = (req, res, next) => {
 };
 
 
+// const logUserActivity = (action, user, policyId,userId) => {
+
+//     // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
+//    // console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
+//     const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}, UserID: ${userId}\n`;
+
+//     fs.appendFile(logFilePath, logEntry, (err) => {
+//         if (err) {
+//             console.error("Error writing to log file:", err);
+//         }
+//         else {
+//             console.log("User activity logged successfully:", logEntry);
+//         }
+
+//           // Append to log file
+//     fs.appendFileSync(logFilePath, logEntry, 'utf8');
+//     console.log("User activity logged:", logEntry);
+//     });
+// };
+ 
+
+
+
+
 // Route to track policy clicks
 app.post('/track-policy-click', mockUserAuth, (req, res) => {
-    const { filename, policyId, actionType } = req.body;
-    const user = req.user; // Use authenticated user from session
+    const { filename } = req.body;
+    const { policyId, actionType } = req.body;
+    const user = req.user;
   
-    if (!policyId || !actionType) {
-        return res.status(400).json({ message: 'Policy ID and Action Type are required' });
+    if (!policyId || !actionType || !filename) {
+        return res.status(400).send('Policy ID and Action Type are required');
     }
 
     console.log("Request body track-policy-click:", req.body);
-    console.log("User from session:", user);
+    console.log("User track-policy-click:", user);
 
+    console.log(`Tracking ${actionType} for policy ${filename} with ID: ${policyId}`);
+
+    if (!filename) {
+        return res.status(400).send('Filename is required');
+    }
+ 
     // Log the action with proper user information for both VIEW and CLICK
     if (actionType === 'VIEW' || actionType === 'CLICK') {
         logUserActivity(actionType, { 
-            id: user.id,
-            email: user.email,
-            username: user.username,
+            email: user.email || user.username, 
             userType: user.userType 
         }, policyId, `Success - ${actionType}ed`);
-
-        // Insert into user_activity table
-        promisePool.query(
-            'INSERT INTO user_activity (action_type, user_id, username, policy_id, status) VALUES (?, ?, ?, ?, ?)',
-            [actionType, user.id, user.username, policyId, `Success - ${actionType}ed`]
-        ).then(() => {
-            console.log(`${actionType} activity logged successfully for user:`, user.username);
-        }).catch(err => {
-            console.error(`Error logging ${actionType} activity:`, err);
-        });
     }
     
-    res.status(200).json({ message: `${actionType} tracked successfully for ${filename || policyId}` });
+    console.log("track-policy-click", user);
+    res.status(200).json({ message: `${actionType} tracked successfully for ${filename}` });
+});
+ 
+
+// Example backend route for tracking clicks
+app.post('/track-policy-click', (req, res) => {
+    const { policyId, actionType } = req.body;
+    if (actionType === 'VIEW') {
+        logUserActivity('VIEW', req.user, policyId);
+    } else if (actionType === 'CLICK') {
+        logUserActivity('CLICK', req.user, policyId);
+    }
+    res.status(200).json({ message: `${actionType} tracked successfully` });
 });
 
 
 app.post('/track-download', mockUserAuth, (req, res) => {
     console.log("Track-download route triggered!");
     console.log("Request body:", req.body);
-    console.log("User from session:", req.user);
+    console.log("User:", req.user);
  
     const { policyId } = req.body;
-    const user = req.user; // Use authenticated user from session
+    const user = req.user;
   
     if (!policyId) {
         console.log("Missing policyId");
         return res.status(400).json({ message: "policyId is required" });
     }
  
-    console.log(`Tracking download for policy with ID: ${policyId}, User: ${user.username}`);
+    // Ensure we have the user's email/username
+    const username = user.username || user.email;
+    if (!username) {
+        console.log("Missing username/email");
+        return res.status(400).json({ message: "User information is missing" });
+    }
+
+    console.log(`Tracking download for policy with ID: ${policyId}, User: ${username}`);
     
     // Log the download activity with proper user information
-    logUserActivity('DOWNLOAD', { 
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        userType: user.userType 
-    }, policyId, "Success - Downloaded");
+    logUserActivity('DOWNLOAD', { email: username, userType: user.userType }, policyId, "Success - Downloaded");
 
-    // Insert into user_activity table
-    promisePool.query(
-        'INSERT INTO user_activity (action_type, user_id, username, policy_id, status) VALUES (?, ?, ?, ?, ?)',
-        ['DOWNLOAD', user.id, user.username, policyId, 'Success - Downloaded']
-    ).then(() => {
-        console.log('Download activity logged successfully for user:', user.username);
-        res.status(200).json({ message: "Download tracked successfully" });
-    }).catch(err => {
-        console.error('Error logging download activity:', err);
-        res.status(500).json({ message: "Error tracking download" });
-    });
+    console.log("Download tracked successfully!");
+    res.status(200).json({ message: "Download tracked successfully" });
 });
  
  
@@ -603,9 +635,9 @@ app.post("/signup", (req, res) => {
                         const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
                         // Send verification email
-                        const verificationLink = `https://your-domain.com/verify-email?token=${token}`;
+                        const verificationLink = `https://audit-tracker-1.onrender.com//verify-email?token=${token}`;
                         const mailOptions = {
-                            from: "your-email@example.com",
+                            from: "hardikchaudhary713@gmail.com",
                             to: username,
                             subject: "Verify Your EmailId For Audit Tracker Portal",
                             text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\nThis link will expire in 1 hour.`
@@ -638,7 +670,7 @@ function sendVerificationEmail(username, verificationLink) {
     const mailOptions = {
         from: "hardikchaudhary713@gmail.com",
         to: username,
-        subject: "Verify Your EmailId For Audit Trcaker Portal!!!",
+        subject: "Verify Your EmailId For Audit Tracker Portal!!!",
         text: `Hello ${username},\n\nThank you for signing up!\n\nYour login details:\nUsername: ${username}\nPassword: ${password}\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour.`,
     };
 
@@ -683,7 +715,7 @@ app.get("/verify-email", (req, res) => {
                 console.log(`✅ Email verified successfully for: ${username}`);
                 return res.status(200).send(`
                     <h2>Email Verified Successfully!</h2>
-                    <p>Your email has been verified. You can now <a href="https://your-domain.com">log in</a>.</p>
+                    <p>Your email has been verified. You can now <a href="https://audit-tracker-1.onrender.com/">log in</a>.</p>
                 `);
             })
             .catch(err => {
@@ -789,78 +821,69 @@ function readUsersFromLog() {
 
 
 
-app.post("/login", async (req, res) => {
+app.post("/login", (req, res) => {
     try {
         const { username, password } = req.body;
-        console.log("Login request received:", { username, password });
-        
         if (!username || !password) {
             logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - Missing Credentials");
             return res.status(400).json({ message: "Email and password are required." });
         }
-        
+
+        console.log("✅ Extracted Username (Email):", username);
+
         // Check user in database
-        const [users] = await promisePool.query('SELECT * FROM users WHERE email = ?', [username]);
-        
-        if (users.length === 0) {
-            logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - User Not Found");
-            return res.status(401).json({ message: "User not found." });
-        }
+        promisePool.query('SELECT * FROM users WHERE email = ?', [username])
+            .then(([results]) => {
+                if (results.length === 0) {
+                    logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - User Not Found");
+                    return res.status(401).json({ message: "User not found." });
+                }
 
-        const user = users[0];
-        console.log("🔍 Found User:", user);
+                const user = results[0];
+                console.log("🔍 Found User:", user);
 
-        // Check if user is verified
-        if (!user.verified) {
-            console.log("❌ User is not verified.");
-            return res.status(403).json({ message: "Please verify your email before logging in." });
-        }
+                // Check if user is verified
+                if (!user.verified) {
+                    console.log("❌ User is not verified.");
+                    return res.status(403).json({ message: "Please verify your email before logging in. Check your inbox for the verification link." });
+                }
 
-        // Compare password using bcrypt
-        const isMatch = await bcrypt.compare(password, user.password);
-        
-        if (!isMatch) {
-            console.log("❌ Passwords do NOT match!");
-            logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - Incorrect Password");
-            return res.status(401).json({ message: "Invalid credentials." });
-        }
+                // Compare password using bcrypt
+                bcrypt.compare(password, user.password, (err, isMatch) => {
+                    if (err) {
+                        console.error("Error comparing passwords:", err);
+                        return res.status(500).json({ message: "Error during login." });
+                    }
 
-        // Define userType dynamically
-        const userType = username === 'admin@shivalikbank.com' ? 'admin' : 'user';
+                    if (!isMatch) {
+                        console.log("❌ Passwords do NOT match!");
+                        logUserActivity1("LOGIN", { email: username, userType: "Unknown" }, "Failed - Incorrect Password");
+                        return res.status(401).json({ message: "Invalid credentials." });
+                    }
 
-        // Save complete user information in session with explicit id
-        req.session.user = { 
-            id: user.id || ('ID' + Date.now()),
-            email: username,
-            username: username,  // Add username explicitly
-            userType: userType
-        };
+                    // Define userType dynamically
+                    const userType = username === 'admin@shivalikbank.com' ? 'admin' : 'user';
 
-        console.log("✅ Session user set to:", req.session.user);
-        
-        // Make sure to save the session explicitly before sending response
-        req.session.save(err => {
-            if (err) {
-                console.error("Error saving session:", err);
-                return res.status(500).json({ message: "Session error" });
-            }
-            
-            console.log("Session saved successfully");
-            
-            // Log user activity
-            logUserActivity("LOGIN", { 
-                id: req.session.user.id,
-                email: username, 
-                username: username,
-                userType: userType 
-            }, "Success - Logged In");
+                    // Save user in session
+                    req.session.user = { 
+                        id: user.id,
+                        username: user.email,
+                        userType: userType
+                    };
 
-            // Send response
-            res.status(200).json({ 
-                message: "Login successful", 
-                user: req.session.user 
+                    console.log("✅ Logging in user:", req.session.user);
+
+                    // Log user activity
+                    logUserActivity("LOGIN", { email: user.email, userType: userType }, "Success - Logged In");
+
+                    // Send response
+                    res.status(200).json({ message: "Login successful", user: req.session.user });
+                });
+            })
+            .catch(err => {
+                console.error("Database error:", err);
+                return res.status(500).json({ message: "Server error." });
             });
-        });
     } catch (error) {
         console.error("Login error:", error);
         logUserActivity("LOGIN", { email: req.body.username || "Unknown", userType: "Unknown" }, "Failed - Server Error");
@@ -1124,76 +1147,75 @@ app.post('/track-policy-click', (req, res) => {
  
  
  
-app.get('/download-policy/:filename', mockUserAuth, (req, res) => {
-    const { filename } = req.params;
-    const decodedFilename = decodeURIComponent(filename);
-    const user = req.user; // Use authenticated user from session
+// Serve static files from public directory
+app.use(express.static('public'));
 
-    console.log("Download request received:", {
-        filename: decodedFilename,
-        user: user
-    });
+// Update download-policy route to handle file serving
+app.get('/download-policy/:filename', mockUserAuth, async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const decodedFilename = decodeURIComponent(filename);
+        const user = req.user;
 
-    // Try different paths to locate the file
-    const filePaths = [
-        path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
-        path.join(__dirname, '..', 'public', 'policies', 'audit', decodedFilename),
-        path.join(__dirname, 'public', 'policies', decodedFilename)
-    ];
-    
-    // Find the first path that exists
-    let foundPath = null;
-    for (const possiblePath of filePaths) {
-        console.log("Checking path:", possiblePath);
-        if (fs.existsSync(possiblePath)) {
-            foundPath = possiblePath;
-            console.log("Found file at:", foundPath);
-            break;
+        console.log("Download request received:", {
+            filename: decodedFilename,
+            user: user
+        });
+
+        // Check possible file locations
+        const possiblePaths = [
+            path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
+            path.join(__dirname, 'public', 'policies', decodedFilename),
+            path.join(__dirname, '..', 'public', 'policies', 'audit', decodedFilename),
+            path.join('public', 'policies', 'audit', decodedFilename)
+        ];
+
+        let filePath = null;
+        for (const path of possiblePaths) {
+            console.log(`Checking path: ${path}`);
+            if (fs.existsSync(path)) {
+                filePath = path;
+                console.log(`Found file at: ${filePath}`);
+                break;
+            }
         }
-    }
-    
-    if (!foundPath) {
-        console.error('File not found at any of the checked paths');
-        return res.status(404).json({ message: 'File not found' });
-    }
 
-    // Generate policyId from filename if not provided
-    const policyId = decodedFilename;
+        if (!filePath) {
+            console.error(`File not found: ${decodedFilename}`);
+            return res.status(404).json({ message: 'File not found' });
+        }
 
-    console.log("User downloading policy:", {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        policyId: policyId
-    });
+        // Track download activity
+        const policyId = decodedFilename;
+        console.log(`User ${user.username} is downloading: ${policyId}`);
 
-    // Log the download activity
-    logUserActivity('DOWNLOAD', { 
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        userType: user.userType 
-    }, policyId, "Success - Downloaded");
+        // Log the download activity to user_activity table
+        await logUserActivity('DOWNLOAD', { 
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            userType: user.userType 
+        }, policyId, "Success - Downloaded");
 
-    // Insert into user_activity table
-    promisePool.query(
-        'INSERT INTO user_activity (action_type, user_id, username, policy_id, status) VALUES (?, ?, ?, ?, ?)',
-        ['DOWNLOAD', user.id, user.username, policyId, 'Success - Downloaded']
-    ).then(() => {
-        console.log('Download activity logged successfully for user:', user.username);
-        
-        // Send the file after logging the activity
-        res.sendFile(foundPath, (err) => {
+        // Also log to activities table for backward compatibility
+        await promisePool.query(
+            'INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', 
+            ['DOWNLOAD', user.email || user.username, policyId, user.id]
+        );
+
+        // Send the file
+        res.sendFile(filePath, (err) => {
             if (err) {
                 console.error('Error sending file:', err);
                 return res.status(500).json({ message: 'Error sending file' });
             }
-            console.log('File sent successfully:', decodedFilename);
+            console.log(`File ${decodedFilename} sent successfully to ${user.username}`);
         });
-    }).catch(err => {
-        console.error('Error logging download activity:', err);
-        res.status(500).json({ message: "Error tracking download" });
-    });
+
+    } catch (err) {
+        console.error('Error in download-policy route:', err);
+        res.status(500).json({ message: 'Server error while processing download' });
+    }
 });
  
  
@@ -1416,6 +1438,97 @@ app.get("/viewData", (req, res) => {
     }
 });
 
+// Route to view policy files
+app.get('/view-policy/:filename', mockUserAuth, async (req, res) => {
+    try {
+        const { filename } = req.params;
+        const decodedFilename = decodeURIComponent(filename);
+        const user = req.user;
+
+        console.log("View policy request received:", {
+            filename: decodedFilename,
+            user: user
+        });
+
+        // Check possible file locations
+        const possiblePaths = [
+            path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
+            path.join(__dirname, 'public', 'policies', decodedFilename),
+            path.join(__dirname, '..', 'public', 'policies', 'audit', decodedFilename),
+            path.join('public', 'policies', 'audit', decodedFilename)
+        ];
+
+        let filePath = null;
+        for (const path of possiblePaths) {
+            console.log(`Checking path: ${path}`);
+            if (fs.existsSync(path)) {
+                filePath = path;
+                console.log(`Found file at: ${filePath}`);
+                break;
+            }
+        }
+
+        if (!filePath) {
+            console.error(`File not found: ${decodedFilename}`);
+            return res.status(404).json({ message: 'File not found' });
+        }
+
+        // Track view activity
+        const policyId = decodedFilename;
+        console.log(`User ${user.username} is viewing: ${policyId}`);
+
+        // Log the view activity to user_activity table
+        await logUserActivity('VIEW', { 
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            userType: user.userType 
+        }, policyId, "Success - Viewed");
+
+        // Also log to activities table for backward compatibility
+        await promisePool.query(
+            'INSERT INTO activities (action_type, email, policy_id, user_id) VALUES (?, ?, ?, ?)', 
+            ['VIEW', user.email || user.username, policyId, user.id]
+        );
+
+        // Set Content-Disposition to inline to display in browser
+        res.setHeader('Content-Disposition', `inline; filename="${decodedFilename}"`);
+        
+        // Send the file for viewing
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('Error sending file:', err);
+                return res.status(500).json({ message: 'Error displaying file' });
+            }
+            console.log(`File ${decodedFilename} displayed successfully to ${user.username}`);
+        });
+
+    } catch (err) {
+        console.error('Error in view-policy route:', err);
+        res.status(500).json({ message: 'Server error while processing view request' });
+    }
+});
+
+// Ensure policy directories exist
+const policyDirs = [
+    path.join(__dirname, 'public', 'policies'),
+    path.join(__dirname, 'public', 'policies', 'audit')
+];
+
+policyDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        console.log(`Creating directory: ${dir}`);
+        fs.mkdirSync(dir, { recursive: true });
+    }
+});
+
+// Output the current directory for debugging
+console.log('Current directory:', __dirname);
+console.log('Policy directories:', policyDirs);
+
+// Serve static files - add this BEFORE route definitions
+app.use('/public', express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 // Start the server
 app.listen(PORT, (err) => {
