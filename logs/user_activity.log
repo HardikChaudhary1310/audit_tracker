@@ -237,3 +237,63 @@
 2025-03-24 15:43:31 | DOWNLOAD | unknown_user | Hardik-Resume-New.pdf | IP: ::1 | Status: SUCCESS
 2025-03-26 18:00:08 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
 2025-03-26 18:03:39 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-26 18:07:33 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-26 18:09:48 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-26 18:11:56 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-26 18:31:24 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-26 18:59:51 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 18:59:57 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:01:23 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:03:27 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:05:49 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:07:51 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:10:26 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:13:31 | SIGNUP | unknown | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:16:49 | SIGNUP | communications_new_10@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - User Exists
+2025-03-26 19:16:57 | SIGNUP | communications_new_11@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Database Error
+2025-03-26 19:17:50 | SIGNUP | communications_new_11@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Database Error
+2025-03-26 19:17:58 | SIGNUP | communications_new_12@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Database Error
+2025-03-26 19:19:31 | SIGNUP | communications_new_12@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Database Error
+2025-03-26 19:20:46 | SIGNUP | communications_new_12@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Database Error
+2025-03-26 19:22:25 | SIGNUP | communications_new_12@shivalikbank.com | 17 | N/A | IP: ::1 | SUCCESS
+2025-03-26 19:27:23 | SIGNUP | aaa@shivalikbank.com | 18 | N/A | IP: ::1 | SUCCESS
+2025-03-26 19:27:40 | SIGNUP | aaa@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:27:47 | SIGNUP | aaa@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - Missing Fields
+2025-03-26 19:28:03 | SIGNUP | aaa@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - User Exists
+2025-03-26 19:28:09 | SIGNUP | aaa@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - User Exists
+2025-03-26 19:28:16 | SIGNUP | a@shivalikbank.com | 19 | N/A | IP: ::1 | SUCCESS
+2025-03-26 19:32:07 | SIGNUP | a@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - User Exists
+2025-03-26 19:32:13 | SIGNUP | a1@shivalikbank.com | 20 | N/A | IP: ::1 | SUCCESS
+2025-03-26 19:35:30 | SIGNUP | a2@shivalikbank.com | 21 | N/A | IP: ::1 | SUCCESS
+2025-03-26 19:35:55 | SIGNUP | a2@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - User Exists
+2025-03-26 19:39:56 | SIGNUP | a3@shivalikbank.com | 22 | N/A | IP: ::1 | SUCCESS
+2025-03-26 19:40:13 | SIGNUP | a3@shivalikbank.com | N/A | N/A | IP: ::1 | FAILED - User Exists
+2025-03-27 11:51:24 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 11:55:47 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 12:06:52 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 12:19:33 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 12:28:23 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 12:47:12 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 12:58:23 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:00:12 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:06:55 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:10:22 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:23:46 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:26:09 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:39:40 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:41:08 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:45:39 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:51:11 | DOWNLOAD | unknown_user | har.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 13:53:51 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:02:43 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:09:28 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:13:32 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:14:58 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:15:08 | DOWNLOAD | unknown_user | Hardik-Resume-New.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:22:10 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:22:37 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:24:08 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:28:36 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:33:50 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:34:22 | DOWNLOAD | unknown_user | Hardik-Resume-New.pdf | IP: ::1 | Status: SUCCESS
+2025-03-27 14:37:48 | DOWNLOAD | unknown_user | My Resume.pdf | IP: ::1 | Status: SUCCESS
