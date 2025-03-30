@@ -18,18 +18,27 @@ const promisePool = pool.promise();
 // models/userActivity.js
 const db = require('./db');  // Import the database connection
 
-const logUserActivity = async(actionType, userData, policyId, status) => {
+const logUserActivity = async (actionType, userData, policyId, status) => {
     try {
+        // Use the same value for userId and username if userData.id isn't available
+        let userId = userData?.id || userData?.username || userData?.email || 'anonymous';
+        let username = userData?.username || userData?.email || 'anonymous';
+
+        // If after all checks, userId is still 'anonymous', and action is DOWNLOAD,
+        // consider it a failure and don't log.
+        if (actionType === 'DOWNLOAD' && userId === 'anonymous') {
+            console.warn("Failed to get username, stopping logging.");
+            return;  // Don't log.
+        }
+
+        //Set the values so they will have the same values
+        userId = username;
+
         const query = `
-            INSERT INTO user_activity (action_type, user_id, username, policy_id, status) 
+            INSERT INTO user_activity (action_type, user_id, username, policy_id, status)
             VALUES (?, ?, ?, ?, ?)
         `;
-
-        // Handle cases where userData might be null or undefined
-        const userId = userData?.email || 'anonymous';
-        const username = userData?.email || 'anonymous';
-
-        // Execute the SQL query to insert the log data into the database
+        //Make sure the values are the same
         const [results] = await promisePool.query(query, [
             actionType,
             userId,

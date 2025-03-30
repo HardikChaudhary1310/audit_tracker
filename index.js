@@ -255,27 +255,66 @@ function logUserAction(username, password, type, status) {
 //     };
 
 //     next();
-// };
-
 const mockUserAuth = (req, res, next) => {
-    console.log("Session Data Before Middleware:", req.session?.user); // Debugging
+    console.log("=== mockUserAuth triggered ===");
+    console.log("req.session:", req.session);
+    console.log("req.user before:", req.user); // Log before any modifications
 
-    const user = req.session?.user || req.user || {};  
+    let user = req.session?.user || req.user || {};
+    let registeredUsername = user.username || user.email || 'unknown_user';
+
+    if (!user || typeof user !== 'object' || Object.keys(user).length === 0) {
+        // Attempt to construct user object with registeredUsername
+        user = {
+            id: 'guest_ID' + Date.now(),
+            email: registeredUsername, // Attempt to use registeredUsername for email
+            username: registeredUsername, // Attempt to use registeredUsername for username
+            userType: 'guest'
+        };
+    }
 
     req.user = {
-        id: user.id || 'ID' + Date.now(),
-        email: user.username || user.email || 'unknown_user', // Ensure username maps correctly
+        id: user.id || registeredUsername, // If ID is empty, use the registeredUsername
+        email: registeredUsername, // Make sure the email is also the registered username
+        username: registeredUsername, // Always the registered username
         userType: user.username === 'admin@shivalikbank.com' ? 'admin' : user.userType || 'user',
     };
 
-    console.log("User After Middleware:", req.user); // Debugging
+    console.log("req.user after:", req.user); // Log after modifications
+    console.log("=== mockUserAuth finished ===");
     next();
 };
 
+const trackPolicyInteraction = async (req, res, actionType) => {
+    const { filename } = req.body;
+    const { policyId } = req.body;
+    const user = req.user;
 
-// const logUserActivity = (action, user, policyId,userId) => {
+    if (!policyId || !filename) {
+        return res.status(400).send('Policy ID and Filename are required');
+    }
 
-//     // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
+    //Log event
+    console.log(`Tracking ${actionType} for policy ${filename} with ID: ${policyId}`);
+
+    //This makes sure we extract the data
+    const registeredUsername = user.username || user.email || 'unknown_user'; // Use unknown_user if still no username
+
+    try {
+        await logUserActivity(actionType, {
+            id: user.id || registeredUsername, // Try to force id
+            email: registeredUsername,
+            username: registeredUsername, //This will be the registered username
+            userType: user.userType
+        }, policyId, `Success - ${actionType}ed`);
+
+        console.log(`${actionType} tracked successfully for ${filename}`);
+        res.status(200).json({ message: `${actionType} tracked successfully for ${filename}` });
+    } catch (err) {
+        console.error(`Error logging activity for ${actionType}:`, err);
+        res.status(500).json({ message: `Error logging activity for ${actionType}` });
+    }
+};//     // console.log("hardikkkkkkkkkk jiiiiiii"+ user);
 //    // console.log("hardikkkkkkkkkk jiiiiiii"+ user.id);
 //     const logEntry = `[${new Date().toLocaleString("en-US", { timeZone: "Asia/Kolkata" })}] ACTION: ${action}, UserName: ${user}, POLICY_ID: ${policyId}, UserID: ${userId}\n`;
 
@@ -294,11 +333,7 @@ const mockUserAuth = (req, res, next) => {
 // };
  
 
-
-
-
-// Route to track policy clicks
-app.post('/track-policy-click', mockUserAuth, (req, res) => {
+app.post('/track-policy-click', mockUserAuth, async (req, res) => {
     const { filename } = req.body;
     const { policyId, actionType } = req.body;
     const user = req.user;
@@ -317,31 +352,24 @@ app.post('/track-policy-click', mockUserAuth, (req, res) => {
     }
  
     // Log the action with proper user information for both VIEW and CLICK
-    if (actionType === 'VIEW' || actionType === 'CLICK') {
-        logUserActivity(actionType, { 
-            email: user.email || user.username, 
+    try {
+        await logUserActivity(actionType, { 
+            id: user.id,
+            email: user.email,
+            username: user.username, // This will be the registered username
             userType: user.userType 
         }, policyId, `Success - ${actionType}ed`);
-    }
     
-    console.log("track-policy-click", user);
-    res.status(200).json({ message: `${actionType} tracked successfully for ${filename}` });
+        console.log("track-policy-click", user);
+        res.status(200).json({ message: `${actionType} tracked successfully for ${filename}` });
+    } catch (err) {
+        console.error("Error logging activity:", err);
+        res.status(500).json({ message: "Error logging activity" });
+    }
 });
  
 
-// Example backend route for tracking clicks
-app.post('/track-policy-click', (req, res) => {
-    const { policyId, actionType } = req.body;
-    if (actionType === 'VIEW') {
-        logUserActivity('VIEW', req.user, policyId);
-    } else if (actionType === 'CLICK') {
-        logUserActivity('CLICK', req.user, policyId);
-    }
-    res.status(200).json({ message: `${actionType} tracked successfully` });
-});
-
-
-app.post('/track-download', mockUserAuth, (req, res) => {
+app.post('/track-download', mockUserAuth, async (req, res) => {
     console.log("Track-download route triggered!");
     console.log("Request body:", req.body);
     console.log("User:", req.user);
@@ -354,7 +382,6 @@ app.post('/track-download', mockUserAuth, (req, res) => {
         return res.status(400).json({ message: "policyId is required" });
     }
  
-    // Ensure we have the user's email/username
     const username = user.username || user.email;
     if (!username) {
         console.log("Missing username/email");
@@ -363,16 +390,32 @@ app.post('/track-download', mockUserAuth, (req, res) => {
 
     console.log(`Tracking download for policy with ID: ${policyId}, User: ${username}`);
     
-    // Log the download activity with proper user information
-    logUserActivity('DOWNLOAD', { email: username, userType: user.userType }, policyId, "Success - Downloaded");
-
-    console.log("Download tracked successfully!");
-    res.status(200).json({ message: "Download tracked successfully" });
+    try {
+        await logUserActivity('DOWNLOAD', { 
+            id: user.id,
+            email: user.email,
+            username: user.username,  //This will be the registered username
+            userType: user.userType 
+        }, policyId, "Success - Downloaded");
+    
+        console.log("Download tracked successfully!");
+        res.status(200).json({ message: "Download tracked successfully" });
+    } catch (err) {
+        console.error("Error logging activity:", err);
+        res.status(500).json({ message: "Error logging activity" });
+    }
 });
- 
- 
 
- 
+
+
+app.get("/policy", mockUserAuth, (req, res) => { // Correct placement
+    const user = req.user;
+    res.render("policy", { user: user });
+});
+
+app.post('/track-policy-click', mockUserAuth, async (req, res) => { // Correct placement
+  // ... handler code
+});
 // const logUserActivity = (eventType, user, policyIdOrFilename) => {
 //     const logDir = path.dirname(logFilePath1);
 //     if (!fs.existsSync(logDir)) {
@@ -660,8 +703,19 @@ app.post("/signup", (req, res) => {
                             // Log user activity and send final success response
                             logUserActivity("SIGNUP", { email: username, userType: "user" }, "N/A", "Success - Signed Up");
 
-                            // Respond to the client
-                            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+                            req.session.user = {
+                                id: newUser.id,  // ID is not auto-generated on signup, you may want to skip this
+                                username: newUser.username,  // Set the username
+                                userType: newUser.userType
+                            };
+
+                            // Force to Save
+                            req.session.save((err) => { //Force save
+                                if(err){
+                                    console.error("✅Session save in SIGNUP:", err);
+                                }
+                                 res.status(200).json({ message: "Signup successful! Check your email to verify your account.",user: req.session.user  });
+                            })
                         });
                     })
                     .catch(err => {
@@ -671,8 +725,6 @@ app.post("/signup", (req, res) => {
             });
         });
 });
-
-
 // Function to send the verification email
 function sendVerificationEmail(username, password, token) {
     const verificationLink = `${BASE_URL}/verify-email?token=${token}`;
