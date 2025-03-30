@@ -51,5 +51,26 @@ const pool = mysql.createPool({
 // Wrap the pool with promise-based API
 const promisePool = pool.promise();
 
+// Create user_policy_activity table if it doesn't exist
+const createUserPolicyActivityTable = `
+CREATE TABLE IF NOT EXISTS user_policy_activity (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    policy_id VARCHAR(255) NOT NULL,
+    action_type ENUM('VIEW', 'DOWNLOAD') NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)`;
+
+pool.query(createUserPolicyActivityTable, (err) => {
+    if (err) {
+        console.error('Error creating user_policy_activity table:', err);
+    } else {
+        console.log('user_policy_activity table created or already exists');
+    }
+});
+
 // module.exports = connection;
 module.exports = promisePool;

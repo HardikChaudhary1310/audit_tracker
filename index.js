@@ -634,8 +634,16 @@ app.post("/signup", (req, res) => {
                         // Generate token for email verification
                         const token = jwt.sign({ username }, "SECRET_KEY", { expiresIn: '1h' });
 
+                        // Base URL configuration for emails and links
+                        const BASE_URL = process.env.BASE_URL || 
+                                        (process.env.NODE_ENV === 'production' 
+                                            ? 'https://audit-tracker-2.onrender.com' 
+                                            : 'http://localhost:3001');
+
+                        console.log(`Server base URL set to: ${BASE_URL}`);
+
                         // Send verification email
-                        const verificationLink = `https://audit-tracker-1.onrender.com//verify-email?token=${token}`;
+                        const verificationLink = `${BASE_URL}/verify-email?token=${token}`;
                         const mailOptions = {
                             from: "hardikchaudhary713@gmail.com",
                             to: username,
@@ -666,7 +674,9 @@ app.post("/signup", (req, res) => {
 
 
 // Function to send the verification email
-function sendVerificationEmail(username, verificationLink) {
+function sendVerificationEmail(username, password, token) {
+    const verificationLink = `${BASE_URL}/verify-email?token=${token}`;
+    
     const mailOptions = {
         from: "hardikchaudhary713@gmail.com",
         to: username,
@@ -680,7 +690,6 @@ function sendVerificationEmail(username, verificationLink) {
         } else {
             console.log("Email sent: " + info.response);
         }
-    
     });
 }
 app.get("/verify-email", (req, res) => {
