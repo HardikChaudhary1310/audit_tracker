@@ -3,18 +3,17 @@
   "version": "1.0.0",
   "description": "Audit Tracker Application",
   "main": "index.js",
-"scripts": {
-"start": "node index.js",
-"dev": "nodemon index.js",
-
-"build": "react-scripts build", 
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
-},
+  },
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
+    "dotenv": "^16.4.7",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
     "express-session": "^1.17.3",
