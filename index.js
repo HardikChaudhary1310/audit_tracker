@@ -937,8 +937,15 @@ app.post("/login", (req, res) => {
                     // Log user activity
                     logUserActivity("LOGIN", { email: user.email, userType: userType }, "Success - Logged In");
 
-                    // Send response
-                    res.status(200).json({ message: "Login successful", user: req.session.user });
+                    req.session.save((err) => { //Force save
+                        if(err){
+                            console.error("✅Session save in LOGIN:", err);
+                        }
+
+                        res.status(200).json({ message: "Login successful", user: req.session.user });
+                    })
+
+                    
                 });
             })
             .catch(err => {

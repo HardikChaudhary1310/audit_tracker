@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "Audit Tracker Application",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
-  },
+"scripts": {
+"start": "node index.js",
+"dev": "nodemon index.js",
+
+"build": "react-scripts build", 
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+},
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
