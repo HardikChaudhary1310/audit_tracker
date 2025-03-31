@@ -21,7 +21,7 @@ if (!dbUrlString) {
         dbConfig = {
             host: '127.0.0.1', // Local fallback
             user: 'root',      // Local fallback
-            password: 'YOUR_CORRECT_LOCAL_PASSWORD', // Local fallback - use your actual local password here
+            password: 'Hardik@12345', // Local fallback - use your actual local password here
             database: 'user_activity', // Local fallback
             port: 3306,
             waitForConnections: true, connectionLimit: 10, queueLimit: 0
