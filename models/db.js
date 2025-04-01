@@ -1,55 +1,42 @@
-// const mongoose = require('mongoose');
-
-// const downloadLogSchema = new mongoose.Schema({
-//     policyName: { type: String, required: true },
-//     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Assuming you have user authentication
-//     timestamp: { type: Date, default: Date.now }
-// });
-
-// const DownloadLog = mongoose.model('DownloadLog', downloadLogSchema);
-
-// module.exports = DownloadLog;
-
-
-
-
 // db.js
-const mysql = require('mysql2');
+const { Pool } = require('pg'); // Use the pg library
 
-// Create a MySQL pool to handle connections
-// const pool = mysql.createPool({
-//     host: 'localhost',
-//     user: 'root', // Your MySQL username
-//     password: 'Hardik@12345', // Your MySQL password
-//     database: 'user_activity', // Database name
-// });
-
-
-// Create a connection to the database
-const pool = mysql.createPool({
-    host: 'localhost',         // Replace with your database host (e.g., 'localhost' or IP address)
-    user: 'root',              // Replace with your MySQL username
-    password: 'Hardik@12345', // Replace with your MySQL password
-    database: 'user_activity',  // Replace with the name of your database
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    connectTimeout: 10000, // 10 seconds
-    acquireTimeout: 10000, // 10 seconds
-    keepAlive: true
+// Create a PostgreSQL pool using the DATABASE_URL environment variable
+// This is the standard way to connect in environments like Render/Heroku
+// Ensure DATABASE_URL is set correctly in your .env file (for local)
+// and in Render's environment variables (for deployment).
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    // Optional: Add SSL configuration if required by your provider (Render often needs it)
+    // ssl: {
+    //   rejectUnauthorized: false // Adjust based on provider requirements
+    // }
 });
 
-// Connect to the MySQL server
-// connection.connect((err) => {
-//     if (err) {
-//         console.error('Error connecting to MySQL:', err);
-//         return;
-//     }
-//     console.log('Connected to MySQL!');
-// });
+// Optional: Add basic error handling for the pool
+pool.on('error', (err, client) => {
+    console.error('❌ Unexpected error on idle PostgreSQL client', err);
+    process.exit(-1); // Exit the process if pool errors occur
+});
 
-// Wrap the pool with promise-based API
-const promisePool = pool.promise();
+console.log('🐘 PostgreSQL Pool created. Connecting...');
 
-// module.exports = connection;
-module.exports = promisePool;
+// Test the connection (optional but good practice)
+pool.connect((err, client, release) => {
+  if (err) {
+    return console.error('❌ Error acquiring PostgreSQL client', err.stack);
+  }
+  console.log('✅ Successfully connected to PostgreSQL database!');
+  client.query('SELECT NOW()', (err, result) => {
+    release(); // Release the client back to the pool
+    if (err) {
+      return console.error('❌ Error executing test query', err.stack);
+    }
+    console.log('🕒 PostgreSQL current time:', result.rows[0].now);
+  });
+});
+
+
+// Export the pool directly. The 'pg' driver methods (like pool.query)
+// return promises natively, so no need for .promise() wrapper.
+module.exports = pool;

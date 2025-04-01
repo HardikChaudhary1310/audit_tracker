@@ -1,48 +1,44 @@
-// Import mysql2
-const mysql = require('mysql2');
-
-// Create a connection pool for better connection management
-const pool = mysql.createPool({
-    host: 'localhost',         // Replace with your database host (e.g., 'localhost' or IP address)
-    user: 'root',              // Replace with your MySQL username
-    password: 'Hardik@12345', // Replace with your MySQL password
-    database: 'user_activity',
-    waitForConnections: true,
-    connectionLimit: 10,  // Adjust the limit based on your needs
-    queueLimit: 0
-});
-
-// Promisify the pool for async/await usage
-const promisePool = pool.promise();
-
 // models/userActivity.js
-const db = require('./db');  // Import the database connection
+const pool = require('./db'); // Import the PostgreSQL pool connection
 
-const logUserActivity = async(actionType, userData, policyId, status) => {
+const logUserActivity = async (actionType, userData, policyId, status) => {
+    // Ensure userData is somewhat valid, default to nulls or placeholders if needed
+    // Adapt how you get user ID - using email as ID might not be ideal.
+    // If you have a numeric user ID in your 'users' table, pass that instead.
+    const userId = userData?.id || null; // Prefer actual user ID if available
+    const username = userData?.email || userData?.username || 'anonymous'; // Get email/username
+    const safePolicyId = policyId || 'N/A'; // Ensure policyId is not undefined
+
+    // PostgreSQL uses $1, $2, etc. for placeholders
+    const query = `
+        INSERT INTO user_activity (action_type, user_id, username, policy_id, status)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id;  -- Optional: return the ID of the inserted row
+    `;
+
     try {
-        const query = `
-            INSERT INTO user_activity (action_type, user_id, username, policy_id, status) 
-            VALUES (?, ?, ?, ?, ?)
-        `;
+        console.log('Attempting to log activity:', { actionType, userId, username, safePolicyId, status });
 
-        // Handle cases where userData might be null or undefined
-        const userId = userData?.email || 'anonymous';
-        const username = userData?.email || 'anonymous';
-
-        // Execute the SQL query to insert the log data into the database
-        const [results] = await promisePool.query(query, [
+        // Execute the SQL query using the pool
+        // Pass parameters as an array matching the $1, $2 order
+        const result = await pool.query(query, [
             actionType,
-            userId,
+            userId,     // Using null if no ID provided
             username,
-            policyId,
+            safePolicyId,
             status
         ]);
 
-        console.log('User activity logged successfully:', results);
-        return results;
+        console.log('✅ User activity logged successfully. Inserted ID:', result.rows[0]?.id || 'N/A');
+        return result; // Return the full result object from pg
+
     } catch (err) {
-        console.error('Error inserting activity into DB:', err);
-        throw err; // Re-throw the error to handle it in the calling function
+        console.error('❌ Error inserting activity into user_policy_activity:', err);
+        // Provide more context on the error if possible
+        console.error('Error Details:', { code: err.code, detail: err.detail });
+        console.error('Failed Query Values:', { actionType, userId, username, safePolicyId, status });
+        // It's important to throw the error so the calling function knows something went wrong
+        throw err;
     }
 };
 
