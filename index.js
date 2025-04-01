@@ -7,7 +7,7 @@ const cors = require('cors');
 const session = require('express-session');
 const morgan = require('morgan');
 const path = require("path");
-
+const pgSession = require('connect-pg-simple')(session);
 // --- Use the PostgreSQL pool ---
 const pool = require('./models/db'); // Correctly imports the pg pool
 
@@ -47,11 +47,20 @@ const policyRoutes = require('./routes/routes');
 
 const app = express();
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key', // Use ENV Variable
+    store: new pgSession({ // Use pgSession as the store
+        pool: pool,                // Pass your existing database pool
+        tableName: 'user_sessions' // Optional: Defines the table name (defaults to 'session')
+        // You can add other pgSession options here if needed
+    }),
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change', // USE ENV VAR
     resave: false,
-    saveUninitialized: true,
-    // For production with HTTPS, set secure: true
-    cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, maxAge: 14400000 }
+    saveUninitialized: false, // Set to false - don't save sessions for anonymous users
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
+        httpOnly: true,         // Good practice
+        maxAge: 1000 * 60 * 60 * 24 // Example: 1 day (adjust as needed)
+        // sameSite: 'lax' // Consider adding for CSRF protection
+    }
 }));
 
 app.use(morgan('dev'));
