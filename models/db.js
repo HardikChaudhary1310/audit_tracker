@@ -1,17 +1,31 @@
 // db.js
 const { Pool } = require('pg'); // Use the pg library
 
-// Create a PostgreSQL pool using the DATABASE_URL environment variable
-// This is the standard way to connect in environments like Render/Heroku
-// Ensure DATABASE_URL is set correctly in your .env file (for local)
-// and in Render's environment variables (for deployment).
-const pool = new Pool({
+// Determine if SSL should be enabled based on the environment
+// Render automatically sets NODE_ENV to 'production'
+const isProduction = process.env.NODE_ENV === 'production';
+
+console.log(`Node Environment: ${process.env.NODE_ENV}, Production mode: ${isProduction}`);
+
+// Base configuration
+const poolConfig = {
     connectionString: process.env.DATABASE_URL,
-    // Optional: Add SSL configuration if required by your provider (Render often needs it)
-    // ssl: {
-    //   rejectUnauthorized: false // Adjust based on provider requirements
-    // }
-});
+};
+
+// Add SSL configuration ONLY for production (Render)
+if (isProduction) {
+    poolConfig.ssl = {
+        rejectUnauthorized: false // Required for Render database connections
+    };
+    console.log('Applying SSL configuration for production environment.');
+} else {
+    console.log('Skipping SSL configuration for non-production environment.');
+}
+
+
+// Create a PostgreSQL pool using the determined configuration
+const pool = new Pool(poolConfig);
+
 
 // Optional: Add basic error handling for the pool
 pool.on('error', (err, client) => {
@@ -24,7 +38,8 @@ console.log('🐘 PostgreSQL Pool created. Connecting...');
 // Test the connection (optional but good practice)
 pool.connect((err, client, release) => {
   if (err) {
-    return console.error('❌ Error acquiring PostgreSQL client', err.stack);
+    // Log the specific connection error
+    return console.error('❌ Error acquiring PostgreSQL client', err);
   }
   console.log('✅ Successfully connected to PostgreSQL database!');
   client.query('SELECT NOW()', (err, result) => {
@@ -32,11 +47,15 @@ pool.connect((err, client, release) => {
     if (err) {
       return console.error('❌ Error executing test query', err.stack);
     }
-    console.log('🕒 PostgreSQL current time:', result.rows[0].now);
+    // Check if result and rows exist before accessing
+    if (result && result.rows && result.rows.length > 0) {
+        console.log('🕒 PostgreSQL current time:', result.rows[0].now);
+    } else {
+        console.log('🕒 Test query executed, but no time returned.');
+    }
   });
 });
 
 
-// Export the pool directly. The 'pg' driver methods (like pool.query)
-// return promises natively, so no need for .promise() wrapper.
+// Export the pool directly.
 module.exports = pool;
