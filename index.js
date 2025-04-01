@@ -47,20 +47,11 @@ const policyRoutes = require('./routes/routes');
 
 const app = express();
 app.use(session({
-    store: new pgSession({ // Use pgSession as the store
-        pool: pool,                // Pass your existing database pool
-        tableName: 'user_sessions' // Optional: Defines the table name (defaults to 'session')
-        // You can add other pgSession options here if needed
-    }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change', // USE ENV VAR
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key', // Use ENV Variable
     resave: false,
-    saveUninitialized: false, // Set to false - don't save sessions for anonymous users
-    cookie: {
-        secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
-        httpOnly: true,         // Good practice
-        maxAge: 1000 * 60 * 60 * 24 // Example: 1 day (adjust as needed)
-        // sameSite: 'lax' // Consider adding for CSRF protection
-    }
+    saveUninitialized: true,
+    // For production with HTTPS, set secure: true
+    cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, maxAge: 14400000 }
 }));
 
 app.use(morgan('dev'));
