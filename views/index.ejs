@@ -429,50 +429,36 @@ background-position: left;
 // Inside handleSubmit, within the if (!response.ok) block:
 
 if (!response.ok) {
-                // Start with status code/text as the default error
+                // Start with the basic status code/text
                 let errorMessage = `Error: ${response.status} ${response.statusText}`;
-                let responseBodyText = ''; // Variable to hold the raw text
-
                 try {
-                    // Read the body ONLY ONCE, as text.
-                    responseBodyText = await response.text();
-
-                    // NOW, try to parse the text we just read as JSON
-                    try {
-                        const errorData = JSON.parse(responseBodyText);
-                        // If parsing succeeds AND there's a message property, use it
-                        if (errorData && errorData.message) {
-                            errorMessage = `Error: ${errorData.message}`;
-                        } else if (responseBodyText) {
-                             // If JSON parsing succeeded but no 'message', maybe use raw text
-                             errorMessage += `\nServer Response: ${responseBodyText.substring(0, 150)}...`;
-                        }
-                    } catch (parseError) {
-                        // JSON parsing failed, likely wasn't JSON. Use the raw text.
-                        if (responseBodyText) {
-                            errorMessage += `\nServer Response (Not JSON): ${responseBodyText.substring(0, 150)}...`;
-                        }
-                         console.warn("Response body was not valid JSON:", parseError);
-                    }
+                    // Try ONLY ONCE to read the body as plain text
+                    const errorText = await response.text();
+                    // Append the raw text (or part of it) to the error message
+                    errorMessage += `\nServer Response: ${errorText.substring(0, 200)}...`; // Show first 200 chars
+                    console.log("Raw 502 Response Body:", errorText); // Log the raw response
                 } catch (readError) {
-                    // If even reading as text failed (less common)
-                    console.error("Could not read error response body:", readError);
-                    errorMessage += ` (Could not read response body)`;
+                    // If even this single read fails, log the error
+                    console.error("Failed to read response body as text:", readError);
+                    // This is where the 'body stream already read' error would likely show up
+                    // if something ELSE read the stream before this point.
+                    errorMessage += " (Failed to read response body)";
                 }
-
-                alert(errorMessage); // Display the best error message we could construct
+                alert(errorMessage);
                 return;
             }
 
             // --- Success handling remains the same ---
-            const data = await response.json(); // Success responses SHOULD be JSON
+            // IMPORTANT: Success responses still assume JSON.
+            // If login/signup SUCCEEDS, it MUST return valid JSON.
+            const data = await response.json();
 
             if (isLogin) {
                 alert("Login Successful! Redirecting...");
-                window.location.href = "/home";  // Redirect to the home page
+                window.location.href = "/home";
             } else {
                 alert("Signup Successful! Redirecting...");
-                window.location.href = "/home";  // Redirect to home page after signup
+                window.location.href = "/home";
             }
             } else {
                 alert("Please correct the errors before submitting.");
