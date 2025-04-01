@@ -426,11 +426,33 @@ background-position: left;
                     body: JSON.stringify(formData),
                 });
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    alert(`Error: ${errorData.message}`);
-                    return;
-                }
+// Inside handleSubmit, within the if (!response.ok) block:
+
+if (!response.ok) {
+    let errorMessage = `Error: ${response.status} ${response.statusText}`; // Default message
+    try {
+        // Try to parse as JSON, but be ready for it to fail
+        const errorData = await response.json();
+        // If JSON parsing succeeds AND there's a message property, use it
+        if (errorData && errorData.message) {
+             errorMessage = `Error: ${errorData.message}`;
+        }
+    } catch (jsonError) {
+        // If JSON parsing fails, try reading as text
+        try {
+            const errorText = await response.text();
+             if (errorText) {
+                // Append some of the text response for debugging
+                 errorMessage += `\nServer Response: ${errorText.substring(0, 100)}...`;
+             }
+        } catch (textError) {
+            // If reading as text also fails, stick with the status code/text
+            console.error("Could not read error response body:", textError);
+        }
+    }
+    alert(errorMessage); // Display the best error message found
+    return;
+}
 
                 const data = await response.json();
 
