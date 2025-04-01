@@ -39,7 +39,7 @@ console.log('🐘 PostgreSQL Pool created. Connecting...');
 pool.connect((err, client, release) => {
   if (err) {
     // Log the specific connection error
-    return console.error('❌ Error acquiring PostgreSQL client', err);
+    return console.error('❌ Error acquiring PostgreSQL client during initial test', err); // Added context
   }
   console.log('✅ Successfully connected to PostgreSQL database!');
   client.query('SELECT NOW()', (err, result) => {
