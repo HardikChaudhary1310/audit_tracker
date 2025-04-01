@@ -377,59 +377,76 @@ background-position: left;
             input.type = input.type === 'password' ? 'text' : 'password';
         }
         async function handleSubmit(event) {
-            event.preventDefault();
-            console.log("handleSubmit called. isLogin:", isLogin); // Log mode
+    event.preventDefault();
+    console.log("handleSubmit called. isLogin:", isLogin); // Log mode
 
-            // ... (validation logic as before) ...
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
 
-            if (isValid) {
-                const formData = { /* ... as before ... */ };
-                const targetUrl = isLogin ? '/login' : '/signup';
-                console.log(`Sending request to ${targetUrl}`);
+    let isValid = true; // <--- isValid IS DECLARED HERE
 
-                try { // Add try...catch around fetch
-                    const response = await fetch(targetUrl, { /* ... as before ... */ });
-                    console.log(`Response received from ${targetUrl}. Status: ${response.status}`);
+    // Reset errors
+    document.getElementById("emailError").textContent = "";
+    document.getElementById("passwordError").textContent = "";
+    document.getElementById("confirmPasswordError").textContent = "";
 
-                    if (!response.ok) {
-                        // ... (error handling as before, maybe log response headers too) ...
-                        console.error("Response Headers:", Object.fromEntries(response.headers.entries()));
-                        let errorMessage = `Error: ${response.status} ${response.statusText}`;
-                        try {
-                            const errorText = await response.text();
-                            errorMessage += `\nServer Response: ${errorText.substring(0, 200)}...`;
-                        } catch (readError) {
-                            errorMessage += " (Failed to read response body)";
-                        }
-                        alert(errorMessage);
-                        return;
-                    }
+    // Validate email domain
+    if (!email.endsWith("@shivalikbank.com")) {
+        document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
+        isValid = false; // <--- Assigned Here
+    }
 
-                    // Attempt to parse JSON only if response is ok
-                    const data = await response.json();
-                    console.log("Successfully parsed response JSON:", data);
+    // Validate password
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+    if (!passwordRegex.test(password)) {
+        document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
+        isValid = false; // <--- Assigned Here
+    }
 
-                    if (isLogin) {
-                        alert("Login Successful! Attempting to redirect to /home...");
-                        console.log("Executing: window.location.href = '/home';");
-                        window.location.href = "/home"; // THE REDIRECT
-                    } else {
-                         // For signup, maybe redirect to login or show message?
-                         alert("Signup successful! Please check your email to verify, then log in.");
-                         console.log("Signup success, staying on page or redirecting to /");
-                         // Optionally redirect back to login form after signup success
-                         // window.location.href = "/"; // Uncomment if desired
-                    }
+    // Validate confirm password (if sign-up)
+    if (!isLogin && password !== confirmPassword) {
+        document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
+        isValid = false; // <--- Assigned Here
+    }
 
-                } catch (networkError) {
-                    console.error("Network or fetch error:", networkError);
-                    alert(`Network error: ${networkError.message}. Please check your connection.`);
-                }
+    // --- Problem Area ---
+    // The error occurs around line 385, which is INSIDE the 'if (isValid)' block below
 
-            } else {
-                alert("Please correct the errors before submitting.");
+    if (isValid) { // <--- CHECKED HERE
+        const formData = { /* ... */ };
+        const targetUrl = isLogin ? '/login' : '/signup';
+        console.log(`Sending request to ${targetUrl}`);
+
+        try {
+            const response = await fetch(targetUrl, { /* ... */ });
+            console.log(`Response received from ${targetUrl}. Status: ${response.status}`);
+
+            if (!response.ok) {
+                 // ... error handling ...
+                 return; // Exit if response not ok
             }
+
+            const data = await response.json(); // Could line 385 be here?
+            console.log("Successfully parsed response JSON:", data);
+
+             if (isLogin) {
+                 alert("Login Successful! Attempting to redirect to /home...");
+                 console.log("Executing: window.location.href = '/home';");
+                 window.location.href = "/home"; // Or maybe here?
+             } else {
+                 // ... signup success logic ...
+             }
+
+        } catch (networkError) {
+             // ... catch block ...
         }
+
+    } else { // <--- ELSE block
+        alert("Please correct the errors before submitting.");
+    }
+} // End of handleSubmit
+
     </script>
 </body>
 </html>
