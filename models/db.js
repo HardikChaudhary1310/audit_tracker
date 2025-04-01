@@ -1,76 +1,76 @@
-// models/db.js
-require('dotenv').config(); // For local dev, ignored by Render mostly
+// const mongoose = require('mongoose');
+
+// const downloadLogSchema = new mongoose.Schema({
+//     policyName: { type: String, required: true },
+//     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, // Assuming you have user authentication
+//     timestamp: { type: Date, default: Date.now }
+// });
+
+// const DownloadLog = mongoose.model('DownloadLog', downloadLogSchema);
+
+// module.exports = DownloadLog;
+
+
+
+
+// db.js
 const mysql = require('mysql2');
 
-const dbUrlString = process.env.DATABASE_URL; // Get URL from environment
+// Create a MySQL pool to handle connections
+// const pool = mysql.createPool({
+//     host: 'localhost',
+//     user: 'root', // Your MySQL username
+//     password: 'Hardik@12345', // Your MySQL password
+//     database: 'user_activity', // Database name
+// });
 
-// Add extra logging for Render debugging:
-console.log(`[DB Setup] DATABASE_URL from environment: ${dbUrlString ? 'SET' : 'NOT SET'}`);
-if (process.env.NODE_ENV) {
-    console.log(`[DB Setup] NODE_ENV: ${process.env.NODE_ENV}`);
-}
 
-let dbConfig = {};
+// Create a connection to the database
+const pool = mysql.createPool({
+    host: 'localhost',         // Replace with your database host (e.g., 'localhost' or IP address)
+    user: 'root',              // Replace with your MySQL username
+    password: 'Hardik@12345', // Replace with your MySQL password
+    database: 'user_activity',  // Replace with the name of your database
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
+    connectTimeout: 10000, // 10 seconds
+    acquireTimeout: 10000, // 10 seconds
+    keepAlive: true
+});
 
-if (!dbUrlString) {
-    console.error("[DB Setup] FATAL ERROR: DATABASE_URL environment variable is not set.");
-    // Fallback ONLY if explicitly NOT in production - but even then it's risky
-    if (process.env.NODE_ENV !== 'production') {
-        console.warn("[DB Setup] Falling back to LOCALHOST (DEVELOPMENT ONLY!)");
-        // THIS SHOULD NOT BE REACHED ON RENDER if DATABASE_URL is set
-        dbConfig = {
-            host: '127.0.0.1', // Local fallback
-            user: 'root',      // Local fallback
-            password: 'Hardik@12345', // Local fallback - use your actual local password here
-            database: 'user_activity', // Local fallback
-            port: 3306,
-            waitForConnections: true, connectionLimit: 10, queueLimit: 0
-        };
-    } else {
-         // In production, exit if DATABASE_URL is missing
-         process.exit(1);
-    }
+// Connect to the MySQL server
+// connection.connect((err) => {
+//     if (err) {
+//         console.error('Error connecting to MySQL:', err);
+//         return;
+//     }
+//     console.log('Connected to MySQL!');
+// });
 
-} else {
-     // Parse the DATABASE_URL from Render's environment
-    try {
-        const dbUrl = new URL(dbUrlString);
-        dbConfig = {
-            host: dbUrl.hostname, // Host from the URL
-            user: dbUrl.username, // User from the URL
-            password: dbUrl.password, // Password from the URL
-            database: dbUrl.pathname.slice(1), // Database name from the URL path
-            port: dbUrl.port || 3306, // Port from the URL or default 3306
-            waitForConnections: true,
-            connectionLimit: 10,
-            queueLimit: 0,
-             // IMPORTANT: Render MySQL often requires SSL. Check your Render DB connection details.
-             // ssl: { rejectUnauthorized: false } // Add this if needed based on Render docs/settings
-        };
-         console.log(`[DB Setup] Parsed DB Config (Password Masked): host=${dbConfig.host}, user=${dbConfig.user}, database=${dbConfig.database}, port=${dbConfig.port}`);
-    } catch (e) {
-         console.error("[DB Setup] FATAL ERROR: Could not parse DATABASE_URL:", e);
-         process.exit(1);
-    }
-}
-
-// Create the pool using the determined dbConfig
-const pool = mysql.createPool(dbConfig);
+// Wrap the pool with promise-based API
 const promisePool = pool.promise();
 
-// ... rest of db.js (testing connection, table creation, export) ...
+// Create user_policy_activity table if it doesn't exist
+const createUserPolicyActivityTable = `
+CREATE TABLE IF NOT EXISTS user_policy_activity (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    policy_id VARCHAR(255) NOT NULL,
+    action_type ENUM('VIEW', 'DOWNLOAD') NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+)`;
 
- // Test connection (optional, but good practice - logs might show specific errors)
-promisePool.getConnection()
-  .then(connection => {
-    console.log('[DB Setup] Successfully connected to the database via pool.');
-    connection.release();
-  })
-  .catch(err => {
-    console.error('[DB Setup] !!! Error connecting to the database via pool:');
-    // Log the config being used (mask password)
-    console.error('[DB Setup] Using DB config:', { ...dbConfig, password: '***' });
-    console.error(err); // Log the full connection error
-  });
+pool.query(createUserPolicyActivityTable, (err) => {
+    if (err) {
+        console.error('Error creating user_policy_activity table:', err);
+    } else {
+        console.log('user_policy_activity table created or already exists');
+    }
+});
 
-module.exports = promisePool; // Export the promise pool
+// module.exports = connection;
+module.exports = promisePool;
