@@ -47,11 +47,20 @@ const policyRoutes = require('./routes/routes');
 
 const app = express();
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key', // Use ENV Variable
+    store: new pgSession({ // Use pgSession as the store
+        pool: pool,                // Pass your existing database pool
+        tableName: 'user_sessions' // Optional: Defines the table name (defaults to 'session')
+        // You can add other pgSession options here if needed
+    }),
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change', // USE ENV VAR
     resave: false,
-    saveUninitialized: true,
-    // For production with HTTPS, set secure: true
-    cookie: { secure: process.env.NODE_ENV === 'production', httpOnly: true, maxAge: 14400000 }
+    saveUninitialized: false, // Set to false - don't save sessions for anonymous users
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
+        httpOnly: true,         // Good practice
+        maxAge: 1000 * 60 * 60 * 24 // Example: 1 day (adjust as needed)
+        // sameSite: 'lax' // Consider adding for CSRF protection
+    }
 }));
 
 app.use(morgan('dev'));
@@ -243,11 +252,12 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 
 // --- Login Route (Using PostgreSQL) ---
-app.post("/login", async (req, res) => { // Make async
-    const { username, password } = req.body; // username is the email
-    const logAttemptData = { email: username }; // Data for logging attempts
+app.post("/login", async (req, res) => {
+    const { username, password } = req.body;
+    const logAttemptData = { email: username };
 
     if (!username || !password) {
+        // ... (error handling as before)
         await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Missing Credentials");
         return res.status(400).json({ message: "Email and password are required." });
     }
@@ -260,62 +270,78 @@ app.post("/login", async (req, res) => { // Make async
         const { rows } = await pool.query(query, [username]);
 
         if (rows.length === 0) {
-            console.log("Login failed: User not found.");
+            // ... (error handling as before)
+             console.log("Login failed: User not found.");
             await logUserActivity("LOGIN", logAttemptData, null, "FAILED - User Not Found");
-            return res.status(401).json({ message: "Invalid credentials." }); // Generic message for security
+            return res.status(401).json({ message: "Invalid credentials." });
         }
 
         const user = rows[0];
-        logAttemptData.id = user.id; // Add ID for logging if found
+        logAttemptData.id = user.id;
 
         // Check if user is verified
         if (!user.verified) {
-            console.log("Login failed: User not verified.");
+            // ... (error handling as before)
+             console.log("Login failed: User not verified.");
             await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Not Verified");
-            return res.status(403).json({ message: "Please verify your email before logging in. Check your inbox for the verification link." });
+            return res.status(403).json({ message: "Please verify your email before logging in." });
         }
 
         // Compare password using bcrypt
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
+            // ... (error handling as before)
             console.log("Login failed: Incorrect password.");
             await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Incorrect Password");
-            return res.status(401).json({ message: "Invalid credentials." }); // Generic message
+            return res.status(401).json({ message: "Invalid credentials." });
         }
 
         // --- Login Successful ---
         console.log("Login successful for:", user.email);
 
-        // Save essential, non-sensitive user info in session
-        req.session.user = {
+        // Store user data directly on the current session *before* regenerating
+        // This helps ensure the data intended for the session is clearly defined first.
+        const userDataForSession = {
             id: user.id,
-            username: user.email, // Use email as the primary username identifier in session
+            username: user.email,
             userType: user.userType
         };
+        req.session.user = userDataForSession; // Set data on current session
 
         // Regenerate session ID upon login for security
         req.session.regenerate(async (err) => {
             if (err) {
-                console.error("Error regenerating session:", err);
-                await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Session Error");
-                return res.status(500).json({ message: "Login failed due to session error." });
+                console.error("❌ Error during session regeneration:", err); // More specific log
+                await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Session Regenerate Error");
+                return res.status(500).json({ message: "Login failed during session update." });
             }
 
-            // Re-save user data to the new session
-            req.session.user = {
-                id: user.id,
-                username: user.email,
-                userType: user.userType
-            };
+            console.log("✅ Session regenerated successfully.");
 
-            // Log successful login activity
-            await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
+            // Re-save user data to the NEW session object after regeneration
+            req.session.user = userDataForSession;
 
-            // Send success response
-            res.status(200).json({
-                message: "Login successful",
-                user: req.session.user // Send back basic user info
+            // *** Explicitly save the session BEFORE sending the response ***
+            // This ensures the data is written to the store (user_sessions table)
+            // before the client gets the OK and tries to redirect.
+            req.session.save(async (saveErr) => {
+                if (saveErr) {
+                    console.error("❌ Error explicitly saving session:", saveErr);
+                    await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Session Save Error");
+                    return res.status(500).json({ message: "Login failed during session save." });
+                }
+
+                console.log("✅ Session saved explicitly after regeneration.");
+                // Log successful login activity
+                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
+
+                // Send success response ONLY after session is saved
+                console.log("➡️ Sending successful login response to client.");
+                res.status(200).json({
+                    message: "Login successful",
+                    user: req.session.user // Send back basic user info
+                });
             });
         });
 
@@ -327,8 +353,19 @@ app.post("/login", async (req, res) => { // Make async
 });
 
 app.get("/home", mockUserAuth, (req, res) => {
-    if (!req.session.user) return res.redirect('/'); // <--- THIS CHECK NOW PASSES
-   res.render("home", { user: req.user });
+    console.log(`➡️ Accessing /home route. Session User ID: ${req.session?.user?.id}`); // Log session user ID specifically
+    // The mockUserAuth middleware already logs req.user, which is helpful.
+
+    if (!req.session || !req.session.user) { // Check session and user object existence
+        console.log("❌ No active session user found. Redirecting to /.");
+        // Optional: Destroy potentially invalid session remnants?
+        // req.session.destroy(err => { if(err) console.error("Error destroying session on redirect:", err); });
+        return res.redirect('/'); // Redirect if not logged in
+    }
+
+    // If we reach here, the session user exists.
+    console.log(`✅ Session user found (ID: ${req.session.user.id}). Rendering home page.`);
+    res.render("home", { user: req.user }); // Pass user info from mockUserAuth
 });
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
