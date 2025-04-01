@@ -326,7 +326,10 @@ app.post("/login", async (req, res) => { // Make async
     }
 });
 
-
+app.get("/home", mockUserAuth, (req, res) => {
+    if (!req.session.user) return res.redirect('/'); // <--- THIS CHECK NOW PASSES
+   res.render("home", { user: req.user });
+});
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
 // Combined route for VIEW and CLICK using logUserActivity
