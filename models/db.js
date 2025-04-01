@@ -1,4 +1,6 @@
-const mysql = require('mysql2/promise');
+// /models/db.js
+
+const mysql = require('mysql2/promise'); // Using the promise wrapper directly
 require('dotenv').config(); // Loads .env file for local development (optional on Render)
 
 // --- Database Configuration using Environment Variables ---
@@ -17,7 +19,7 @@ const connectionConfig = {
         user: process.env.DB_USER || 'root',            // Fallback to root
         password: process.env.DB_PASSWORD || '',        // !! NO DEFAULT PASSWORD !! Set in env
         database: process.env.DB_NAME || 'user_activity',// Fallback db name
-        port: process.env.DB_PORT || 3306,              // Default MySQL port
+        port: parseInt(process.env.DB_PORT || '3306', 10), // Ensure port is a number
     }),
 
     // --- Pooling Options (keep these from your original code) ---
@@ -26,39 +28,32 @@ const connectionConfig = {
     queueLimit: 0,
     connectTimeout: 10000, // 10 seconds
     acquireTimeout: 10000, // 10 seconds
-    // keepAlive: true, // Often managed by pool settings implicitly
 
     // --- SSL Configuration (IMPORTANT for remote databases) ---
-    // Uncomment and configure if your database provider requires SSL
-    // ssl: {
-    //   // Set to true to require SSL, false to disable (not recommended for remote)
-    //   require: process.env.DB_SSL_REQUIRE === 'true', // Example using env var
-    //
-    //   // Set to true to reject connections with invalid certs (recommended)
-    //   rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false', // Default true
-    //
-    //   // Example: Provide CA certificate if needed (path relative to where app runs)
-    //   // ca: fs.readFileSync(process.env.DB_SSL_CA_PATH),
-    // }
+    // ssl: { /* ... SSL config if needed ... */ }
 };
 
 // --- Create the Pool ---
+// pool created here using require('mysql2/promise') is already promise-aware
 let pool;
 try {
     pool = mysql.createPool(connectionConfig);
-    console.log('✅ MySQL Pool configured.');
+    console.log('✅ MySQL Pool (Promise-based) configured.');
 } catch (error) {
     console.error('❌ FATAL: Error configuring MySQL Pool:', error.message);
-    console.error('Current Config:', { ...connectionConfig, password: '[REDACTED]' }); // Log config without password
-    process.exit(1); // Exit if pool configuration fails critically
+    console.error('Current Config:', { ...connectionConfig, password: '[REDACTED]' });
+    process.exit(1);
 }
 
-
-// --- Test Connection on Startup ---
-pool.getConnection((err, connection) => {
-    if (err) {
+// --- Test Connection on Startup (using async/await with the promise pool) ---
+// Using an immediately invoked async function expression (IIAFE) for top-level await
+(async () => {
+    let connection = null;
+    try {
+        connection = await pool.getConnection();
+        console.log('✅ Database connected successfully via pool!');
+    } catch (err) {
         console.error('❌ DATABASE CONNECTION FAILED:', err.code, err.message);
-        // Optional: Log specific details without exposing password
         console.error('Connection attempt details:', {
             host: connectionConfig.host || (connectionConfig.uri ? new URL(connectionConfig.uri).hostname : 'N/A'),
             port: connectionConfig.port || (connectionConfig.uri ? new URL(connectionConfig.uri).port : 'N/A'),
@@ -66,23 +61,18 @@ pool.getConnection((err, connection) => {
             database: connectionConfig.database || (connectionConfig.uri ? new URL(connectionConfig.uri).pathname.substring(1) : 'N/A'),
             ssl_enabled: !!connectionConfig.ssl
         });
-        // You might choose *not* to exit here if the app can run partially without DB initially
+        // Consider if the app should exit if DB connection fails
         // process.exit(1);
-        return;
+    } finally {
+        if (connection) {
+            connection.release(); // Always release the connection
+        }
     }
-    if (connection) {
-        connection.release();
-        console.log('✅ Database connected successfully via pool!');
-    }
-});
+})();
 
-// Wrap the pool with promise-based API
-const promisePool = pool.promise();
 
-// --- Schema Setup ---
+// --- Schema Setup (using the promise pool directly) ---
 
-// Create users table if it doesn't exist (assuming it's needed for the foreign key)
-// Modify this schema based on your actual users table structure
 const createUsersTable = `
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -94,7 +84,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 )`;
 
-promisePool.query(createUsersTable)
+pool.query(createUsersTable) // Use pool directly
     .then(() => {
         console.log('`users` table checked/created successfully.');
     })
@@ -103,21 +93,20 @@ promisePool.query(createUsersTable)
     });
 
 
-// Create user_policy_activity table if it doesn't exist
 const createUserPolicyActivityTable = `
 CREATE TABLE IF NOT EXISTS user_policy_activity (
-    activity_id INT AUTO_INCREMENT PRIMARY KEY, -- Renamed id for clarity
-    user_id INT NULL,                           -- Allow NULL if user might not be logged in for some actions? Or make NOT NULL
-    username VARCHAR(255) NOT NULL,             -- Consider making NULLable if user_id is present
-    email VARCHAR(255) NOT NULL,                -- Consider making NULLable if user_id is present
-    policy_id VARCHAR(255) NOT NULL,            -- Might be filename or a specific ID
-    action_type ENUM('VIEW', 'DOWNLOAD', 'CLICK', 'SIGNUP', 'LOGIN') NOT NULL, -- Added more actions
-    status VARCHAR(50) NULL,                    -- Added status from your logging
+    activity_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    policy_id VARCHAR(255) NOT NULL,
+    action_type ENUM('VIEW', 'DOWNLOAD', 'CLICK', 'SIGNUP', 'LOGIN') NOT NULL,
+    status VARCHAR(50) NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE -- SET NULL if user deleted, CASCADE if ID changes
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 )`;
 
-promisePool.query(createUserPolicyActivityTable)
+pool.query(createUserPolicyActivityTable) // Use pool directly
     .then(() => {
         console.log('`user_policy_activity` table checked/created successfully.');
     })
@@ -126,4 +115,5 @@ promisePool.query(createUserPolicyActivityTable)
     });
 
 // --- Export the Promise Pool ---
-module.exports = promisePool;
+// The 'pool' object IS the promise pool when using require('mysql2/promise')
+module.exports = pool;
