@@ -7,8 +7,11 @@ require('dotenv').config(); // Loads .env file for local development (optional o
 
 // Check if Render provides a DATABASE_URL (common for database addons)
 // Format: mysql://user:password@host:port/database
-const hasDatabaseUrl = !!process.env.DATABASE_URL;
+console.log('[DEBUG] DB_HOST from process.env:', process.env.DB_HOST); // <<< ADD THIS LOG
+console.log('[DEBUG] DB_USER from process.env:', process.env.DB_USER); // <<< ADD THIS LOG
 
+// --- Database Configuration using Environment Variables ---
+const hasDatabaseUrl = !!process.env.DATABASE_URL;
 const connectionConfig = {
     // If DATABASE_URL is provided, use it directly
     ...(hasDatabaseUrl && { uri: process.env.DATABASE_URL }),
