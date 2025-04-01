@@ -429,40 +429,51 @@ background-position: left;
 // Inside handleSubmit, within the if (!response.ok) block:
 
 if (!response.ok) {
-    let errorMessage = `Error: ${response.status} ${response.statusText}`; // Default message
-    try {
-        // Try to parse as JSON, but be ready for it to fail
-        const errorData = await response.json();
-        // If JSON parsing succeeds AND there's a message property, use it
-        if (errorData && errorData.message) {
-             errorMessage = `Error: ${errorData.message}`;
-        }
-    } catch (jsonError) {
-        // If JSON parsing fails, try reading as text
-        try {
-            const errorText = await response.text();
-             if (errorText) {
-                // Append some of the text response for debugging
-                 errorMessage += `\nServer Response: ${errorText.substring(0, 100)}...`;
-             }
-        } catch (textError) {
-            // If reading as text also fails, stick with the status code/text
-            console.error("Could not read error response body:", textError);
-        }
-    }
-    alert(errorMessage); // Display the best error message found
-    return;
-}
+                // Start with status code/text as the default error
+                let errorMessage = `Error: ${response.status} ${response.statusText}`;
+                let responseBodyText = ''; // Variable to hold the raw text
 
-                const data = await response.json();
+                try {
+                    // Read the body ONLY ONCE, as text.
+                    responseBodyText = await response.text();
 
-                if (isLogin) {
-                    alert("Login Successful! Redirecting...");
-                    window.location.href = "/home";  // Redirect to the home page
-                } else {
-                    alert("Signup Successful! Redirecting...");
-                    window.location.href = "/home";  // Redirect to home page after signup
+                    // NOW, try to parse the text we just read as JSON
+                    try {
+                        const errorData = JSON.parse(responseBodyText);
+                        // If parsing succeeds AND there's a message property, use it
+                        if (errorData && errorData.message) {
+                            errorMessage = `Error: ${errorData.message}`;
+                        } else if (responseBodyText) {
+                             // If JSON parsing succeeded but no 'message', maybe use raw text
+                             errorMessage += `\nServer Response: ${responseBodyText.substring(0, 150)}...`;
+                        }
+                    } catch (parseError) {
+                        // JSON parsing failed, likely wasn't JSON. Use the raw text.
+                        if (responseBodyText) {
+                            errorMessage += `\nServer Response (Not JSON): ${responseBodyText.substring(0, 150)}...`;
+                        }
+                         console.warn("Response body was not valid JSON:", parseError);
+                    }
+                } catch (readError) {
+                    // If even reading as text failed (less common)
+                    console.error("Could not read error response body:", readError);
+                    errorMessage += ` (Could not read response body)`;
                 }
+
+                alert(errorMessage); // Display the best error message we could construct
+                return;
+            }
+
+            // --- Success handling remains the same ---
+            const data = await response.json(); // Success responses SHOULD be JSON
+
+            if (isLogin) {
+                alert("Login Successful! Redirecting...");
+                window.location.href = "/home";  // Redirect to the home page
+            } else {
+                alert("Signup Successful! Redirecting...");
+                window.location.href = "/home";  // Redirect to home page after signup
+            }
             } else {
                 alert("Please correct the errors before submitting.");
             }
