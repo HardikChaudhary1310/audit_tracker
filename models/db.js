@@ -61,26 +61,23 @@ try {
 // IMPORTANT: PostgreSQL uses different syntax for AUTO_INCREMENT (SERIAL)
 // and doesn't typically use backticks for identifiers.
 // Also adjust ENUM syntax if needed or use VARCHAR/CHECK constraints.
+// models/db.js (Schema Setup section)
+
+// ... (pool setup code above) ...
+
+// --- Schema Setup (Ensure Order) ---
+
 const createUsersTable = `
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL, -- Store hashed passwords!
+    password VARCHAR(255) NOT NULL,
     verified BOOLEAN DEFAULT FALSE,
-    "userType" VARCHAR(10) DEFAULT 'user' CHECK ("userType" IN ('user', 'admin')), -- Use quotes for mixed case or use all lowercase
-    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP -- TIMESTAMPTZ includes timezone
+    "userType" VARCHAR(10) DEFAULT 'user' CHECK ("userType" IN ('user', 'admin')),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 )`;
 
-pool.query(createUsersTable)
-    .then(() => {
-        console.log('"users" table checked/created successfully.');
-    })
-    .catch((err) => {
-        console.error('Error creating/checking "users" table:', err);
-    });
-
-// Adjust ENUM syntax for PostgreSQL or use VARCHAR/CHECK
 const createUserPolicyActivityTable = `
 CREATE TABLE IF NOT EXISTS user_policy_activity (
     activity_id SERIAL PRIMARY KEY,
@@ -90,17 +87,24 @@ CREATE TABLE IF NOT EXISTS user_policy_activity (
     policy_id VARCHAR(255) NOT NULL,
     action_type VARCHAR(10) NOT NULL CHECK (action_type IN ('VIEW', 'DOWNLOAD', 'CLICK', 'SIGNUP', 'LOGIN')),
     status VARCHAR(50) NULL,
-    "timestamp" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP, -- Use TIMESTAMPTZ
+    "timestamp" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL ON UPDATE CASCADE
 )`;
 
-pool.query(createUserPolicyActivityTable)
+// Chain the promises: Execute users table creation, THEN activity table creation
+pool.query(createUsersTable)
+    .then(() => {
+        console.log('"users" table checked/created successfully.');
+        // Only attempt to create the activity table AFTER users table is done
+        return pool.query(createUserPolicyActivityTable); // Return the next promise
+    })
     .then(() => {
         console.log('"user_policy_activity" table checked/created successfully.');
     })
     .catch((err) => {
-        console.error('Error creating/checking "user_policy_activity" table:', err);
+        // This will catch errors from EITHER query
+        console.error('Error during table creation:', err);
     });
 
 // --- Export the Pool ---
-module.exports = pool; // Export the pg Pool directly
+module.exports = pool;
