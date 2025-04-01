@@ -1,4 +1,4 @@
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 require('dotenv').config(); // Loads .env file for local development (optional on Render)
 
 // --- Database Configuration using Environment Variables ---
