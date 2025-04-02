@@ -376,7 +376,58 @@ background-position: left;
             const input = document.getElementById(id);
             input.type = input.type === 'password' ? 'text' : 'password';
         }
+        function validateForm() {
+             let isValid = true;
+             // Reset errors
+             document.getElementById("emailError").textContent = "";
+             document.getElementById("passwordError").textContent = "";
+             document.getElementById("confirmPasswordError").textContent = "";
+             document.getElementById("usernameError").textContent = ""; // Reset username error
 
+             const email = document.getElementById("email").value.trim();
+             const password = document.getElementById("password").value.trim();
+             const username = document.getElementById("username")?.value.trim(); // Get username if signup
+             const confirmPassword = document.getElementById("confirmPassword")?.value.trim(); // Get confirm pass if signup
+
+              // --- Email Validation ---
+             if (!email) {
+                  document.getElementById("emailError").textContent = "Email is required.";
+                  isValid = false;
+             } else if (!email.endsWith("@shivalikbank.com")) {
+                document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
+                isValid = false;
+             }
+
+             // --- Password Validation ---
+             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+             if (!password) {
+                 document.getElementById("passwordError").textContent = "Password is required.";
+                 isValid = false;
+             } else if (!passwordRegex.test(password)) {
+                 document.getElementById("passwordError").textContent = "Min. 6 chars, with uppercase, number, and special character.";
+                 isValid = false;
+             }
+
+             // --- Signup Specific Validation ---
+             if (!isLogin) {
+                 // Username Validation (Example: not empty)
+                 if (!username) {
+                    document.getElementById("usernameError").textContent = "Username is required for signup.";
+                    isValid = false;
+                 }
+                 // Confirm Password Validation
+                 if (!confirmPassword) {
+                     document.getElementById("confirmPasswordError").textContent = "Please confirm your password.";
+                     isValid = false;
+                 } else if (password && password !== confirmPassword) { // Only check if password itself is present
+                     document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
+                     isValid = false;
+                 }
+             }
+
+             console.log("Validation result:", isValid); // Add log to see validation outcome
+             return isValid;
+        }
         // --- Submit Handler ---
         async function handleSubmit(event) {
             event.preventDefault(); // Prevent default form submission
