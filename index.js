@@ -359,13 +359,14 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
-    // Basic validation
+    // Validate input credentials
     if (!username || !password) {
         console.log("Login failed: Missing credentials.");
         return res.status(400).json({ message: "Username and password are required." });
     }
 
     try {
+        // Fetch user from the database using parameterized query
         const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
         const { rows } = await pool.query(query, [username]);
 
@@ -376,11 +377,13 @@ app.post("/login", async (req, res) => {
 
         const user = rows[0];
 
+        // Check if the user account is verified
         if (!user.verified) {
             console.log(`Login failed: Account not verified for ${user.email}`);
-            return res.status(401).json({ message: "Account not verified." });
+            return res.status(401).json({ message: "Account not verified. Please check your email." });
         }
 
+        // Compare provided password with stored hash
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -390,52 +393,38 @@ app.post("/login", async (req, res) => {
 
         console.log("Login successful for:", user.email);
 
-        const userDataForSession = {
+        // Prepare user data for session
+        req.session.user = {
             id: user.id,
             username: user.email,
             userType: user.userType
         };
 
-        // Log session before regeneration
-        console.log("Session before regeneration:", req.session);
-
-        req.session.regenerate((regenerateErr) => {
-            if (regenerateErr) {
-                console.error("❌ Session regeneration error:", regenerateErr);
-                return res.status(500).json({ message: "Server error during login." });
-            }
-
-            console.log("✅ Session regenerated successfully.");
-
-            req.session.user = userDataForSession; // Save user data in session
-
-            // Log session after setting user
-            console.log("Session after setting user:", req.session);
-
-            // req.session.save((saveErr) => {
-            //     if (saveErr) {
-            //         console.error("❌ Session save error:", saveErr);
-            //         return res.status(500).json({ message: "Error saving session." });
-            //     }
-
-            //     console.log("✅ Session saved successfully.");
-            //     res.redirect("/home"); // Redirect after login
-            // });
+        // Save session asynchronously by wrapping it in a Promise
+        await new Promise((resolve, reject) => {
             req.session.save((err) => {
                 if (err) {
                     console.error("Session save error:", err);
-                    return res.status(500).json({ message: "Server error saving session." });
+                    reject(err); // Reject the promise if there's an error
+                } else {
+                    resolve(); // Resolve the promise if session is saved successfully
                 }
-                // Log the successful login
-                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
-                res.render("home", { user: req.session.user });
             });
         });
+
+        // Log the successful login action
+        await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
+
+        // Render the home page and pass user data
+        res.render("home", { user: req.session.user });
+
     } catch (error) {
         console.error("❌ Login process error:", error);
         res.status(500).json({ message: "Server error during login." });
     }
 });
+
+
 
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
