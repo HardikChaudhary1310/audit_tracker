@@ -47,22 +47,20 @@ const policyRoutes = require('./routes/routes');
 
 const app = express();
 app.use(session({
-    store: new pgSession({ // Use pgSession as the store
-        pool: pool,                // Pass your existing database pool
-        tableName: 'user_sessions' // Optional: Defines the table name (defaults to 'session')
-        // You can add other pgSession options here if needed
+    store: new pgSession({
+        pool: pool,
+        tableName: 'user_sessions'
     }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change', // USE ENV VAR
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
-    // saveUninitialized: true, // Set to false - don't save sessions for anonymous users
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
         secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
-        httpOnly: true,         // Good practice
-        maxAge: 1000 * 60 * 60 * 24 // Example: 1 day (adjust as needed)
-        // sameSite: 'lax' // Consider adding for CSRF protection
+        httpOnly: true, // Prevent access to cookie from JavaScript
+        maxAge: 1000 * 60 * 60 * 24 // 1 day (adjust as needed)
     }
 }));
+
 
 app.use(morgan('dev'));
 
@@ -114,6 +112,7 @@ const mockUserAuth = (req, res, next) => {
 
     next(); // Proceed to the next middleware or route
 };
+
 
 
 
@@ -359,14 +358,13 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
-    // Validate input credentials
     if (!username || !password) {
         console.log("Login failed: Missing credentials.");
         return res.status(400).json({ message: "Username and password are required." });
     }
 
     try {
-        // Fetch user from the database using parameterized query
+        // Fetch user from the database
         const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
         const { rows } = await pool.query(query, [username]);
 
@@ -377,13 +375,11 @@ app.post("/login", async (req, res) => {
 
         const user = rows[0];
 
-        // Check if the user account is verified
         if (!user.verified) {
             console.log(`Login failed: Account not verified for ${user.email}`);
             return res.status(401).json({ message: "Account not verified. Please check your email." });
         }
 
-        // Compare provided password with stored hash
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
@@ -400,7 +396,7 @@ app.post("/login", async (req, res) => {
             userType: user.userType
         };
 
-        // Save session asynchronously by wrapping it in a Promise
+        // Avoid regenerating session ID, just save the session
         await new Promise((resolve, reject) => {
             req.session.save((err) => {
                 if (err) {
