@@ -54,7 +54,7 @@ app.use(session({
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change', // USE ENV VAR
     resave: false,
-    saveUninitialized: false, // Set to false - don't save sessions for anonymous users
+    saveUninitialized: true, // Set to false - don't save sessions for anonymous users
     cookie: {
         secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
         httpOnly: true,         // Good practice
