@@ -1,122 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>E-Register</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <style>
-        /* Basic Styles */
- 
-         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            
-            /* background: linear-gradient(to bottom right, #702db7, #4171c5); */
-            background: linear-gradient(90deg, #674dcd, rgb(56, 131, 196), #52d7ee);
+      /* Basic Styles */
 
-            transition: background-color 0.33s, box-shadow 0.3s;
-             background-image: var(--gradient);
-            animation: gradientBackground 10s infinite; 
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
 
-        } 
+        /* background: linear-gradient(to bottom right, #702db7, #4171c5); */
+        background: linear-gradient(90deg, #674dcd, rgb(56, 131, 196), #52d7ee);
 
-        @keyframes gradientBackground {
+        transition: background-color 0.33s, box-shadow 0.3s;
+        background-image: var(--gradient);
+        animation: gradientBackground 10s infinite;
+      }
+
+      @keyframes gradientBackground {
         0% {
-            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-            background-position: left;
+          background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+          background-position: left;
         }
         25% {
-            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-            background-position: right
+          background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+          background-position: right;
         }
         50% {
-            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-            background-position: left;
+          background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+          background-position: left;
         }
         75% {
-            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-            background-position: right
+          background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+          background-position: right;
         }
         100% {
-            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-            background-position: left;
+          background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+          background-position: left;
         }
-    } 
+      }
 
-    
-        header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background-color: white;
-            padding: 10px 20px;
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: white;
+        padding: 10px 20px;
 
+        font-family: basic-sans, sans-serif;
 
-            font-family: basic-sans, sans-serif;
-  
-  color: #333;
-  background: white;
-  background-size: 300%;
-  background-image: var(--gradient);
-  animation: bg-animation 25s infinite;
-           
-        }
+        color: #333;
+        background: white;
+        background-size: 300%;
+        background-image: var(--gradient);
+        animation: bg-animation 25s infinite;
+      }
 
-  
-
-
-        .logo {
-            display: flex;
-            align-items: center;
-        }
-        .logo img {
-            height: 40px; /* Logo height */
-            width: auto;  /* Maintain aspect ratio */
-            margin-right: 15px;
-            object-fit: contain;
-        }
-        nav {
-            display: flex;
-            gap: 20px;
-            margin: 0;
-            padding: 0;
-        }
-        nav a {
-            text-decoration: none;
-            color: #333;
-            font-weight: bold;
-            padding: 10px;
-        }
-        .button {
-            background-color: rgba(113, 164, 37, 0.588);
-            color: black;
-            padding: 10px 15px;
-            border-radius: 10px;
-            text-decoration: none;
-        }
-        .search-container {
-            display: flex;
-            align-items: center;
-            margin-left: 20px;
-        }
-        .search-container input {
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .search-container button {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            margin-left: 5px;
-        }
-/*         
+      .logo {
+        display: flex;
+        align-items: center;
+      }
+      .logo img {
+        height: 40px; /* Logo height */
+        width: auto; /* Maintain aspect ratio */
+        margin-right: 15px;
+        object-fit: contain;
+      }
+      nav {
+        display: flex;
+        gap: 20px;
+        margin: 0;
+        padding: 0;
+      }
+      nav a {
+        text-decoration: none;
+        color: #333;
+        font-weight: bold;
+        padding: 10px;
+      }
+      .button {
+        background-color: rgba(113, 164, 37, 0.588);
+        color: black;
+        padding: 10px 15px;
+        border-radius: 10px;
+        text-decoration: none;
+      }
+      .search-container {
+        display: flex;
+        align-items: center;
+        margin-left: 20px;
+      }
+      .search-container input {
+        padding: 5px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      .search-container button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        margin-left: 5px;
+      }
+      /*         
         .features {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -163,28 +162,32 @@
             color: #62ac62;
         } */
 
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+        padding: 80px;
+        /* background: linear-gradient(to bottom, #90caf9, #4d87b7); */
+        /* background: linear-gradient(to bottom right, #7c27d7, #3572da); */
+        background: linear-gradient(90deg, #674dcd, rgb(67, 131, 187), #6ed3e4);
 
+        transition: background-color 0.4s, box-shadow 0.6s;
+        background-image: var(--gradient);
+        animation: bg-animation 25s infinite;
+      }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 30px;
-            padding: 80px;
-            /* background: linear-gradient(to bottom, #90caf9, #4d87b7); */
-            /* background: linear-gradient(to bottom right, #7c27d7, #3572da); */
-            background: linear-gradient(90deg, #674dcd, rgb(67, 131, 187), #6ed3e4);
-
-            transition: background-color 0.40s, box-shadow 0.6s;
-            background-image: var(--gradient);
-  animation: bg-animation 25s infinite;
+      @keyframes bg-animation {
+        0% {
+          background-position: left;
         }
-
-        @keyframes bg-animation {
-  0% {background-position: left}
-  50% {background-position: right}
-  100% {background-position: left}
-}
-        /* .feature-block {
+        50% {
+          background-position: right;
+        }
+        100% {
+          background-position: left;
+        }
+      }
+      /* .feature-block {
              background-color: #9fbed8; 
             background: linear-gradient(to bottom right, #7c47b4, #4f76b7);
 
@@ -211,140 +214,193 @@
             border-color: #fff;
         } */
 
-        .feature-block {
-            border-radius: 8px;  
-            height: 100px;
-            width: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            cursor: pointer;
-  color: white;
-  border: 0;
-  cursor: pointer;
-  padding: .5em 1.25em;
-  background: linear-gradient(90deg, #7d6ac9, rgb(74, 141, 200), #60c5d7);
-  background-size: 300%;
-  background-position: left;
-  transition: background-position 350ms;
+      .feature-block {
+        border-radius: 8px;
+        height: 100px;
+        width: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        cursor: pointer;
+        color: white;
+        border: 0;
+        cursor: pointer;
+        padding: 0.5em 1.25em;
+        background: linear-gradient(90deg, #7d6ac9, rgb(74, 141, 200), #60c5d7);
+        background-size: 300%;
+        background-position: left;
+        transition: background-position 350ms;
 
-  transition: background-color 0.33s, box-shadow 0.10s, transform 0.50s;
-            box-shadow: 0 4px 8px rgba(229, 227, 227, 0.3);
-            border: 1px solid rgba(169, 169, 169, 0.20);
-}
+        transition: background-color 0.33s, box-shadow 0.1s, transform 0.5s;
+        box-shadow: 0 4px 8px rgba(229, 227, 227, 0.3);
+        border: 1px solid rgba(169, 169, 169, 0.2);
+      }
 
-.feature-block:hover {
-  background-position: right;
-  background: linear-gradient(90deg, #7764c5, rgb(67, 131, 187,0.10), #72aab4);
-}
-        .feature-text {
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-        }
-        .feature-block i {
-            font-size: 20px;
-            color: white;
-        }
+      .feature-block:hover {
+        background-position: right;
+        background: linear-gradient(
+          90deg,
+          #7764c5,
+          rgb(67, 131, 187, 0.1),
+          #72aab4
+        );
+      }
+      .feature-text {
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+      }
+      .feature-block i {
+        font-size: 20px;
+        color: white;
+      }
 
+      footer {
+        text-align: center;
+        padding: 5px;
+        background-color: white;
+        line-height: 1.5;
+        position: fixed;
+        width: 100%;
+        bottom: 0;
+        font-size: 14px;
+        color: #333;
+      }
 
-        footer {
-            text-align: center;
-            padding: 5px;
-            background-color: white;
-            line-height: 1.5;
-            position: fixed;
-            width: 100%;
-            bottom: 0;
-            font-size: 14px;
-            color: #333;
-        }
+      .footer-icons {
+        display: flex;
+        gap: 10px;
+      }
 
-        .footer-icons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .footer-icons a {
-            margin: 0 5px;
-            color: #3b5998; /* Updated to match the icons' color */
-            font-size: 18px;
-        }
-        .footer-icons a:hover {
-            color: #0077b5; /* Hover color for icons */
-        }
-
+      .footer-icons a {
+        margin: 0 5px;
+        color: #3b5998; /* Updated to match the icons' color */
+        font-size: 18px;
+      }
+      .footer-icons a:hover {
+        color: #0077b5; /* Hover color for icons */
+      }
     </style>
-
-</head>
-<body>
+  </head>
+  <body>
     <header>
-        <div class="logo">
-            <img src="https://shivalikbank.com/public/frontendassets/images/media-kit-logo.png" alt="Shivalik Logo">
-        </div>
+      <div class="logo">
+        <img
+          src="https://shivalikbank.com/public/frontendassets/images/media-kit-logo.png"
+          alt="Shivalik Logo"
+        />
+      </div>
       <!--  <nav>
             <a class="button" href="#" style="background-color: rgba(99, 147, 27, 0.742);color: black;">Lodge A Complaint</a>
         </nav>  -->
-        <div class="search-container">
-           <!-- <input type="text" placeholder="Search...">  -->
-           <!-- <button><i class="fas fa-search"></i></button>   -->
-           <a href="/home"><b>HOME</b></a>&nbsp;&nbsp;
-           <a href="#"><b>E-REGISTER</b></a>
-
-        </div>
+      <div class="search-container">
+        <!-- <input type="text" placeholder="Search...">  -->
+        <!-- <button><i class="fas fa-search"></i></button>   -->
+        <a href="/home"><b>HOME</b></a
+        >&nbsp;&nbsp;
+        <a href="#"><b>E-REGISTER</b></a>
+      </div>
     </header>
-    <h3 style="text-align: center; margin: 20px 0; color: white;"><b>FEATURES</b></h3>
+    <h3 style="text-align: center; margin: 20px 0; color: white">
+      <b>FEATURES</b>
+    </h3>
     <div class="features">
-        <div class="feature-block">
-            <div class="feature-text"><b>BRANCH BANKING & SALES</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color: #ccc;font-weight: lighter;">Please click on image</p>
+      <div class="feature-block">
+        <div class="feature-text">
+          <b>BRANCH BANKING & SALES</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
 
-        <div class="feature-block" onclick="window.location.href='/policy'">
-            <div class="feature-text"><b>POLICY</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color: #ccc;font-weight: lighter;">Please click on image</p>
+      <div class="feature-block" onclick="window.location.href='/policy'">
+        <div class="feature-text">
+          <b>POLICY</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
 
-        <div class="feature-block" onclick="window.location.href='/circular'">
-            <div class="feature-text"><b>CIRCULARS</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color: #ccc;font-weight: lighter;">Please click on image</p>
+      <div class="feature-block" onclick="window.location.href='/circular'">
+        <div class="feature-text">
+          <b>CIRCULARS</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
-        
-        <div class="feature-block" onclick="window.location.href='/manuals'">
-            <div class="feature-text"><b>MANUALS</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color: #ccc;font-weight: lighter;">Please click on image</p>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
+
+      <div class="feature-block" onclick="window.location.href='/manuals'">
+        <div class="feature-text">
+          <b>MANUALS</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
-        <div class="feature-block">
-            <div class="feature-text"><b>FOR HEAD OFFICE</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color:#ccc;font-weight: lighter;">Please click on image</p>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
+      <div class="feature-block">
+        <div class="feature-text">
+          <b>FOR HEAD OFFICE</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
-        <div class="feature-block">
-            <div class="feature-text"><b>PRODUCT NOTES</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color: #ccc;font-weight: lighter;">Please click on image</p>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
+      <div class="feature-block">
+        <div class="feature-text">
+          <b>PRODUCT NOTES</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
-        <div class="feature-block">
-            <div class="feature-text"><b>DOCUMENTS AND TEMPLATES</b>&nbsp;&nbsp;&nbsp;<i class='far fa-arrow-alt-circle-right' style='font-size:24px; color:white'></i></div>
-            <p style="color: #ccc;font-weight: lighter;">Please click on image</p>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
+      <div class="feature-block">
+        <div class="feature-text">
+          <b>DOCUMENTS AND TEMPLATES</b>&nbsp;&nbsp;&nbsp;<i
+            class="far fa-arrow-alt-circle-right"
+            style="font-size: 24px; color: white"
+          ></i>
         </div>
+        <p style="color: #ccc; font-weight: lighter">Please click on image</p>
+      </div>
     </div>
 
+    <footer
+      style="
+        text-align: center;
+        padding: 20px;
+        background-color: #f1f1f1;
+        line-height: 1.8;
+        position: fixed;
+        width: 100%;
+        bottom: 0;
+      "
+    >
+      <p style="margin: 0; color: #333">
+        <b
+          >Copyright © 2025 Shivalik Small Finance Bank. All Rights Reserved.
+          Site updated on 17/01/25.</b
+        >
+      </p>
+      <div>
+        <a href="#" style="margin: 0 10px"><i class="fab fa-twitter"></i></a>
+        <a href="#" style="margin: 0 10px"><i class="fab fa-youtube"></i></a>
+        <a href="#" style="margin: 0 10px"><i class="fab fa-facebook"></i></a>
+        <a href="#" style="margin: 0 10px"><i class="fab fa-instagram"></i></a>
+        <a href="#" style="margin: 0 10px"><i class="fab fa-linkedin"></i></a>
+      </div>
+    </footer>
 
-    <footer style="text-align: center; padding: 20px; background-color: #f1f1f1; line-height: 1.8; position: fixed; width: 100%; bottom: 0;">
-        <p style="margin: 0; color: #333;">
-            <b>Copyright © 2025 Shivalik Small Finance Bank. All Rights Reserved. Site updated on 17/01/25.</b>
-        </p>
-        <div>
-            <a href="#" style="margin: 0 10px;"><i class="fab fa-twitter"></i></a>
-            <a href="#" style="margin: 0 10px;"><i class="fab fa-youtube"></i></a>
-            <a href="#" style="margin: 0 10px;"><i class="fab fa-facebook"></i></a>
-            <a href="#" style="margin: 0 10px;"><i class="fab fa-instagram"></i></a>
-            <a href="#" style="margin: 0 10px;"><i class="fab fa-linkedin"></i></a>
-        </div>
-    </footer> 
-
-    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+  </body>
 </html>
