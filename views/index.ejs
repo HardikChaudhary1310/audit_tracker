@@ -376,76 +376,140 @@ background-position: left;
             const input = document.getElementById(id);
             input.type = input.type === 'password' ? 'text' : 'password';
         }
-        async function handleSubmit(event) {
-    event.preventDefault();
-    console.log("handleSubmit called. isLogin:", isLogin); // Log mode
-
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
-
-    let isValid = true; // <--- isValid IS DECLARED HERE
-
-    // Reset errors
-    document.getElementById("emailError").textContent = "";
-    document.getElementById("passwordError").textContent = "";
-    document.getElementById("confirmPasswordError").textContent = "";
-
-    // Validate email domain
-    if (!email.endsWith("@shivalikbank.com")) {
-        document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
-        isValid = false; // <--- Assigned Here
+// Assuming this function is an async event handler, like for a form's 'submit' event
+async function handleSubmit(event) {
+    // Prevent the default form submission which causes a page reload
+    if (event) {
+        event.preventDefault();
     }
 
-    // Validate password
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-    if (!passwordRegex.test(password)) {
-        document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
-        isValid = false; // <--- Assigned Here
-    }
+    // --- 1. Form Validation (Assuming you have this logic elsewhere) ---
+    // Example: isValid might be a boolean returned from a validation function
+    const isValid = yourValidationFunction(); // Replace with your actual validation call
 
-    // Validate confirm password (if sign-up)
-    if (!isLogin && password !== confirmPassword) {
-        document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
-        isValid = false; // <--- Assigned Here
-    }
+    if (isValid) {
+        // --- 2. Determine Action and Gather Form Data ---
+        const isLogin = /* Determine if this is a login or signup attempt, e.g., based on a state variable or button clicked */;
 
-    // --- Problem Area ---
-    // The error occurs around line 385, which is INSIDE the 'if (isValid)' block below
+        // --- IMPORTANT: Get data from your form fields ---
+        // Replace 'email', 'password', 'username' with the actual IDs or names of your input fields
+        const emailInput = document.getElementById('email'); // Example ID
+        const passwordInput = document.getElementById('password'); // Example ID
+        const usernameInput = document.getElementById('username'); // Example ID (only needed for signup?)
 
-    if (isValid) { // <--- CHECKED HERE
-        const formData = { /* ... */ };
-        const targetUrl = isLogin ? '/login' : '/signup';
-        console.log(`Sending request to ${targetUrl}`);
-
-        try {
-            const response = await fetch(targetUrl, { /* ... */ });
-            console.log(`Response received from ${targetUrl}. Status: ${response.status}`);
-
-            if (!response.ok) {
-                 // ... error handling ...
-                 return; // Exit if response not ok
-            }
-
-            const data = await response.json(); // Could line 385 be here?
-            console.log("Successfully parsed response JSON:", data);
-
-             if (isLogin) {
-                 alert("Login Successful! Attempting to redirect to /home...");
-                 console.log("Executing: window.location.href = '/home';");
-                 window.location.href = "/home"; // Or maybe here?
-             } else {
-                 // ... signup success logic ...
-             }
-
-        } catch (networkError) {
-             // ... catch block ...
+        if (!emailInput || !passwordInput || (!isLogin && !usernameInput)) {
+             console.error("Could not find all required form input elements!");
+             alert("Internal error: Form elements not found.");
+             return;
         }
 
-    } else { // <--- ELSE block
-        alert("Please correct the errors before submitting.");
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        let formData = {};
+        if (isLogin) {
+            formData = { email, password };
+        } else {
+            // Adjust this based on EXACTLY what your /signup endpoint expects
+            const username = usernameInput.value;
+            formData = { username, email, password };
+        }
+        // ---------------------------------------------------
+
+        const targetUrl = isLogin ? '/login' : '/signup';
+        console.log(`handleSubmit called. isLogin: ${isLogin}`); // Added isLogin state
+        console.log(`Sending POST request to ${targetUrl}`); // Corrected log message
+
+        try {
+            // --- 3. Make the API Call using POST ---
+            const response = await fetch(targetUrl, {
+                method: 'POST', // Use POST for sending data
+                headers: {
+                    'Content-Type': 'application/json' // Specify sending JSON data
+                    // Add other headers if required by your backend (e.g., 'Accept', 'X-CSRF-Token')
+                },
+                body: JSON.stringify(formData) // Convert the JS object to a JSON string
+            });
+
+            console.log(`Response received from ${targetUrl}. Status: ${response.status}`); // Log the status
+
+            // --- 4. Handle the Response ---
+            if (!response.ok) {
+                // Log more details for non-OK responses (like 400, 401, 404, 500)
+                let errorMsg = `Server responded with ${response.status}: ${response.statusText}`;
+                try {
+                    // Try to parse error details from the response body if the server sends them
+                    const errorData = await response.json(); // Or response.text() if error isn't JSON
+                    errorMsg += `\nDetails: ${JSON.stringify(errorData)}`;
+                } catch (e) {
+                    // Could not parse error body or it wasn't JSON
+                    errorMsg += "\n(Could not parse error body for more details)";
+                }
+                console.error(errorMsg);
+                alert(`Operation failed: ${response.statusText}. Check console for details.`); // User-friendly message
+                return; // Exit the function on error
+            }
+
+            // --- 5. Process Successful Response ---
+            // Only try to parse JSON if the response indicates success (e.g., 200 OK, 201 Created)
+            const data = await response.json(); // Parse the JSON body from the successful response
+            console.log("Successfully parsed response JSON:", data);
+
+            if (isLogin) {
+                // Login Success Logic (e.g., store token, redirect)
+                alert("Login Successful! Redirecting to home..."); // Keep alert for now
+                console.log("Executing: window.location.href = '/home';");
+                // Store auth token if received: localStorage.setItem('authToken', data.token);
+                window.location.href = "/home"; // Redirect
+            } else {
+                // Signup Success Logic (e.g., show message, maybe redirect to login)
+                console.log("Signup successful:", data); // Log server response
+                alert("Signup Successful! You can now log in.");
+                // Optionally redirect to login page or clear the form
+                // window.location.href = "/login"; // Example redirect
+                // Or maybe clear form fields: emailInput.value = ''; passwordInput.value = ''; etc.
+            }
+
+        } catch (networkError) {
+            // --- 6. Handle Network Errors ---
+            // This catches errors like server down, CORS issues, network connection lost
+            console.error("Network or fetch error:", networkError);
+            alert("Failed to connect to the server. Please check your network connection and try again.");
+        }
+
+    } else {
+        // --- Validation Failed ---
+        console.log("Form validation failed."); // Log validation failure
+        alert("Please correct the errors in the form before submitting.");
     }
-} // End of handleSubmit
+}
+
+// --- Helper Functions (Example - Replace with your actual validation) ---
+function yourValidationFunction() {
+    // Add your real form validation logic here
+    // Check if fields are empty, email format is valid, password strength, etc.
+    // Return true if valid, false otherwise
+    console.log("Executing validation...");
+    // Placeholder:
+    const email = document.getElementById('email')?.value;
+    const password = document.getElementById('password')?.value;
+    if (email && password) { // Very basic check
+        console.log("Validation passed (basic).");
+        return true;
+    } else {
+        console.log("Validation failed (basic).");
+        return false;
+    }
+}
+
+// --- How to attach this handler (Example) ---
+// Assuming you have a form with id="authForm"
+// const form = document.getElementById('authForm');
+// if (form) {
+//     form.addEventListener('submit', handleSubmit);
+// } else {
+//     console.error("Could not find form with ID 'authForm' to attach submit listener.");
+// }it
 
     </script>
 </body>
