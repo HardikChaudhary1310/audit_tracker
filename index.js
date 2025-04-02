@@ -104,7 +104,7 @@ const mockUserAuth = (req, res, next) => {
 
     if (!sessionUser) {
         console.log("❌ No active session user found. Redirecting to login.");
-        return res.redirect('/login'); // Redirect if no session user found
+        return res.redirect('/'); // Redirect if no session user found
     }
 
     // If session user exists, assign it to req.user
