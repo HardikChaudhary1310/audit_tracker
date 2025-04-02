@@ -17,44 +17,39 @@
         /* Basic Styles */
         body {
             font-family: Arial, sans-serif;
-            /* background-color: #a1a6b8;
-            background: linear-gradient(to right, #888080, #a3adcd); */
             height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #333;
- /* background: linear-gradient(to bottom right, #702db7, #4171c5); */
- background: linear-gradient(90deg, #674dcd, rgb(56, 131, 196), #52d7ee);
+            background: linear-gradient(90deg, #674dcd, rgb(56, 131, 196), #52d7ee);
+            transition: background-color 0.36s, box-shadow 0.5s;
+            background-image: var(--gradient);
+            animation: gradientBackground 10s infinite;
+        }
 
-transition: background-color 0.36s, box-shadow 0.5s;
- background-image: var(--gradient);
-animation: gradientBackground 10s infinite; 
-
-} 
-
-@keyframes gradientBackground {
-0% {
-background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-background-position: left;
-}
-25% {
-background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-background-position: right
-}
-50% {
-background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-background-position: left;
-}
-75% {
-background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-background-position: right
-}
-100% {
-background: linear-gradient(to bottom, #674dcd, #f0f8ff);
-background-position: left;
-}
-} 
+        @keyframes gradientBackground {
+        0% {
+            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+            background-position: left;
+        }
+        25% {
+            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+            background-position: right
+        }
+        50% {
+            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+            background-position: left;
+        }
+        75% {
+            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+            background-position: right
+        }
+        100% {
+            background: linear-gradient(to bottom, #674dcd, #f0f8ff);
+            background-position: left;
+        }
+        }
 
 
         .container {
@@ -87,37 +82,9 @@ background-position: left;
             z-index: 2;
         }
 
-        .form-container h2 {
+        .form-container h2 { /* Using h3 in HTML, let's match */
             margin-bottom: 20px;
         }
-
-        /* .social-login {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 20px;
-        }
-
-        .social-login button {
-            background: none;
-            border: 1px solid #ccc;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .social-login button:hover {
-            background-color: #f0f0f0;
-        }
-
-        .social-login img {
-            width: 20px;
-            height: 20px;
-        } */
 
         .social-login {
             display: flex;
@@ -129,24 +96,32 @@ background-position: left;
             background: none;
             border: 1px solid #ccc;
             border-radius: 50%;
-            width: 30px;
-            height: 30px;
+            width: 30px; /* Adjusted */
+            height: 30px; /* Adjusted */
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             transition: background-color 0.3s;
-            overflow: hidden;
+            overflow: hidden; /* Ensure icon doesn't overflow */
         }
 
         .social-login button img {
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
+             width: 18px; /* Adjusted */
+            height: 18px; /* Adjusted */
+            border-radius: 50%; /* Keep image rounded if needed */
+        }
+         /* Added FontAwesome icon styling */
+        .social-login button i {
+            font-size: 16px; /* Adjust icon size */
+            color: #555; /* Adjust icon color */
         }
 
         .social-login button:hover {
             background-color: #f0f0f0;
+        }
+        .social-login button:hover i {
+             color: #007bff; /* Example hover color */
         }
 
         .input-group {
@@ -168,7 +143,7 @@ background-position: left;
             font-size: 13px;
             border-radius: 15px;
             outline: none;
-            size:inherit;
+            /* size:inherit; -> not a valid property */
         }
 
         .password-wrapper {
@@ -178,11 +153,13 @@ background-position: left;
         .toggle-password {
             position: absolute;
             right: 10px;
-            top: 65%;
+            top: 50%; /* Center vertically relative to input */
             transform: translateY(-50%);
             cursor: pointer;
             font-size: 14px;
             color: #777;
+            user-select: none; /* Prevent text selection */
+            padding: 5px; /* Increase clickable area */
         }
 
         .toggle-password:hover {
@@ -198,7 +175,8 @@ background-position: left;
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, color 0.3s, border 0.3s; /* Added transitions */
+            margin-top: 10px; /* Added some space above button */
         }
 
         button[type="submit"]:hover {
@@ -215,6 +193,7 @@ background-position: left;
         .signup-link a {
             color: #007BFF;
             text-decoration: none;
+            font-weight: bold;
         }
 
         .signup-link a:hover {
@@ -230,85 +209,125 @@ background-position: left;
             z-index: 1;
             width: 50%;
         }
-
-        .overlay-container h2 {
-            margin-bottom: 10px;
-        }
-
-        .overlay-container p {
-            margin-bottom: 20px;
-        }
-
-        .overlay-container button {
-            background-color: #512da8;
-            color: #fff;
-            font-size: 12px;
-            padding: 10px 40px;
-            border: 1px solid transparent;
-            border-radius: 20px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        .overlay-container button:hover {
-            background-color: transparent;
-            border-color: #fff;
-        }
-
-        .container.sign-up-mode .form-container {
+        /* Selectors were slightly off, ensure they target correctly */
+        .container.sign-up-mode .form-container.sign-in-form {
             transform: translateX(100%);
+            opacity: 0;
+            z-index: 1; /* Send sign-in form behind during transition */
+        }
+        .container.sign-up-mode .form-container.sign-up-form {
+             transform: translateX(0%); /* Bring sign-up form in */
+             opacity: 1;
+             z-index: 5; /* Ensure sign-up form is on top */
         }
 
         .container.sign-up-mode .overlay-container {
             transform: translateX(-100%);
         }
+         /* Added explicit transitions for overlay panels */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 50%;
+            height: 100%;
+            overflow: hidden;
+            transition: transform 0.6s ease-in-out;
+            z-index: 100; /* Ensure overlay is above forms initially */
+        }
+        .container.sign-up-mode .overlay {
+            transform: translateX(-100%);
+        }
+         .overlay-panel {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 0 40px;
+            text-align: center;
+            top: 0;
+            height: 100%;
+            width: 50%;
+            transform: translateX(0);
+            transition: transform 0.6s ease-in-out;
+        }
+        .overlay-left {
+            transform: translateX(-20%); /* Start hidden left */
+        }
+         .container.sign-up-mode .overlay-left {
+            transform: translateX(0); /* Bring in */
+        }
+        .overlay-right {
+             right: 0;
+             transform: translateX(0); /* Start visible right */
+        }
+        .container.sign-up-mode .overlay-right {
+            transform: translateX(20%); /* Move away */
+        }
+         .overlay-container button { /* Style overlay buttons */
+             background-color: transparent; /* Make overlay buttons ghost buttons */
+             border: 1px solid #fff;
+             color: #fff;
+             font-size: 12px;
+             padding: 10px 40px;
+             border-radius: 20px;
+             cursor: pointer;
+             transition: background-color 0.3s;
+             margin-top: 15px;
+        }
+        .overlay-container button:hover {
+             background-color: rgba(255, 255, 255, 0.2); /* Slight background on hover */
+        }
+
 
         .error {
             color: red;
-            font-size: 14px;
-            margin-top: 5px;
+            font-size: 0.8em; /* Smaller font for errors */
+            margin-top: 3px; /* Space below input */
+            min-height: 1em; /* Prevent layout shifts */
         }
+        /* Styles for better transitions (Optional but recommended) */
+        .form-container {
+             transition: all 0.6s ease-in-out; /* Apply transition to the form container itself */
+        }
+        .container.sign-up-mode .form-container {
+            transform: translateX(100%); /* Move sign-in form */
+        }
+        /* You might need separate containers or logic to handle swapping forms smoothly */
 
-        .overlay-container.active {
-            transform: translateX(-50%);
-        }
 
     </style>
 </head>
 <body>
+    <!-- NOTE: The original HTML had only one form-container. For smoother transitions,
+         it's often better to have two distinct form containers, one for sign-in and one for sign-up,
+         and toggle their visibility/position. However, sticking to the original structure for now. -->
     <div class="container" id="container">
+        <!-- Form Container (Handles both Login and Signup based on JS toggle) -->
         <div class="form-container">
             <h3 id="formTitle">Sign In</h3>
 
-
-            <!-- <div class="social-login">
-               <button title="Google"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" alt="Google"></button>
-                <button title="Facebook"><b><img src="#" alt="F"></b></button>&nbsp;&nbsp;
-                <button title="GitHub"><b><img src="#" alt="GH"></b></button>&nbsp;&nbsp;
-                <button title="LinkedIn"><b><img src="#" alt="In"></b></button>&nbsp;&nbsp;
-              
-
-              <button title="Google">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-twitter"></i></a>
-            </button>&nbsp;
-            <button title="Facebook">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-instagram"></i></a>
-            </button>&nbsp;
-            <button title="GitHub">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-youtube"></i></a>
-            </button>&nbsp;
-            <button title="LinkedIn">
-                <a href="#" style="margin: 0 10px;"><i class="fab fa-linkedin"></i></a>           
-             </button>
-            
-        </div>  
-    -->
+            <!-- Social Login Icons (Using FontAwesome) -->
+             <div class="social-login">
+                <button title="Twitter"><i class="fab fa-twitter"></i></button>
+                <button title="Facebook"><i class="fab fa-facebook-f"></i></button>
+                <button title="Google"><i class="fab fa-google"></i></button>
+                <button title="LinkedIn"><i class="fab fa-linkedin-in"></i></button>
+            </div>
+            <span style="font-size: 12px; margin-bottom: 15px; color: #888;" id="formHint">or use your email for registration</span>
 
 
-            <form id="form" onsubmit="handleSubmit(event)">
+            <form id="authForm" onsubmit="handleSubmit(event)">
+                 <!-- Add hidden input to track mode if needed, though `isLogin` JS var handles it -->
+                <div class="input-group" id="usernameGroup" style="display: none;"> <!-- Initially hidden -->
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Choose a username">
+                    <div class="error" id="usernameError"></div>
+                </div>
                 <div class="input-group">
                     <label for="email">Email ID</label>
-                    <input type="email" id="email" name="email" required placeholder="Enter your Email">
+                    <input type="email" id="email" name="email" required placeholder="Enter your @shivalikbank.com email">
                     <div class="error" id="emailError"></div>
                 </div>
                 <div class="input-group password-wrapper">
@@ -323,145 +342,263 @@ background-position: left;
                     <span class="toggle-password" onclick="togglePassword('confirmPassword')">👁️</span>
                     <div class="error" id="confirmPasswordError"></div>
                 </div>
-                <button type="submit">Submit</button>
+                 <!-- Forgot Password Link (for Login View) -->
+                 <a href="#" id="forgotPasswordLink" style="font-size: 12px; color: #555; text-decoration: none; display: block; margin-bottom: 15px;">Forgot Your Password?</a>
+
+                <button type="submit" id="submitButton">SIGN IN</button> <!-- Dynamic text -->
             </form>
-            <div class="signup-link">
+            <!-- This toggle link is now handled by the overlay buttons -->
+            <!-- <div class="signup-link">
                 <span id="toggleLink">Don't have an account? <a href="javascript:void(0);" onclick="toggleForm()">Sign Up</a></span>
+            </div> -->
+        </div>
+
+        <!-- Overlay Container -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                     <!-- Content for when SIGN UP form is visible -->
+                    <h2>Welcome Back!</h2>
+                    <p>To keep connected with us please login with your personal info</p>
+                    <button class="ghost" id="signInButton" onclick="toggleForm()">Sign In</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                     <!-- Content for when SIGN IN form is visible -->
+                    <h2>Hello, Friend!</h2>
+                    <p>Enter your personal details and start journey with us</p>
+                    <button class="ghost" id="signUpButton" onclick="toggleForm()">Sign Up</button>
+                </div>
             </div>
         </div>
-        <div class="overlay-container" id="overlayContainer">
-            <h3 id="overlayTitle">Hi, Friend!</h3>
-            <p id="overlayText">Register with your personal details to use all site features</p>
-            <button id="overlayButton" onclick="toggleForm()">Sign Up</button>
-        </div>
+
     </div>
 
     <script>
-        let isLogin = true;
+        let isLogin = true; // Start in Sign In mode
+
+        // Get references to elements
+        const container = document.getElementById("container");
+        const formTitle = document.getElementById("formTitle");
+        const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
+        const usernameGroup = document.getElementById("usernameGroup"); // Added username group
+        const submitButton = document.getElementById("submitButton");
+        const formHint = document.getElementById("formHint");
+        const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+
+        // --- Initial State Setup ---
+        confirmPasswordGroup.style.display = "none";
+        usernameGroup.style.display = "none"; // Hide username initially
+        formTitle.textContent = "Sign In";
+        submitButton.textContent = "SIGN IN";
+        formHint.textContent = "or use your email account";
+        forgotPasswordLink.style.display = 'block'; // Show forgot password
 
         function toggleForm() {
-            const container = document.getElementById("container");
-            const formTitle = document.getElementById("formTitle");
-            const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
-            const toggleLink = document.getElementById("toggleLink");
-            const overlayTitle = document.getElementById("overlayTitle");
-            const overlayText = document.getElementById("overlayText");
-            const overlayButton = document.getElementById("overlayButton");
-            const overlayContainer = document.getElementById("overlayContainer");
+            isLogin = !isLogin; // Toggle the state
 
-            isLogin = !isLogin;
+            container.classList.toggle("sign-up-mode"); // This class controls the animation/overlay shift
 
             if (isLogin) {
-                container.classList.remove("sign-up-mode");
+                // --- Switch to Sign In View ---
                 formTitle.textContent = "Sign In";
-                confirmPasswordGroup.style.display = "none";
-                toggleLink.innerHTML = "Don't have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign Up</a>";
-                overlayTitle.textContent = "Hi, Friends!";
-                overlayText.textContent = "Register with your personal details to use all site features!";
-                overlayButton.textContent = "Sign Up";
-                overlayContainer.classList.remove("active");
+                submitButton.textContent = "SIGN IN";
+                formHint.textContent = "or use your email account";
+                confirmPasswordGroup.style.display = "none"; // Hide confirm password
+                usernameGroup.style.display = "none"; // Hide username
+                forgotPasswordLink.style.display = 'block'; // Show forgot password
+                 // Clear potential signup errors
+                document.getElementById("usernameError").textContent = "";
+                document.getElementById("confirmPasswordError").textContent = "";
+
             } else {
-                container.classList.add("sign-up-mode");
-                formTitle.textContent = "Sign Up";
-                confirmPasswordGroup.style.display = "block";
-                toggleLink.innerHTML = "Already have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign In</a>";
-                overlayTitle.textContent = "Welcome Back!";
-                overlayText.textContent = "To keep connected with us, please login with your personal info!";
-                overlayButton.textContent = "Sign In";
-                overlayContainer.classList.add("active");
+                // --- Switch to Sign Up View ---
+                formTitle.textContent = "Create Account";
+                submitButton.textContent = "SIGN UP";
+                formHint.textContent = "or use your email for registration";
+                confirmPasswordGroup.style.display = "block"; // Show confirm password
+                usernameGroup.style.display = "block"; // Show username
+                forgotPasswordLink.style.display = 'none'; // Hide forgot password
+                 // Clear potential login errors
+                // (email/password fields are reused, so errors are cleared in handleSubmit)
             }
+             // Clear errors on toggle
+             document.getElementById("emailError").textContent = "";
+             document.getElementById("passwordError").textContent = "";
+             document.getElementById("confirmPasswordError").textContent = "";
+             document.getElementById("usernameError").textContent = ""; // Clear username error too
+             // Reset form fields (optional, but good practice)
+             document.getElementById('authForm').reset();
         }
 
         function togglePassword(id) {
             const input = document.getElementById(id);
-            input.type = input.type === 'password' ? 'text' : 'password';
+            const eyeIcon = input.nextElementSibling; // Get the span next to the input
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.textContent = '🙈'; // Change icon to indicate visible
+            } else {
+                input.type = 'password';
+                eyeIcon.textContent = '👁️'; // Change icon back
+            }
         }
 
-        async function handleSubmit(event) {
-            event.preventDefault();  // Prevent form from submitting normally
+        // --- Validation Function ---
+        function validateForm() {
+             let isValid = true;
+             // Reset errors
+             document.getElementById("emailError").textContent = "";
+             document.getElementById("passwordError").textContent = "";
+             document.getElementById("confirmPasswordError").textContent = "";
+             document.getElementById("usernameError").textContent = ""; // Reset username error
 
-            const email = document.getElementById("email").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
+             const email = document.getElementById("email").value.trim();
+             const password = document.getElementById("password").value.trim();
+             const username = document.getElementById("username")?.value.trim(); // Get username if signup
+             const confirmPassword = document.getElementById("confirmPassword")?.value.trim(); // Get confirm pass if signup
 
-            let isValid = true;
-
-            // Reset errors
-            document.getElementById("emailError").textContent = "";
-            document.getElementById("passwordError").textContent = "";
-            document.getElementById("confirmPasswordError").textContent = "";
-
-            // Validate email domain
-            if (!email.endsWith("@shivalikbank.com")) {
+              // --- Email Validation ---
+             if (!email) {
+                  document.getElementById("emailError").textContent = "Email is required.";
+                  isValid = false;
+             } else if (!email.endsWith("@shivalikbank.com")) {
                 document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
                 isValid = false;
-            }
+             }
 
-            // Validate password
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-            if (!passwordRegex.test(password)) {
-                document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
-                isValid = false;
-            }
+             // --- Password Validation ---
+             const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+             if (!password) {
+                 document.getElementById("passwordError").textContent = "Password is required.";
+                 isValid = false;
+             } else if (!passwordRegex.test(password)) {
+                 document.getElementById("passwordError").textContent = "Min. 6 chars, with uppercase, number, and special character.";
+                 isValid = false;
+             }
 
-            // Validate confirm password (if sign-up)
-            if (!isLogin && password !== confirmPassword) {
-                document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
-                isValid = false;
-            }
+             // --- Signup Specific Validation ---
+             if (!isLogin) {
+                 // Username Validation (Example: not empty)
+                 if (!username) {
+                    document.getElementById("usernameError").textContent = "Username is required for signup.";
+                    isValid = false;
+                 }
+                 // Confirm Password Validation
+                 if (!confirmPassword) {
+                     document.getElementById("confirmPasswordError").textContent = "Please confirm your password.";
+                     isValid = false;
+                 } else if (password && password !== confirmPassword) { // Only check if password itself is present
+                     document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
+                     isValid = false;
+                 }
+             }
+
+             return isValid;
+        }
+
+
+        // --- Submit Handler ---
+        async function handleSubmit(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Validate form using the dedicated function
+            const isValid = validateForm();
 
             if (isValid) {
-                const formData = {
+                // Gather form data
+                const email = document.getElementById("email").value.trim();
+                const password = document.getElementById("password").value.trim();
+                let formData = {
+                    // Send 'username' field as the email for login consistency with backend expectation
                     username: email,
                     password,
-                    confirmPassword: !isLogin ? confirmPassword : undefined,
                 };
 
-                // Send POST request for login/signup
-                const response = await fetch(isLogin ? '/login' : '/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
-
-// Inside handleSubmit, within the if (!response.ok) block:
-
-if (!response.ok) {
-                // Start with the basic status code/text
-                let errorMessage = `Error: ${response.status} ${response.statusText}`;
-                try {
-                    // Try ONLY ONCE to read the body as plain text
-                    const errorText = await response.text();
-                    // Append the raw text (or part of it) to the error message
-                    errorMessage += `\nServer Response: ${errorText.substring(0, 200)}...`; // Show first 200 chars
-                    console.log("Raw 502 Response Body:", errorText); // Log the raw response
-                } catch (readError) {
-                    // If even this single read fails, log the error
-                    console.error("Failed to read response body as text:", readError);
-                    // This is where the 'body stream already read' error would likely show up
-                    // if something ELSE read the stream before this point.
-                    errorMessage += " (Failed to read response body)";
+                // Add signup-specific fields if in signup mode
+                if (!isLogin) {
+                    const signupUsername = document.getElementById("username").value.trim();
+                    formData = {
+                        username: signupUsername, // Actual chosen username for signup
+                        email: email,            // Email for signup
+                        password,                // Password
+                        // No need to send confirmPassword to backend
+                    };
                 }
-                alert(errorMessage);
-                return;
-            }
 
-            // --- Success handling remains the same ---
-            // IMPORTANT: Success responses still assume JSON.
-            // If login/signup SUCCEEDS, it MUST return valid JSON.
-            const data = await response.json();
+                const targetUrl = isLogin ? '/login' : '/signup';
+                console.log(`Sending POST request to ${targetUrl} with data:`, formData);
 
-            if (isLogin) {
-                alert("Login Successful! Redirecting...");
-                window.location.href = "/home";
+                try {
+                    // Send POST request
+                    const response = await fetch(targetUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData),
+                    });
+
+                    console.log(`Response received from ${targetUrl}. Status: ${response.status}`);
+
+                    // --- Handle NON-OK Responses (Errors: 4xx, 5xx) ---
+                    if (!response.ok) {
+                        let errorMessage = `Error: ${response.status} ${response.statusText}`;
+                        let rawResponseBody = '';
+                        try {
+                            rawResponseBody = await response.text();
+                            // Try to parse as JSON to get server's specific message if available
+                            try {
+                                const errorData = JSON.parse(rawResponseBody);
+                                if (errorData && errorData.message) {
+                                     errorMessage += `\nServer: ${errorData.message}`;
+                                } else {
+                                     errorMessage += `\nServer Response: ${rawResponseBody.substring(0, 200)}${rawResponseBody.length > 200 ? '...' : ''}`;
+                                }
+                            } catch (jsonError) {
+                                // If not JSON, use the raw text snippet
+                                errorMessage += `\nServer Response: ${rawResponseBody.substring(0, 200)}${rawResponseBody.length > 200 ? '...' : ''}`;
+                            }
+                             console.error(`Raw ${response.status} Response Body from ${targetUrl}:`, rawResponseBody); // Log full raw response
+
+                        } catch (readError) {
+                            console.error("Failed to read response body as text:", readError);
+                            errorMessage += " (Failed to read response body)";
+                        }
+                        alert(errorMessage); // Show combined error message
+                        return; // Stop processing on error
+                    }
+
+                    // --- Handle OK Responses (Success: 2xx) ---
+                    // ASSUMPTION: Server successfully processed request. The server *might* have sent
+                    // HTML (like home.ejs) or just a success status. Fetch doesn't navigate automatically.
+                    // We trigger the navigation manually using window.location.href.
+
+                    console.log(`Server responded OK to ${targetUrl}. Redirecting client-side to /home.`);
+
+                    const successMessage = isLogin ? "Login Successful! Redirecting..." : "Signup Successful! Please login.";
+                    alert(successMessage);
+
+                     // Redirect on success
+                    if (isLogin) {
+                        window.location.href = "/home"; // Redirect to home after login
+                    } else {
+                         // After successful signup, maybe toggle back to login form instead of redirecting home
+                         toggleForm(); // Switch back to login view
+                         alert("Signup complete! Please sign in."); // Inform user
+                         // Or redirect to login page explicitly if it's different:
+                         // window.location.href = "/"; // Or wherever login page is
+                    }
+
+                } catch (networkError) {
+                     // Handle Fetch/Network Errors
+                     console.error("Network or fetch error:", networkError);
+                     alert("Failed to connect to the server. Please check your network connection and try again.");
+                }
+
             } else {
-                alert("Signup Successful! Redirecting...");
-                window.location.href = "/home";
-            }
-            } else {
-                alert("Please correct the errors before submitting.");
+                 // Form validation failed
+                 console.log("Client-side validation failed.");
+                 // No need for an alert here, as errors are shown below fields
+                 // alert("Please correct the errors indicated in the form.");
             }
         }
     </script>
