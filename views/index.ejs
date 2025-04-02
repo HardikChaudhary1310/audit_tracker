@@ -377,91 +377,102 @@ background-position: left;
             input.type = input.type === 'password' ? 'text' : 'password';
         }
 
+        // --- Submit Handler ---
         async function handleSubmit(event) {
-            event.preventDefault();  // Prevent form from submitting normally
+            event.preventDefault(); // Prevent default form submission
 
-            const email = document.getElementById("email").value.trim();
-            const password = document.getElementById("password").value.trim();
-            const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
-
-            let isValid = true;
-
-            // Reset errors
-            document.getElementById("emailError").textContent = "";
-            document.getElementById("passwordError").textContent = "";
-            document.getElementById("confirmPasswordError").textContent = "";
-
-            // Validate email domain
-            if (!email.endsWith("@shivalikbank.com")) {
-                document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
-                isValid = false;
-            }
-
-            // Validate password
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-            if (!passwordRegex.test(password)) {
-                document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
-                isValid = false;
-            }
-
-            // Validate confirm password (if sign-up)
-            if (!isLogin && password !== confirmPassword) {
-                document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
-                isValid = false;
-            }
+            const isValid = validateForm();
 
             if (isValid) {
-                const formData = {
-                    username: email,
-                    password,
-                    confirmPassword: !isLogin ? confirmPassword : undefined,
-                };
+                const email = document.getElementById("email").value.trim();
+                const password = document.getElementById("password").value.trim();
+                let formData = { username: email, password }; // Default for login
 
-                // Send POST request for login/signup
-                const response = await fetch(isLogin ? '/login' : '/signup', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(formData),
-                });
-
-// Inside handleSubmit, within the if (!response.ok) block:
-
-if (!response.ok) {
-                // Start with the basic status code/text
-                let errorMessage = `Error: ${response.status} ${response.statusText}`;
-                try {
-                    // Try ONLY ONCE to read the body as plain text
-                    const errorText = await response.text();
-                    // Append the raw text (or part of it) to the error message
-                    errorMessage += `\nServer Response: ${errorText.substring(0, 200)}...`; // Show first 200 chars
-                    console.log("Raw 502 Response Body:", errorText); // Log the raw response
-                } catch (readError) {
-                    // If even this single read fails, log the error
-                    console.error("Failed to read response body as text:", readError);
-                    // This is where the 'body stream already read' error would likely show up
-                    // if something ELSE read the stream before this point.
-                    errorMessage += " (Failed to read response body)";
+                if (!isLogin) {
+                    const signupUsername = document.getElementById("username").value.trim();
+                    formData = { username: signupUsername, email: email, password };
                 }
-                alert(errorMessage);
-                return;
-            }
 
-            // --- Success handling remains the same ---
-            // IMPORTANT: Success responses still assume JSON.
-            // If login/signup SUCCEEDS, it MUST return valid JSON.
-            const data = await response.json();
+                const targetUrl = isLogin ? '/login' : '/signup';
+                console.log(`Sending POST request to ${targetUrl} with data:`, formData);
 
-            if (isLogin) {
-                alert("Login Successful! Redirecting...");
-                window.location.href = "/home";
+                try {
+                    const response = await fetch(targetUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData),
+                    });
+
+                    console.log(`Response received from ${targetUrl}. Status: ${response.status}`);
+
+                    // --- Handle NON-OK Responses (Errors: 4xx, 5xx) ---
+                    if (!response.ok) {
+                        let errorMessage = `Error: ${response.status} ${response.statusText}`;
+                        let rawResponseBody = '';
+                        try {
+                            rawResponseBody = await response.text();
+                            try { // Try parsing potential JSON error message from server
+                                const errorData = JSON.parse(rawResponseBody);
+                                if (errorData && errorData.message) errorMessage += `\nServer: ${errorData.message}`;
+                                else errorMessage += `\nServer Response: ${rawResponseBody.substring(0, 200)}${rawResponseBody.length > 200 ? '...' : ''}`;
+                            } catch (jsonError){ // If response wasn't JSON, use raw text
+                                errorMessage += `\nServer Response: ${rawResponseBody.substring(0, 200)}${rawResponseBody.length > 200 ? '...' : ''}`;
+                            }
+                            console.error(`Raw ${response.status} Response Body from ${targetUrl}:`, rawResponseBody);
+                        } catch (readError) {
+                            console.error("Failed to read response body as text:", readError);
+                            errorMessage += " (Failed to read response body)";
+                        }
+                        alert(errorMessage);
+                        return; // Stop processing on error
+                    }
+
+                    // --- Handle OK Responses (Success: 2xx) ---
+                    // Need to differentiate based on whether it was login or signup
+
+                    if (isLogin) {
+                        // LOGIN SUCCESS: Expecting HTML from res.render('home', ...)
+                        // We don't need to parse the body. The server sent the page.
+                        // We just need to navigate the browser there.
+                        console.log("Login successful (server likely sent home page HTML). Redirecting client-side.");
+                        alert("Login Successful! Redirecting...");
+                        window.location.href = "/home"; // Manually navigate
+
+                    } else {
+                        // SIGNUP SUCCESS: Expecting JSON from res.json(...)
+                        console.log("Signup successful response received. Attempting to parse JSON...");
+                        try {
+                             // --- Try to parse JSON ONLY for SIGNUP success ---
+                             const data = await response.json();
+                             console.log("Signup success data from server:", data); // Log the parsed data
+                             alert(data.message || "Signup Successful! Check email."); // Show server message or default
+
+                             // Decide what to do after successful signup
+                             toggleForm(); // Switch back to login view is often best UX
+                             alert("Signup complete! Please sign in after verifying your email.");
+
+                             // OR redirect if you prefer (less common after signup)
+                             // window.location.href = "/"; // Redirect to login/index page
+
+                        } catch (jsonError) {
+                             // --- THIS IS WHERE YOUR ERROR IS LIKELY CAUGHT NOW ---
+                             console.error("Failed to parse JSON response from /signup:", jsonError);
+                             // Even though status was OK, the body wasn't JSON. Log the raw body.
+                             const rawBody = await response.text(); // Read it again as text
+                             console.error("Raw non-JSON response body from /signup:", rawBody);
+                             alert("Signup response from server was not in the expected format. Please check console logs.");
+                             // Don't redirect here, as something is wrong.
+                        }
+                    }
+
+                } catch (networkError) {
+                     // Handle Fetch/Network Errors
+                     console.error("Network or fetch error:", networkError);
+                     alert("Failed to connect to the server. Please check your network connection and try again.");
+                }
+
             } else {
-                alert("Signup Successful! Redirecting...");
-                window.location.href = "/home";
-            }
-            } else {
-                alert("Please correct the errors before submitting.");
+                 console.log("Client-side validation failed.");
             }
         }
     </script>
