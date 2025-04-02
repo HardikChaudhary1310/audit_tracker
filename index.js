@@ -48,18 +48,24 @@ const policyRoutes = require('./routes/routes');
 const app = express();
 app.use(session({
     store: new pgSession({
-        pool: pool,
-        tableName: 'user_sessions'
+        pool: pool, // Database pool
+        tableName: 'user_sessions' // Table to store sessions
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
-    resave: false,
-    saveUninitialized: true,
+    resave: false, // Avoid resaving the session unless the session data changes
+    saveUninitialized: false, // Avoid creating a session if no data is stored
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
-        httpOnly: true, // Prevent access to cookie from JavaScript
-        maxAge: 1000 * 60 * 60 * 24 // 1 day (adjust as needed)
+        secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
+        httpOnly: true, // Don't allow client-side JS to access the cookie
+        maxAge: 1000 * 60 * 60 * 24 // Session expiration in milliseconds
     }
 }));
+
+app.use((req, res, next) => {
+    console.log("Current Session ID:", req.sessionID);
+    console.log("Session User Data:", req.session.user);
+    next();
+});
 
 
 app.use(morgan('dev'));
@@ -364,6 +370,12 @@ app.post("/login", async (req, res) => {
     }
 
     try {
+        // Check if a session already exists for the user
+        if (req.session.user) {
+            console.log("User already logged in:", req.session.user.username);
+            return res.redirect("/home"); // Redirect if the user is already logged in
+        }
+
         // Fetch user from the database
         const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
         const { rows } = await pool.query(query, [username]);
@@ -396,7 +408,7 @@ app.post("/login", async (req, res) => {
             userType: user.userType
         };
 
-        // Avoid regenerating session ID, just save the session
+        // Ensure session is saved before continuing
         await new Promise((resolve, reject) => {
             req.session.save((err) => {
                 if (err) {
@@ -408,11 +420,11 @@ app.post("/login", async (req, res) => {
             });
         });
 
-        // Log the successful login action
+        // Log the successful login
         await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
 
         // Render the home page and pass user data
-        res.render("home", { user: req.session.user });
+        res.redirect("/home");
 
     } catch (error) {
         console.error("❌ Login process error:", error);
