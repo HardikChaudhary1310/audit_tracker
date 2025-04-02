@@ -102,30 +102,37 @@ const mockUserAuth = (req, res, next) => {
     const sessionUser = req.session?.user; // Check if session user is set
     console.log("Session User:", sessionUser); // Log user data from session
 
-    if (!sessionUser) {
-        // If no session data, set default user values
-        req.user = {
-            id: null,
-            username: null,
-            email: null,
-            userType: 'user',  // Default userType
-        };
-    } else {
-        // Set user data from session if it exists
-        // req.user = {
-        //     id: sessionUser.id || null,
-        //     username: sessionUser.username || null,
-        //     email: sessionUser.username || null,  // Fallback to username if email is not set
-        //     userType: sessionUser.userType || 'user',  // Default userType if missing
-        // };
-        req.user = {
-            id: "9",
-            username: "aguleria@shivalikbank.com ",
-            email: "aguleria@shivalikbank.com",  
-            userType: "user",  
-        };
-    }
+    // if (!sessionUser) {
+    //     // If no session data, set default user values
+    //     // req.user = {
+    //     //     id: null,
+    //     //     username: null,
+    //     //     email: null,
+    //     //     userType: 'user',  // Default userType
+    //     // };
+    //      req.user = {
+    //         id: "9",
+    //         username: "aguleria@shivalikbank.com ",
+    //         email: "aguleria@shivalikbank.com",  
+    //         userType: "user",  
+    //     };
+    // } else {
+    //     // Set user data from session if it exists
+    //     // req.user = {
+    //     //     id: sessionUser.id || null,
+    //     //     username: sessionUser.username || null,
+    //     //     email: sessionUser.username || null,  // Fallback to username if email is not set
+    //     //     userType: sessionUser.userType || 'user',  // Default userType if missing
+    //     // };
 
+    //     };
+    // }
+    req.user = {
+                id: "9",
+                username: "aguleria@shivalikbank.com ",
+                email: "aguleria@shivalikbank.com",  
+                userType: "user",  
+            };
 
     console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
 
