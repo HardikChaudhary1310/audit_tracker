@@ -409,6 +409,8 @@ app.post("/login", async (req, res) => {
             userType: user.userType
         };
 
+        console.log("Session after login:", req.session); // Log session after setting user
+
         // Ensure session is saved before continuing
         await new Promise((resolve, reject) => {
             req.session.save((err) => {
@@ -423,6 +425,9 @@ app.post("/login", async (req, res) => {
 
         // Log the successful login
         await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
+
+        // Check session right before redirecting
+        console.log("Session before redirect:", req.session);
 
         // Render the home page and pass user data
         res.redirect("/home");
