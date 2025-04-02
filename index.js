@@ -99,7 +99,10 @@ const isValidPassword = (password) => {
 const mockUserAuth = (req, res, next) => {
     // ... (keep existing implementation) ...
     const sessionUser = req.session?.user;
+    console.log(sessionUser);
+
     req.user = { // Standardize req.user structure
+
         id: sessionUser?.id || null, // Get ID from session if available
         username: sessionUser?.username || null, // Get username (email) from session
         email: sessionUser?.username || null, // Keep email field consistent
