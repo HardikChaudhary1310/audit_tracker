@@ -102,42 +102,18 @@ const mockUserAuth = (req, res, next) => {
     const sessionUser = req.session?.user; // Check if session user is set
     console.log("Session User:", sessionUser); // Log user data from session
 
-    // if (!sessionUser) {
-    //     // If no session data, set default user values
-    //     // req.user = {
-    //     //     id: null,
-    //     //     username: null,
-    //     //     email: null,
-    //     //     userType: 'user',  // Default userType
-    //     // };
-    //      req.user = {
-    //         id: "9",
-    //         username: "aguleria@shivalikbank.com ",
-    //         email: "aguleria@shivalikbank.com",  
-    //         userType: "user",  
-    //     };
-    // } else {
-    //     // Set user data from session if it exists
-    //     // req.user = {
-    //     //     id: sessionUser.id || null,
-    //     //     username: sessionUser.username || null,
-    //     //     email: sessionUser.username || null,  // Fallback to username if email is not set
-    //     //     userType: sessionUser.userType || 'user',  // Default userType if missing
-    //     // };
+    if (!sessionUser) {
+        console.log("❌ No active session user found. Redirecting to login.");
+        return res.redirect('/login'); // Redirect if no session user found
+    }
 
-    //     };
-    // }
-    req.user = {
-                id: "9",
-                username: "aguleria@shivalikbank.com ",
-                email: "aguleria@shivalikbank.com",  
-                userType: "user",  
-            };
-
+    // If session user exists, assign it to req.user
+    req.user = sessionUser; 
     console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
 
     next(); // Proceed to the next middleware or route
 };
+
 
 
 
@@ -287,20 +263,17 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 
 app.get("/home", mockUserAuth, (req, res) => {
-    console.log(`➡️ Accessing /home route. Session User ID: ${req.session?.user?.id}`); // Log session user ID specifically
-    // The mockUserAuth middleware already logs req.user, which is helpful.
-
-    if (!req.session || !req.session.user) { // Check session and user object existence
+    console.log(`➡️ Accessing /home route. Session User ID: ${req.user?.id}`); // Log session user ID specifically
+    
+    if (!req.user || !req.user.id) { // Check if the user is present in the session
         console.log("❌ No active session user found. Redirecting to /.");
-        // Optional: Destroy potentially invalid session remnants?
-        // req.session.destroy(err => { if(err) console.error("Error destroying session on redirect:", err); });
         return res.redirect('/'); // Redirect if not logged in
     }
 
-    // If we reach here, the session user exists.
-    console.log(`✅ Session user found (ID: ${req.session.user.id}). Rendering home page.`);
+    console.log(`✅ Session user found (ID: ${req.user.id}). Rendering home page.`);
     res.render("home", { user: req.user }); // Pass user info from mockUserAuth
 });
+
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
 // Combined route for VIEW and CLICK using logUserActivity
@@ -386,52 +359,40 @@ app.post("/login", async (req, res) => {
     // Basic validation
     if (!username || !password) {
         console.log("Login failed: Missing credentials.");
-        await logUserActivity("LOGIN", { username: username || 'N/A' }, null, "FAILED - Missing Credentials");
         return res.status(400).json({ message: "Username and password are required." });
     }
 
-    console.log(`Login attempt for: ${username}`);
-    const logAttemptData = { username };
-
     try {
-        // Fetch user from database using parameterized query for security
         const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
         const { rows } = await pool.query(query, [username]);
 
         if (rows.length === 0) {
             console.log(`Login failed: User not found for ${username}.`);
-            await logUserActivity("LOGIN", logAttemptData, null, "FAILED - User Not Found");
             return res.status(401).json({ message: "Invalid credentials." });
         }
 
         const user = rows[0];
 
-        // Check if user account is verified
         if (!user.verified) {
             console.log(`Login failed: Account not verified for ${user.email}`);
-            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Not Verified");
-            return res.status(401).json({ message: "Account not verified. Please check your email." });
+            return res.status(401).json({ message: "Account not verified." });
         }
 
-        // Compare password using bcrypt
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             console.log(`Login failed: Incorrect password for ${user.email}.`);
-            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Incorrect Password");
             return res.status(401).json({ message: "Invalid credentials." });
         }
 
         console.log("Login successful for:", user.email);
 
-        // Prepare user data for session
         const userDataForSession = {
             id: user.id,
             username: user.email,
             userType: user.userType
         };
 
-        // Regenerate session to avoid session fixation
         req.session.regenerate((regenerateErr) => {
             if (regenerateErr) {
                 console.error("❌ Session regeneration error:", regenerateErr);
@@ -440,30 +401,20 @@ app.post("/login", async (req, res) => {
 
             console.log("✅ Session regenerated successfully.");
 
-            // Save user data to the session
-            req.session.user = userDataForSession;
+            req.session.user = userDataForSession; // Save user data in session
 
-            // Explicitly save the session
-            req.session.save(async (saveErr) => {
+            req.session.save((saveErr) => {
                 if (saveErr) {
                     console.error("❌ Session save error:", saveErr);
-                    return res.status(500).json({ message: "Server error saving session." });
+                    return res.status(500).json({ message: "Error saving session." });
                 }
 
                 console.log("✅ Session saved successfully.");
-
-                // Log the successful login
-                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
-
-                // Rendering home page
-                res.render('home', { user: req.session.user });
-
-            }); // End of session.save
-        }); // End of session.regenerate
-
+                res.redirect("/home"); // Redirect after login
+            });
+        });
     } catch (error) {
         console.error("❌ Login process error:", error);
-        await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Server Error");
         res.status(500).json({ message: "Server error during login." });
     }
 });
