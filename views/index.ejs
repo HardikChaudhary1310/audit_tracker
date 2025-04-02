@@ -373,131 +373,147 @@
     </div>
     <div id="responseContainer"></div>
     <script>
-        let isLogin = true;
-  
-        // Toggle between login and signup form
-        function toggleForm() {
-          const container = document.getElementById("container");
-          const formTitle = document.getElementById("formTitle");
-          const confirmPasswordGroup = document.getElementById("confirmPasswordGroup");
-          const toggleLink = document.getElementById("toggleLink");
-          const overlayTitle = document.getElementById("overlayTitle");
-          const overlayText = document.getElementById("overlayText");
-          const overlayButton = document.getElementById("overlayButton");
-          const overlayContainer = document.getElementById("overlayContainer");
-  
-          isLogin = !isLogin;
-  
-          if (isLogin) {
-            container.classList.remove("sign-up-mode");
-            formTitle.textContent = "Sign In";
-            confirmPasswordGroup.style.display = "none";
-            toggleLink.innerHTML = "Don't have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign Up</a>";
-            overlayTitle.textContent = "Hi, Friends!";
-            overlayText.textContent = "Register with your personal details to use all site features!";
-            overlayButton.textContent = "Sign Up";
-            overlayContainer.classList.remove("active");
-          } else {
-            container.classList.add("sign-up-mode");
-            formTitle.textContent = "Sign Up";
-            confirmPasswordGroup.style.display = "block";
-            toggleLink.innerHTML = "Already have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign In</a>";
-            overlayTitle.textContent = "Welcome Back!";
-            overlayText.textContent = "To keep connected with us, please login with your personal info!";
-            overlayButton.textContent = "Sign In";
-            overlayContainer.classList.add("active");
-          }
+      let isLogin = true;
+
+      // Toggle between login and signup form
+      function toggleForm() {
+        const container = document.getElementById("container");
+        const formTitle = document.getElementById("formTitle");
+        const confirmPasswordGroup = document.getElementById(
+          "confirmPasswordGroup"
+        );
+        const toggleLink = document.getElementById("toggleLink");
+        const overlayTitle = document.getElementById("overlayTitle");
+        const overlayText = document.getElementById("overlayText");
+        const overlayButton = document.getElementById("overlayButton");
+        const overlayContainer = document.getElementById("overlayContainer");
+
+        isLogin = !isLogin;
+
+        if (isLogin) {
+          container.classList.remove("sign-up-mode");
+          formTitle.textContent = "Sign In";
+          confirmPasswordGroup.style.display = "none";
+          toggleLink.innerHTML =
+            "Don't have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign Up</a>";
+          overlayTitle.textContent = "Hi, Friends!";
+          overlayText.textContent =
+            "Register with your personal details to use all site features!";
+          overlayButton.textContent = "Sign Up";
+          overlayContainer.classList.remove("active");
+        } else {
+          container.classList.add("sign-up-mode");
+          formTitle.textContent = "Sign Up";
+          confirmPasswordGroup.style.display = "block";
+          toggleLink.innerHTML =
+            "Already have an account? <a href='javascript:void(0);' onclick='toggleForm()'>Sign In</a>";
+          overlayTitle.textContent = "Welcome Back!";
+          overlayText.textContent =
+            "To keep connected with us, please login with your personal info!";
+          overlayButton.textContent = "Sign In";
+          overlayContainer.classList.add("active");
         }
-  
-        // Toggle password visibility
-        function togglePassword(id) {
-          const input = document.getElementById(id);
-          input.type = input.type === "password" ? "text" : "password";
+      }
+
+      // Toggle password visibility
+      function togglePassword(id) {
+        const input = document.getElementById(id);
+        input.type = input.type === "password" ? "text" : "password";
+      }
+
+      // Handle form submission
+      async function handleSubmit(event) {
+        event.preventDefault(); // Prevent form from submitting normally
+
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const confirmPassword = document
+          .getElementById("confirmPassword")
+          ?.value.trim();
+
+        let isValid = true;
+
+        // Reset errors
+        document.getElementById("emailError").textContent = "";
+        document.getElementById("passwordError").textContent = "";
+        document.getElementById("confirmPasswordError").textContent = "";
+
+        // Validate email domain
+        if (!email.endsWith("@shivalikbank.com")) {
+          document.getElementById("emailError").textContent =
+            "Email must end with @shivalikbank.com.";
+          isValid = false;
         }
-  
-        // Handle form submission
-        async function handleSubmit(event) {
-          event.preventDefault(); // Prevent form from submitting normally
-  
-          const email = document.getElementById("email").value.trim();
-          const password = document.getElementById("password").value.trim();
-          const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
-  
-          let isValid = true;
-  
-          // Reset errors
-          document.getElementById("emailError").textContent = "";
-          document.getElementById("passwordError").textContent = "";
-          document.getElementById("confirmPasswordError").textContent = "";
-  
-          // Validate email domain
-          if (!email.endsWith("@shivalikbank.com")) {
-            document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
-            isValid = false;
-          }
-  
-          // Validate password format
-          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-          if (!passwordRegex.test(password)) {
-            document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
-            isValid = false;
-          }
-  
-          // Validate confirm password (only for signup)
-          if (!isLogin && password !== confirmPassword) {
-            document.getElementById("confirmPasswordError").textContent = "Passwords do not match.";
-            isValid = false;
-          }
-  
-          if (isValid) {
-            const formData = {
-              username: email,
-              password,
-              confirmPassword: !isLogin ? confirmPassword : undefined,
-            };
-  
-            // Send POST request for login/signup
-            try {
-              const response = await fetch(isLogin ? "/login" : "/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-              });
-  
-              // Check if the response is an error (non-OK status)
-              if (!response.ok) {
-                let errorMessage = `Error: ${response.status} ${response.statusText}`;
-                const errorText = await response.text(); // Read the response as text (HTML)
-                console.log("Server Response (HTML):", errorText); // Log the HTML response
-                errorMessage += `\nServer Response: ${errorText.substring(0, 200)}...`; // Show first 200 chars
-                alert(errorMessage);
-                return;
-              }
-  
-              // Handle the response
-              const htmlContent = await response.text();
-  
-              // Ensure this element exists before trying to set innerHTML
-              const responseContainer = document.getElementById("responseContainer");
-              if (responseContainer) {
-                responseContainer.innerHTML = htmlContent;
-              }
-  
-              // Optionally, redirect after a successful login/signup
-              if (isLogin) {
-                alert("Login Successful! Redirecting...");
-                window.location.href = "/home";
-              } else {
-                alert("Signup Successful! Redirecting...");
-                window.location.href = "/home";
-              }
-            } catch (error) {
-              alert("An error occurred: " + error.message);
+
+        // Validate password format
+        const passwordRegex =
+          /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+        if (!passwordRegex.test(password)) {
+          document.getElementById("passwordError").textContent =
+            "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
+          isValid = false;
+        }
+
+        // Validate confirm password (only for signup)
+        if (!isLogin && password !== confirmPassword) {
+          document.getElementById("confirmPasswordError").textContent =
+            "Passwords do not match.";
+          isValid = false;
+        }
+
+        if (isValid) {
+          const formData = {
+            username: email,
+            password,
+            confirmPassword: !isLogin ? confirmPassword : undefined,
+          };
+
+          // Send POST request for login/signup
+          try {
+            const response = await fetch(isLogin ? "/login" : "/signup", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify(formData),
+            });
+
+            // Check if the response is an error (non-OK status)
+            if (!response.ok) {
+              let errorMessage = `Error: ${response.status} ${response.statusText}`;
+              const errorText = await response.text(); // Read the response as text (HTML)
+              console.log("Server Response (HTML):", errorText); // Log the HTML response
+              errorMessage += `\nServer Response: ${errorText.substring(
+                0,
+                200
+              )}...`; // Show first 200 chars
+              alert(errorMessage);
+              return;
             }
-          } else {
-            alert("Please correct the errors before submitting.");
+
+            // Handle the response
+            const htmlContent = await response.text();
+
+            // Ensure this element exists before trying to set innerHTML
+            const responseContainer =
+              document.getElementById("responseContainer");
+            if (responseContainer) {
+              responseContainer.innerHTML = htmlContent;
+            }
+
+            // Optionally, redirect after a successful login/signup
+            if (isLogin) {
+              alert("Login Successful! Redirecting...");
+              window.location.href = "/home";
+            } else {
+              alert("Signup Successful! Redirecting...");
+              window.location.href = "/home";
+            }
+          } catch (error) {
+            alert("An error occurred: " + error.message);
           }
+        } else {
+          alert("Please correct the errors before submitting.");
         }
-      </script>
+      }
+    </script>
   </body>
 </html>
