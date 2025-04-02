@@ -419,6 +419,102 @@
         input.type = input.type === "password" ? "text" : "password";
       }
 
+      //   async function handleSubmit(event) {
+      //     event.preventDefault(); // Prevent form from submitting normally
+
+      //     const email = document.getElementById("email").value.trim();
+      //     const password = document.getElementById("password").value.trim();
+      //     const confirmPassword = document
+      //       .getElementById("confirmPassword")
+      //       ?.value.trim();
+
+      //     let isValid = true;
+
+      //     // Reset errors
+      //     document.getElementById("emailError").textContent = "";
+      //     document.getElementById("passwordError").textContent = "";
+      //     document.getElementById("confirmPasswordError").textContent = "";
+
+      //     // Validate email domain
+      //     if (!email.endsWith("@shivalikbank.com")) {
+      //       document.getElementById("emailError").textContent =
+      //         "Email must end with @shivalikbank.com.";
+      //       isValid = false;
+      //     }
+
+      //     // Validate password
+      //     const passwordRegex =
+      //       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+      //     if (!passwordRegex.test(password)) {
+      //       document.getElementById("passwordError").textContent =
+      //         "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
+      //       isValid = false;
+      //     }
+
+      //     // Validate confirm password (if sign-up)
+      //     if (!isLogin && password !== confirmPassword) {
+      //       document.getElementById("confirmPasswordError").textContent =
+      //         "Passwords do not match.";
+      //       isValid = false;
+      //     }
+
+      //     if (isValid) {
+      //       const formData = {
+      //         username: email,
+      //         password,
+      //         confirmPassword: !isLogin ? confirmPassword : undefined,
+      //       };
+
+      //       // Send POST request for login/signup
+      //       const response = await fetch(isLogin ? "/login" : "/signup", {
+      //         method: "POST",
+      //         headers: {
+      //           "Content-Type": "application/json",
+      //         },
+      //         body: JSON.stringify(formData),
+      //       });
+
+      //       // Inside handleSubmit, within the if (!response.ok) block:
+
+      //       if (!response.ok) {
+      //         // Start with the basic status code/text
+      //         let errorMessage = `Error: ${response.status} ${response.statusText}`;
+      //         try {
+      //           // Try ONLY ONCE to read the body as plain text
+      //           const errorText = await response.text();
+      //           // Append the raw text (or part of it) to the error message
+      //           errorMessage += `\nServer Response: ${errorText.substring(
+      //             0,
+      //             200
+      //           )}...`; // Show first 200 chars
+      //           console.log("Raw 502 Response Body:", errorText); // Log the raw response
+      //         } catch (readError) {
+      //           // If even this single read fails, log the error
+      //           console.error("Failed to read response body as text:", readError);
+      //           // This is where the 'body stream already read' error would likely show up
+      //           // if something ELSE read the stream before this point.
+      //           errorMessage += " (Failed to read response body)";
+      //         }
+      //         alert(errorMessage);
+      //         return;
+      //       }
+
+      //       // --- Success handling remains the same ---
+      //       // IMPORTANT: Success responses still assume JSON.
+      //       // If login/signup SUCCEEDS, it MUST return valid JSON.
+      //       const data = await response.json();
+
+      //       if (isLogin) {
+      //         alert("Login Successful! Redirecting...");
+      //         window.location.href = "/home";
+      //       } else {
+      //         alert("Signup Successful! Redirecting...");
+      //         window.location.href = "/home";
+      //       }
+      //     } else {
+      //       alert("Please correct the errors before submitting.");
+      //     }
+      //   }
       async function handleSubmit(event) {
         event.preventDefault(); // Prevent form from submitting normally
 
@@ -474,36 +570,32 @@
             body: JSON.stringify(formData),
           });
 
-          // Inside handleSubmit, within the if (!response.ok) block:
-
+          // Check if the response is an error (non-OK status)
           if (!response.ok) {
-            // Start with the basic status code/text
             let errorMessage = `Error: ${response.status} ${response.statusText}`;
             try {
-              // Try ONLY ONCE to read the body as plain text
-              const errorText = await response.text();
-              // Append the raw text (or part of it) to the error message
+              const errorText = await response.text(); // Read the response as text (HTML)
+              console.log("Server Response (HTML):", errorText); // Log the HTML response
               errorMessage += `\nServer Response: ${errorText.substring(
                 0,
                 200
               )}...`; // Show first 200 chars
-              console.log("Raw 502 Response Body:", errorText); // Log the raw response
             } catch (readError) {
-              // If even this single read fails, log the error
               console.error("Failed to read response body as text:", readError);
-              // This is where the 'body stream already read' error would likely show up
-              // if something ELSE read the stream before this point.
               errorMessage += " (Failed to read response body)";
             }
             alert(errorMessage);
             return;
           }
 
-          // --- Success handling remains the same ---
-          // IMPORTANT: Success responses still assume JSON.
-          // If login/signup SUCCEEDS, it MUST return valid JSON.
-          const data = await response.json();
+          // If the server responds with HTML, you can directly use the response text (HTML)
+          const htmlContent = await response.text();
 
+          // You can now use this HTML, for example, by inserting it into the page
+          // Assuming you want to insert the HTML content somewhere in the page
+          document.getElementById("responseContainer").innerHTML = htmlContent;
+
+          // Optionally, you can redirect to another page if the login/signup was successful
           if (isLogin) {
             alert("Login Successful! Redirecting...");
             window.location.href = "/home";
