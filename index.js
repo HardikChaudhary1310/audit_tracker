@@ -347,39 +347,46 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 });
 
 // --- Login Route (Using PostgreSQL) ---
+// --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
-    const { username, password } = req.body; // Use username/email as sent from form
+    const { username, password } = req.body; // 'username' is the email from the form
 
     // Basic validation
     if (!username || !password) {
         console.log("Login failed: Missing credentials.");
-        // Optionally log activity for missing credentials attempt
-        return res.status(400).json({ message: "Username and password are required." }); // Send JSON for client-side error handling
+        // Log activity even for missing credentials attempt if desired
+        await logUserActivity("LOGIN", { username: username || 'N/A' }, null, "FAILED - Missing Credentials")
+            .catch(e => console.error("Error logging failed login (missing creds):", e)); // Prevent logging error from crashing
+        return res.status(400).json({ message: "Username and password are required." });
     }
 
     console.log(`Login attempt for: ${username}`);
     const logAttemptData = { username }; // Data for logging if user not found
 
     try {
-        // Fetch user from database (adjust query as needed)
-        // Using parameterized query to prevent SQL injection
-        const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = ?'; // Assuming login uses email
-        const [rows] = await db.promise().query(query, [username]); // Use your actual DB connection method
+        // Fetch user from database using the CORRECT pool variable
+        // Use parameterized query ($1) for security with node-postgres (pg)
+        const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
+
+        // --- !!! FIX IS HERE: Use 'pool.query' instead of 'db.promise().query' !!! ---
+        const { rows } = await pool.query(query, [username]);
+        // --- End of Fix ---
 
         if (rows.length === 0) {
-            console.log("Login failed: User not found.");
-            await logUserActivity("LOGIN", logAttemptData, null, "FAILED - User Not Found");
-            // Use a generic message for security - don't reveal if user exists
-            return res.status(401).json({ message: "Invalid credentials." }); // Send JSON for client-side error handling
+            console.log(`Login failed: User not found for ${username}.`);
+            await logUserActivity("LOGIN", logAttemptData, null, "FAILED - User Not Found")
+                .catch(e => console.error("Error logging failed login (user not found):", e));
+            return res.status(401).json({ message: "Invalid credentials." }); // Generic message for security
         }
 
         const user = rows[0];
 
-        // Check if user account is verified (if applicable)
-        if (!user.verified) { // Assuming a 'verified' column/flag
+        // Check if user account is verified
+        if (!user.verified) {
              console.log(`Login failed: Account not verified for ${user.email}`);
-             await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Not Verified");
-             return res.status(401).json({ message: "Account not verified. Please check your email." }); // Send JSON
+             await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Not Verified")
+                .catch(e => console.error("Error logging failed login (not verified):", e));
+             return res.status(401).json({ message: "Account not verified. Please check your email." });
         }
 
         // Compare password using bcrypt
@@ -387,9 +394,9 @@ app.post("/login", async (req, res) => {
 
         if (!isMatch) {
             console.log(`Login failed: Incorrect password for ${user.email}.`);
-            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Incorrect Password");
-            // Use a generic message
-            return res.status(401).json({ message: "Invalid credentials." }); // Send JSON
+            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Incorrect Password")
+                .catch(e => console.error("Error logging failed login (wrong pass):", e));
+            return res.status(401).json({ message: "Invalid credentials." }); // Generic message
         }
 
         // --- Login Successful ---
@@ -398,55 +405,59 @@ app.post("/login", async (req, res) => {
         // Prepare user data for session
         const userDataForSession = {
             id: user.id,
-            username: user.email, // Or user.username if you have that
-            userType: user.userType // Include any other relevant, non-sensitive data
+            username: user.email, // Using email as the session username identifier
+            userType: user.userType
         };
 
-        // Regenerate session ID upon login for security (prevents session fixation)
+        // Regenerate session ID upon login for security
         req.session.regenerate(async (regenerateErr) => {
             if (regenerateErr) {
                 console.error("❌ Session regeneration error:", regenerateErr);
-                await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Session Regen Error");
-                // Don't send detailed error to client
-                return res.status(500).json({ message: "Server error during login process." }); // Send JSON
+                // Log error but use original user object as session data might be gone
+                await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Session Regen Error")
+                    .catch(e => console.error("Error logging failed login (regen error):", e));
+                return res.status(500).json({ message: "Server error during login process." });
             }
 
             console.log("✅ Session regenerated successfully.");
 
-            // Save user data to the NEW session object after regeneration
+            // Save user data to the NEW session object
             req.session.user = userDataForSession;
 
             // Explicitly save the session BEFORE rendering/redirecting
             req.session.save(async (saveErr) => {
                 if (saveErr) {
                     console.error("❌ Session save error after regeneration:", saveErr);
-                    await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Session Save Error");
-                    return res.status(500).json({ message: "Server error saving session." }); // Send JSON
+                     // Log error but use original user object as session data might be gone
+                    await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Session Save Error")
+                         .catch(e => console.error("Error logging failed login (save error):", e));
+                    return res.status(500).json({ message: "Server error saving session." });
                 }
 
                 console.log("✅ Session saved explicitly after regeneration.");
-                // Log successful login activity AFTER session is confirmed saved
-                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
+                // Log successful login activity using data from the now-saved session
+                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS")
+                    .catch(e => console.error("Error logging successful login:", e)); // Log success but don't crash if logging fails
 
-                // --- !!! CHANGE HERE: Render home page instead of sending JSON !!! ---
+                // --- Render home page on success ---
                 console.log("➡️ Rendering home page for client.");
-                // Pass the user data to the template in case it's needed
-                res.render('home', { // Ensure 'home.ejs' is in your 'views' directory
+                res.render('home', { // Pass user data to the template
                    user: req.session.user
                 });
-                // --- End of Change ---
+                // --- End of Rendering ---
 
             }); // End session save
         }); // End session regenerate
 
     } catch (error) {
+        // This catch block handles errors from pool.query, bcrypt.compare, etc.
         console.error("❌ Login process error (Catch Block):", error);
-        // Attempt to log even if user details aren't fully known yet
-        await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Server Error Catch");
-        res.status(500).json({ message: "Server error during login." }); // Send JSON for client-side handling
+        // Attempt to log the error using the initial attempt data
+        await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Server Error Catch")
+            .catch(e => console.error("Error logging failed login (catch block):", e)); // Log error from catch, avoid infinite loop if logging fails
+        res.status(500).json({ message: "Server error during login." }); // Send generic error to client
     }
 });
-// --- File Serving Routes (Download/View - Updated Logging) ---
 
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
