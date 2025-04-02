@@ -502,7 +502,7 @@
           // --- Success handling remains the same ---
           // IMPORTANT: Success responses still assume JSON.
           // If login/signup SUCCEEDS, it MUST return valid JSON.
-        //   const data = await response.json();
+          const data = await response.json();
 
           if (isLogin) {
             alert("Login Successful! Redirecting...");
