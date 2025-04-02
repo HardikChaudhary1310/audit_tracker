@@ -395,6 +395,9 @@ app.post("/login", async (req, res) => {
             userType: user.userType
         };
 
+        // Log session before regeneration
+        console.log("Session before regeneration:", req.session);
+
         req.session.regenerate((regenerateErr) => {
             if (regenerateErr) {
                 console.error("❌ Session regeneration error:", regenerateErr);
@@ -404,6 +407,9 @@ app.post("/login", async (req, res) => {
             console.log("✅ Session regenerated successfully.");
 
             req.session.user = userDataForSession; // Save user data in session
+
+            // Log session after setting user
+            console.log("Session after setting user:", req.session);
 
             req.session.save((saveErr) => {
                 if (saveErr) {
