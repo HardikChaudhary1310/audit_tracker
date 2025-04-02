@@ -362,20 +362,23 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 
 // --- Login Route (Using PostgreSQL) ---
 // --- Login Route (Using PostgreSQL) ---
+// --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
 
     if (!username || !password) {
         console.log("Login failed: Missing credentials.");
-        return res.status(400).json({ message: "Username and password are required." });
+        // Send JSON error
+        return res.status(400).json({ success: false, message: "Username and password are required." });
     }
 
     try {
-        // Check if a session already exists for the user
-        if (req.session.user) {
-            console.log("User already logged in:", req.session.user.username);
-            return res.redirect("/home"); // Redirect if the user is already logged in
-        }
+        // Check if a session already exists for the user (Optional, but okay)
+        // if (req.session.user) {
+        //     console.log("User already logged in:", req.session.user.username);
+        //     // Send JSON indicating already logged in and where to go
+        //     return res.status(200).json({ success: true, redirectUrl: '/home', message: 'Already logged in.' });
+        // }
 
         // Fetch user from the database
         const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
@@ -383,62 +386,74 @@ app.post("/login", async (req, res) => {
 
         if (rows.length === 0) {
             console.log(`Login failed: User not found for ${username}.`);
-            return res.status(401).json({ message: "Invalid credentials." });
+            // Send JSON error
+            return res.status(401).json({ success: false, message: "Invalid credentials." });
         }
 
         const user = rows[0];
 
         if (!user.verified) {
             console.log(`Login failed: Account not verified for ${user.email}`);
-            return res.status(401).json({ message: "Account not verified. Please check your email." });
+            // Send JSON error
+            return res.status(401).json({ success: false, message: "Account not verified. Please check your email." });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
             console.log(`Login failed: Incorrect password for ${user.email}.`);
-            return res.status(401).json({ message: "Invalid credentials." });
+             // Send JSON error
+            return res.status(401).json({ success: false, message: "Invalid credentials." });
         }
 
         console.log("Login successful for:", user.email);
 
         // Prepare user data for session
-        req.session.user = {
+        const sessionUser = {
             id: user.id,
-            username: user.email,
+            username: user.email, // Use email as username consistently
             userType: user.userType
         };
+        req.session.user = sessionUser;
 
-        console.log("Session after login:", req.session); // Log session after setting user
 
-        // Ensure session is saved before continuing
-        await new Promise((resolve, reject) => {
-            req.session.save((err) => {
-                if (err) {
-                    console.error("Session save error:", err);
-                    reject(err); // Reject the promise if there's an error
-                } else {
-                    resolve(); // Resolve the promise if session is saved successfully
-                }
+        console.log("Session before save:", req.session); // Log session before saving
+
+        // Ensure session is saved before sending response
+        req.session.save(async (err) => { // Make callback async if logging depends on it
+            if (err) {
+                console.error("Session save error:", err);
+                // Log failure even if session save fails
+                await logUserActivity("LOGIN", { email: username }, null, "FAILED - Session Save Error").catch(e => console.error("Error logging failed login:", e));
+                // Send JSON error
+                return res.status(500).json({ success: false, message: "Server error during login (session save)." });
+            }
+
+            console.log("Session saved successfully, Session ID:", req.sessionID);
+            console.log("Session content after save:", req.session);
+
+            // Log the successful login AFTER session save
+            await logUserActivity("LOGIN", sessionUser, null, "SUCCESS"); // Use the user object directly
+
+            // --- MODIFICATION ---
+            // Instead of redirecting, send a success JSON response
+            // containing the URL the frontend should navigate to.
+            res.status(200).json({
+                success: true,
+                message: "Login successful! Redirecting...",
+                redirectUrl: "/home" // Tell the frontend where to go
             });
+            // --- END MODIFICATION ---
         });
-
-        // Log the successful login
-        await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
-
-        // Check session right before redirecting
-        console.log("Session before redirect:", req.session);
-
-        // Render the home page and pass user data
-        res.redirect("/home");
 
     } catch (error) {
         console.error("❌ Login process error:", error);
-        res.status(500).json({ message: "Server error during login." });
+        // Log generic error
+         await logUserActivity("LOGIN", { email: username }, null, "FAILED - Server Error").catch(e => console.error("Error logging failed login:", e));
+        // Send JSON error
+        res.status(500).json({ success: false, message: "Server error during login." });
     }
 });
-
-
 
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async

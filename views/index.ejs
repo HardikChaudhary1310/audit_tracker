@@ -420,90 +420,100 @@ function togglePassword(id) {
 }
 
 // Handle form submission
+// Handle form submission
 async function handleSubmit(event) {
-  event.preventDefault(); // Prevent form from submitting normally
+    event.preventDefault(); // Prevent form from submitting normally
 
-  const email = document.getElementById("email").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const confirmPassword = document.getElementById("confirmPassword")?.value.trim();
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const confirmPasswordInput = document.getElementById("confirmPassword");
+    const confirmPassword = confirmPasswordInput ? confirmPasswordInput.value.trim() : null; // Handle confirm password input potentially not existing
 
-  let isValid = true;
+    let isValid = true;
 
-  // Reset errors
-  document.getElementById("emailError").textContent = "";
-  document.getElementById("passwordError").textContent = "";
-  document.getElementById("confirmPasswordError").textContent = "";
+    // Reset errors
+    document.getElementById("emailError").textContent = "";
+    document.getElementById("passwordError").textContent = "";
+    const confirmPasswordError = document.getElementById("confirmPasswordError");
+    if (confirmPasswordError) confirmPasswordError.textContent = "";
 
-  // Validate email domain
-  if (!email.endsWith("@shivalikbank.com")) {
-    document.getElementById("emailError").textContent =
-      "Email must end with @shivalikbank.com.";
-    isValid = false;
-  }
 
-  // Validate password format
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
-  if (!passwordRegex.test(password)) {
-    document.getElementById("passwordError").textContent =
-      "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
-    isValid = false;
-  }
-
-  // Validate confirm password (only for signup)
-  if (!isLogin && password !== confirmPassword) {
-    document.getElementById("confirmPasswordError").textContent =
-      "Passwords do not match.";
-    isValid = false;
-  }
-
-  if (isValid) {
-    const formData = {
-      username: email,
-      password,
-      confirmPassword: !isLogin ? confirmPassword : undefined, // Include confirmPassword only when not logging in
-    };
-
-    // Send POST request for login/signup
-    try {
-      const response = await fetch(isLogin ? "/login" : "/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      // Check if the response is an error (non-OK status)
-      if (!response.ok) {
-        let errorMessage = `Error: ${response.status} ${response.statusText}`;
-        const errorText = await response.text(); // Read the response as text (HTML)
-        console.log("Server Response (HTML):", errorText); // Log the HTML response
-        errorMessage += `\nServer Response: ${errorText.substring(0, 200)}...`; // Show first 200 chars
-        alert(errorMessage);
-        return;
-      }
-
-      // Handle the response
-      const htmlContent = await response.text();
-
-      // Ensure this element exists before trying to set innerHTML
-      const responseContainer = document.getElementById("responseContainer");
-      if (responseContainer) {
-        responseContainer.innerHTML = htmlContent;
-      }
-
-      // Optionally, redirect after a successful login/signup
-      if (isLogin) {
-        alert("Login Successful! Redirecting...");
-        window.location.href = "/home";
-      } else {
-        alert("Signup Successful! Redirecting...");
-        window.location.href = "/home";
-      }
-    } catch (error) {
-      alert("An error occurred: " + error.message);
+    // === Client-side validation (keep as is) ===
+    if (!email.endsWith("@shivalikbank.com")) {
+        document.getElementById("emailError").textContent = "Email must end with @shivalikbank.com.";
+        isValid = false;
     }
-  } else {
-    alert("Please correct the errors before submitting.");
-  }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{6,}$/;
+    if (!passwordRegex.test(password)) {
+        document.getElementById("passwordError").textContent = "Password must be at least 6 characters long, include a number, a special character, and a capital letter.";
+        isValid = false;
+    }
+    if (!isLogin && confirmPasswordInput && password !== confirmPassword) { // Check if confirmPasswordInput exists
+        if(confirmPasswordError) confirmPasswordError.textContent = "Passwords do not match.";
+        isValid = false;
+    }
+    // === End Client-side validation ===
+
+
+    if (isValid) {
+        const endpoint = isLogin ? "/login" : "/signup";
+        const bodyData = {
+            username: email, // Send email as username
+            password: password
+        };
+
+        if (!isLogin) {
+            bodyData.confirmPassword = confirmPassword;
+        }
+
+        // Send POST request
+        try {
+            const response = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(bodyData),
+            });
+
+            // --- MODIFICATION: Handle JSON response ---
+            const data = await response.json(); // Always try to parse JSON
+
+            if (response.ok && data.success) {
+                // SUCCESS CASE (Login or Signup)
+                alert(data.message || (isLogin ? "Login Successful!" : "Signup successful! Check email.")); // Use message from server or default
+
+                if (isLogin && data.redirectUrl) {
+                     console.log("Redirecting to:", data.redirectUrl);
+                     window.location.href = data.redirectUrl; // Perform redirect
+                } else if (!isLogin) {
+                    // Optional: Maybe redirect to login page after successful signup?
+                    // Or just show the message.
+                     console.log("Signup successful message shown.");
+                     // If you want to switch back to login form automatically after signup success:
+                     // toggleForm(); // Uncomment if needed
+                }
+
+            } else {
+                // ERROR CASE (Based on JSON response or non-ok status)
+                console.error("Login/Signup failed:", data);
+                alert(data.message || `An error occurred: ${response.statusText}`); // Show server message or generic error
+                // Optionally display the error message near the relevant field if possible
+                if (data.message && data.message.toLowerCase().includes("credential")) {
+                    document.getElementById("emailError").textContent = data.message;
+                    document.getElementById("passwordError").textContent = data.message;
+                } else if (data.message && data.message.toLowerCase().includes("verified")) {
+                     document.getElementById("emailError").textContent = data.message;
+                }
+                // Add more specific error handling if needed
+            }
+            // --- END MODIFICATION ---
+
+        } catch (error) {
+            console.error("Fetch Error:", error);
+            alert("A network error occurred: " + error.message);
+        }
+    } else {
+        // alert("Please correct the errors before submitting."); // Optional: Less disruptive to show errors inline
+    }
 }
 
     </script>
