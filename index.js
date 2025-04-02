@@ -97,20 +97,32 @@ const isValidPassword = (password) => {
 
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
 const mockUserAuth = (req, res, next) => {
-    // ... (keep existing implementation) ...
+    console.log("Session Object:", req.session);  // Log entire session object
+
     const sessionUser = req.session?.user;
-    console.log(sessionUser);
+    console.log("Session User:", sessionUser);  // Log user data from session
 
-    req.user = { // Standardize req.user structure
+    if (!sessionUser) {
+        req.user = {
+            id: null,
+            username: null,
+            email: null,
+            userType: 'user',  // Default userType
+        };
+    } else {
+        req.user = {
+            id: sessionUser.id || null,
+            username: sessionUser.username || null,
+            email: sessionUser.username || null,  // Fallback to username if email is not set
+            userType: sessionUser.userType || 'user',  // Default userType if missing
+        };
+    }
 
-        id: sessionUser?.id || null, // Get ID from session if available
-        username: sessionUser?.username || null, // Get username (email) from session
-        email: sessionUser?.username || null, // Keep email field consistent
-        userType: sessionUser?.userType || 'user',
-    };
-    console.log("User Data in mockUserAuth:", req.user);
+    console.log("User Data in mockUserAuth:", req.user);  // Log the user data
+
     next();
 };
+
 
 
 // --- Signup Route (Using PostgreSQL) ---
