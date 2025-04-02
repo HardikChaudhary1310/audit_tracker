@@ -54,7 +54,8 @@ app.use(session({
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change', // USE ENV VAR
     resave: false,
-    saveUninitialized: true, // Set to false - don't save sessions for anonymous users
+    // saveUninitialized: true, // Set to false - don't save sessions for anonymous users
+    saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production', // True in production (HTTPS)
         httpOnly: true,         // Good practice
@@ -411,14 +412,23 @@ app.post("/login", async (req, res) => {
             // Log session after setting user
             console.log("Session after setting user:", req.session);
 
-            req.session.save((saveErr) => {
-                if (saveErr) {
-                    console.error("❌ Session save error:", saveErr);
-                    return res.status(500).json({ message: "Error saving session." });
-                }
+            // req.session.save((saveErr) => {
+            //     if (saveErr) {
+            //         console.error("❌ Session save error:", saveErr);
+            //         return res.status(500).json({ message: "Error saving session." });
+            //     }
 
-                console.log("✅ Session saved successfully.");
-                res.redirect("/home"); // Redirect after login
+            //     console.log("✅ Session saved successfully.");
+            //     res.redirect("/home"); // Redirect after login
+            // });
+            req.session.save((err) => {
+                if (err) {
+                    console.error("Session save error:", err);
+                    return res.status(500).json({ message: "Server error saving session." });
+                }
+                // Log the successful login
+                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
+                res.render("home", { user: req.session.user });
             });
         });
     } catch (error) {
