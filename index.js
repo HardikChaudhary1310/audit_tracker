@@ -103,6 +103,8 @@ const isValidPassword = (password) => {
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
 const mockUserAuth = (req, res, next) => {
     console.log("Session Object:", req.session); // Log session object for debugging
+    console.log("Session Object:", req.session); // Log the full session object
+    console.log("Session Cookie:", req.cookies); // Log cookies to check if connect.sid is present
 
     const sessionUser = req.session?.user; // Check if session user is set
     console.log("Session User:", sessionUser); // Log user data from session
@@ -268,18 +270,17 @@ app.get("/verify-email", async (req, res) => { // Make async
 // --- Login Route (Using PostgreSQL) ---
 
 
-app.get("/home", mockUserAuth, (req, res) => {
-    console.log(`➡️ Accessing /home route. Session User ID: ${req.user?.id}`); // Log session user ID specifically
-    console.log(`➡️ Accessing /home route. Session User ID: ${req}`); 
-    if (!req.user || !req.user.id) { // Check if the user is present in the session
-        console.log(`➡️ Accessing /home route. Session User ID: ${req}`);
-        console.log("❌ No active session user found. Redirecting to /.");
-        return res.redirect('/'); // Redirect if not logged in
-        
+app.get("/home", (req, res) => {
+    console.log("Session Object:", req.session);
+    console.log("Session User Data:", req.session.user);
+
+    if (!req.session.user) {
+        console.log("❌ No active session user found. Redirecting to login.");
+        return res.redirect("/");
     }
 
-    console.log(`✅ Session user found (ID: ${req.user.id}). Rendering home page.`);
-    res.render("home", { user: req.user }); // Pass user info from mockUserAuth
+    // Proceed to render home page with user data
+    res.render("home", { user: req.session.user });
 });
 
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
