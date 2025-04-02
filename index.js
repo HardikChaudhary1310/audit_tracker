@@ -264,10 +264,12 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 app.get("/home", mockUserAuth, (req, res) => {
     console.log(`➡️ Accessing /home route. Session User ID: ${req.user?.id}`); // Log session user ID specifically
-    
+    console.log(`➡️ Accessing /home route. Session User ID: ${req}`); 
     if (!req.user || !req.user.id) { // Check if the user is present in the session
+        console.log(`➡️ Accessing /home route. Session User ID: ${req}`);
         console.log("❌ No active session user found. Redirecting to /.");
         return res.redirect('/'); // Redirect if not logged in
+        
     }
 
     console.log(`✅ Session user found (ID: ${req.user.id}). Rendering home page.`);
