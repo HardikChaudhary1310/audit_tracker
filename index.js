@@ -97,12 +97,13 @@ const isValidPassword = (password) => {
 
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
 const mockUserAuth = (req, res, next) => {
-    console.log("Session Object:", req.session);  // Log entire session object
+    console.log("Session Object:", req.session); // Log session object for debugging
 
-    const sessionUser = req.session?.user;
-    console.log("Session User:", sessionUser);  // Log user data from session
+    const sessionUser = req.session?.user; // Check if session user is set
+    console.log("Session User:", sessionUser); // Log user data from session
 
     if (!sessionUser) {
+        // If no session data, set default user values
         req.user = {
             id: null,
             username: null,
@@ -110,6 +111,7 @@ const mockUserAuth = (req, res, next) => {
             userType: 'user',  // Default userType
         };
     } else {
+        // Set user data from session if it exists
         req.user = {
             id: sessionUser.id || null,
             username: sessionUser.username || null,
@@ -118,10 +120,11 @@ const mockUserAuth = (req, res, next) => {
         };
     }
 
-    console.log("User Data in mockUserAuth:", req.user);  // Log the user data
+    console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
 
-    next();
+    next(); // Proceed to the next middleware or route
 };
+
 
 
 
@@ -364,44 +367,36 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 // --- Login Route (Using PostgreSQL) ---
 // --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
-    const { username, password } = req.body; // 'username' is the email from the form
+    const { username, password } = req.body;
 
     // Basic validation
     if (!username || !password) {
         console.log("Login failed: Missing credentials.");
-        // Log activity even for missing credentials attempt if desired
-        await logUserActivity("LOGIN", { username: username || 'N/A' }, null, "FAILED - Missing Credentials")
-            .catch(e => console.error("Error logging failed login (missing creds):", e)); // Prevent logging error from crashing
+        await logUserActivity("LOGIN", { username: username || 'N/A' }, null, "FAILED - Missing Credentials");
         return res.status(400).json({ message: "Username and password are required." });
     }
 
     console.log(`Login attempt for: ${username}`);
-    const logAttemptData = { username }; // Data for logging if user not found
+    const logAttemptData = { username };
 
     try {
-        // Fetch user from database using the CORRECT pool variable
-        // Use parameterized query ($1) for security with node-postgres (pg)
+        // Fetch user from database using parameterized query for security
         const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
-
-        // --- !!! FIX IS HERE: Use 'pool.query' instead of 'db.promise().query' !!! ---
         const { rows } = await pool.query(query, [username]);
-        // --- End of Fix ---
 
         if (rows.length === 0) {
             console.log(`Login failed: User not found for ${username}.`);
-            await logUserActivity("LOGIN", logAttemptData, null, "FAILED - User Not Found")
-                .catch(e => console.error("Error logging failed login (user not found):", e));
-            return res.status(401).json({ message: "Invalid credentials." }); // Generic message for security
+            await logUserActivity("LOGIN", logAttemptData, null, "FAILED - User Not Found");
+            return res.status(401).json({ message: "Invalid credentials." });
         }
 
         const user = rows[0];
 
         // Check if user account is verified
         if (!user.verified) {
-             console.log(`Login failed: Account not verified for ${user.email}`);
-             await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Not Verified")
-                .catch(e => console.error("Error logging failed login (not verified):", e));
-             return res.status(401).json({ message: "Account not verified. Please check your email." });
+            console.log(`Login failed: Account not verified for ${user.email}`);
+            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Not Verified");
+            return res.status(401).json({ message: "Account not verified. Please check your email." });
         }
 
         // Compare password using bcrypt
@@ -409,68 +404,53 @@ app.post("/login", async (req, res) => {
 
         if (!isMatch) {
             console.log(`Login failed: Incorrect password for ${user.email}.`);
-            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Incorrect Password")
-                .catch(e => console.error("Error logging failed login (wrong pass):", e));
-            return res.status(401).json({ message: "Invalid credentials." }); // Generic message
+            await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Incorrect Password");
+            return res.status(401).json({ message: "Invalid credentials." });
         }
 
-        // --- Login Successful ---
         console.log("Login successful for:", user.email);
 
         // Prepare user data for session
         const userDataForSession = {
             id: user.id,
-            username: user.email, // Using email as the session username identifier
+            username: user.email,
             userType: user.userType
         };
 
-        // Regenerate session ID upon login for security
-        req.session.regenerate(async (regenerateErr) => {
+        // Regenerate session to avoid session fixation
+        req.session.regenerate((regenerateErr) => {
             if (regenerateErr) {
                 console.error("❌ Session regeneration error:", regenerateErr);
-                // Log error but use original user object as session data might be gone
-                await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Session Regen Error")
-                    .catch(e => console.error("Error logging failed login (regen error):", e));
-                return res.status(500).json({ message: "Server error during login process." });
+                return res.status(500).json({ message: "Server error during login." });
             }
 
             console.log("✅ Session regenerated successfully.");
 
-            // Save user data to the NEW session object
+            // Save user data to the session
             req.session.user = userDataForSession;
 
-            // Explicitly save the session BEFORE rendering/redirecting
+            // Explicitly save the session
             req.session.save(async (saveErr) => {
                 if (saveErr) {
-                    console.error("❌ Session save error after regeneration:", saveErr);
-                     // Log error but use original user object as session data might be gone
-                    await logUserActivity("LOGIN", { id: user.id, username: user.email }, null, "FAILED - Session Save Error")
-                         .catch(e => console.error("Error logging failed login (save error):", e));
+                    console.error("❌ Session save error:", saveErr);
                     return res.status(500).json({ message: "Server error saving session." });
                 }
 
-                console.log("✅ Session saved explicitly after regeneration.");
-                // Log successful login activity using data from the now-saved session
-                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS")
-                    .catch(e => console.error("Error logging successful login:", e)); // Log success but don't crash if logging fails
+                console.log("✅ Session saved successfully.");
 
-                // --- Render home page on success ---
-                console.log("➡️ Rendering home page for client.");
-                res.render('home', { // Pass user data to the template
-                   user: req.session.user
-                });
-                // --- End of Rendering ---
+                // Log the successful login
+                await logUserActivity("LOGIN", req.session.user, null, "SUCCESS");
 
-            }); // End session save
-        }); // End session regenerate
+                // Rendering home page
+                res.render('home', { user: req.session.user });
+
+            }); // End of session.save
+        }); // End of session.regenerate
 
     } catch (error) {
-        // This catch block handles errors from pool.query, bcrypt.compare, etc.
-        console.error("❌ Login process error (Catch Block):", error);
-        // Attempt to log the error using the initial attempt data
-        await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Server Error Catch")
-            .catch(e => console.error("Error logging failed login (catch block):", e)); // Log error from catch, avoid infinite loop if logging fails
-        res.status(500).json({ message: "Server error during login." }); // Send generic error to client
+        console.error("❌ Login process error:", error);
+        await logUserActivity("LOGIN", logAttemptData, null, "FAILED - Server Error");
+        res.status(500).json({ message: "Server error during login." });
     }
 });
 
