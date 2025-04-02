@@ -112,13 +112,20 @@ const mockUserAuth = (req, res, next) => {
         };
     } else {
         // Set user data from session if it exists
+        // req.user = {
+        //     id: sessionUser.id || null,
+        //     username: sessionUser.username || null,
+        //     email: sessionUser.username || null,  // Fallback to username if email is not set
+        //     userType: sessionUser.userType || 'user',  // Default userType if missing
+        // };
         req.user = {
-            id: sessionUser.id || null,
-            username: sessionUser.username || null,
-            email: sessionUser.username || null,  // Fallback to username if email is not set
-            userType: sessionUser.userType || 'user',  // Default userType if missing
+            id: "9",
+            username: "aguleria@shivalikbank.com ",
+            email: "aguleria@shivalikbank.com",  
+            userType: "user",  
         };
     }
+
 
     console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
 
