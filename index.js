@@ -53,25 +53,22 @@ const app = express();
 app.use(cookieParser()); // Ensure this is before session middleware
 app.use(session({
     store: new pgSession({
-      pool: pool,
-      tableName: 'user_sessions',
-      serialize: function (session) {
-        return JSON.stringify(session); // Convert session to JSON
-      },
-      unserialize: function (session) {
-        return JSON.parse(session); // Convert JSON back from JSON
-      }
+        pool: pool,
+        tableName: 'user_sessions',
+        createTableIfMissing: true, // Add this to ensure table exists
+        pruneSessionInterval: 60 // Clean up expired sessions every 60 minutes
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Change to false for security
     cookie: {
-      secure: process.env.NODE_ENV === 'production', // Set secure cookie in production
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24, // Session expires in 1 day
-      sameSite: 'lax' // Recommended for cross-site compatibility
-    }
-  }));
+        secure: process.env.NODE_ENV === 'production', // Only true in production
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        sameSite: 'lax'
+    },
+    name: 'auditTracker.sid' // Give your session cookie a specific name
+}));
   
 
 // This middleware runs after session is set up and will log session details
@@ -284,14 +281,19 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 // --- Login Route (Using PostgreSQL) ---
 app.get("/home", (req, res) => {
-    console.log("Session Object:", req.session);
-    console.log("Session User Data:", req.session.user);
+    // Debugging logs
+    console.log("Session ID:", req.sessionID);
+    console.log("Session:", req.session);
+    console.log("Session User:", req.session.user);
+    console.log("Cookies:", req.cookies);
+
     if (!req.session.user) {
-      console.log("❌ No active session user found. Redirecting to login.");
-      return res.redirect("/");
+        console.log("No user in session, redirecting to login");
+        return res.redirect("/");
     }
+
     res.render("home", { user: req.session.user });
-  });
+});
   
   
 
@@ -377,103 +379,74 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 // --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-  
+
     if (!username || !password) {
-      console.log("Login failed: Missing credentials.");
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Username and password are required.",
+        return res.status(400).json({ 
+            success: false, 
+            message: "Username and password are required." 
         });
     }
-  
+
     try {
-      const query =
-        "SELECT id, email, password, userType, verified FROM users WHERE email = $1";
-      const { rows } = await pool.query(query, [username]);
-  
-      if (rows.length === 0) {
-        console.log(`Login failed: User not found for ${username}.`);
-        return res
-          .status(401)
-          .json({ success: false, message: "Invalid credentials." });
-      }
-  
-      const user = rows[0];
-  
-      if (!user.verified) {
-        console.log(`Login failed: Account not verified for ${user.email}`);
-        return res
-          .status(401)
-          .json({
-            success: false,
-            message: "Account not verified. Please check your email.",
-          });
-      }
-  
-      const isMatch = await bcrypt.compare(password, user.password);
-  
-      if (!isMatch) {
-        console.log(`Login failed: Incorrect password for ${user.email}.`);
-        return res
-          .status(401)
-          .json({ success: false, message: "Invalid credentials." });
-      }
-  
-      console.log("Login successful for:", user.email);
-  
-      const sessionUser = {
-        id: user.id,
-        username: user.email,
-        userType: user.userType,
-      };
-      req.session.user = sessionUser;
-  
-      console.log("hardkkkkkkk 1 Session before save:", req.session);
-      console.log("hardikkkkkkkkkkk Session before save:", req.session.user);
-  
-      req.session.save(async (err) => {
-        if (err) {
-          console.error("Session save error:", err);
-          await logUserActivity(
-            "LOGIN",
-            { email: username },
-            null,
-            "FAILED - Session Save Error"
-          ).catch((e) => console.error("Error logging failed login:", e));
-          return res
-            .status(500)
-            .json({
-              success: false,
-              message: "Server error during login (session save).",
+        const query = "SELECT id, email, password, userType, verified FROM users WHERE email = $1";
+        const { rows } = await pool.query(query, [username]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ success: false, message: "Invalid credentials." });
+        }
+
+        const user = rows[0];
+
+        if (!user.verified) {
+            return res.status(401).json({ 
+                success: false, 
+                message: "Account not verified. Please check your email." 
             });
         }
-  
-        console.log("Session saved successfully:", req.session);
-        res
-          .status(200)
-          .json({
-            success: true,
-            message: "Login successful!",
-            redirectUrl: "/home",
-          });
-      });
-    } catch (error) {
-      console.error("❌ Login process error:", error);
-      await logUserActivity(
-        "LOGIN",
-        { email: username },
-        null,
-        "FAILED - Server Error"
-      ).catch((e) => console.error("Error logging failed login:", e));
-      res
-        .status(500)
-        .json({ success: false, message: "Server error during login." });
-    }
-  });
-  
 
+        const isMatch = await bcrypt.compare(password, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: "Invalid credentials." });
+        }
+
+        // Create session user object
+        req.session.user = {
+            id: user.id,
+            email: user.email,
+            userType: user.userType
+        };
+
+        // Save session before responding
+        req.session.save(err => {
+            if (err) {
+                console.error("Session save error:", err);
+                return res.status(500).json({ 
+                    success: false, 
+                    message: "Server error during login." 
+                });
+            }
+            
+            // Set cookie manually if needed
+            res.cookie('auditTracker.sid', req.sessionID, {
+                maxAge: 24 * 60 * 60 * 1000,
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
+            });
+
+            return res.status(200).json({ 
+                success: true, 
+                message: "Login successful!", 
+                redirectUrl: "/home" 
+            });
+        });
+
+    } catch (error) {
+        console.error("Login process error:", error);
+        res.status(500).json({ success: false, message: "Server error during login." });
+    }
+});
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
     const { filename } = req.params;
