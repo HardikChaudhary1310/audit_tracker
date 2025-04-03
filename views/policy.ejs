@@ -524,40 +524,64 @@ async function handleDownload(element) {
     }
 }
 
-// Attach to all download buttons
-document.querySelectorAll('.download-link').forEach(button => {
-    button.addEventListener('click', (e) => {
-        e.preventDefault();
-        handleDownload(e.currentTarget);
-    });
-});
-        
 // Unified policy action handler
 async function trackPolicyAction(action, element) {
     const policyId = element.dataset.policyId;
     const filename = element.dataset.filename || policyId;
+    const url = element.href;
     
     try {
-        const response = await fetch(`/api/policies/track-${action.toLowerCase()}`, {
+        const response = await fetch(`/api/track-${action.toLowerCase()}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            },
             body: JSON.stringify({ policyId, filename }),
             credentials: 'include'
         });
 
-        if (!response.ok) throw new Error('Tracking failed');
-        
+        if (!response.ok) {
+            throw new Error(`Tracking failed: ${response.status}`);
+        }
+
         const result = await response.json();
         console.log(`${action} tracked:`, result);
-        return result;
+        
+        // Proceed with the action
+        if (action === 'DOWNLOAD') {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
 
     } catch (error) {
         console.error(`Error tracking ${action}:`, error);
-        // Fallback action if tracking fails
-        return { success: false };
+        // Fallback to direct action
+        if (action === 'DOWNLOAD') {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
     }
 }
 
+// Attach event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.view-button').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            trackPolicyAction('VIEW', e.currentTarget);
+        });
+    });
+
+    document.querySelectorAll('.download-link').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            trackPolicyAction('DOWNLOAD', e.currentTarget);
+        });
+    });
+});
 // Example usage in your frontend
 document.querySelectorAll('.view-button').forEach(button => {
     button.addEventListener('click', async (e) => {

@@ -542,59 +542,67 @@ app.post('/track-policy-click', mockUserAuth, async (req, res) => { // Make asyn
 });
 
 // Track policy view
-app.post('/track-view', mockUserAuth, async (req, res) => {
+app.post('/api/track-view', mockUserAuth, async (req, res) => {
     try {
         const { policyId, filename } = req.body;
-        const user = req.user;
+        
+        if (!policyId) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Policy ID is required'
+            });
+        }
 
-        const result = await logUserActivity('VIEW', user, policyId, "Viewed", {
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
+        const activity = await logPolicyAction('VIEW', req.user, {
+            id: policyId,
             filename
-        });
+        }, req);
 
-        console.log('View tracking result:', result);
         res.json({ 
             success: true,
-            activityId: result.id,
-            table: 'activities' // Confirm which table was written to
+            activityId: activity.id,
+            table: 'activities'
         });
 
-    } catch (err) {
-        console.error('View tracking failed:', err);
+    } catch (error) {
+        console.error('View Tracking Error:', error);
         res.status(500).json({ 
             success: false,
             message: 'Failed to track policy view',
-            error: err.message
+            error: process.env.NODE_ENV === 'development' ? error.message : null
         });
     }
 });
 
 // Track policy download
-app.post('/track-download', mockUserAuth, async (req, res) => {
+app.post('/api/track-download', mockUserAuth, async (req, res) => {
     try {
         const { policyId, filename } = req.body;
-        const user = req.user;
+        
+        if (!policyId) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Policy ID is required'
+            });
+        }
 
-        const result = await logUserActivity('DOWNLOAD', user, policyId, "Downloaded", {
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
+        const activity = await logPolicyAction('DOWNLOAD', req.user, {
+            id: policyId,
             filename
-        });
+        }, req);
 
-        console.log('Download tracking result:', result);
         res.json({ 
             success: true,
-            activityId: result.id,
-            table: 'activities' // Confirm which table was written to
+            activityId: activity.id,
+            table: 'activities'
         });
 
-    } catch (err) {
-        console.error('Download tracking failed:', err);
+    } catch (error) {
+        console.error('Download Tracking Error:', error);
         res.status(500).json({ 
             success: false,
             message: 'Failed to track policy download',
-            error: err.message
+            error: process.env.NODE_ENV === 'development' ? error.message : null
         });
     }
 });
