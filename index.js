@@ -99,7 +99,7 @@ app.use(async (req, res, next) => {
     try {
         const result = await pool.query(
             'SELECT sess FROM user_sessions WHERE sid = $1', 
-            [req.sessionID]
+            [req.cookies['auditTracker.sid']]
         );
         
         if (result.rows.length > 0) {
