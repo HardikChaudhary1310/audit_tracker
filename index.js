@@ -376,76 +376,102 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 // --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-
+  
     if (!username || !password) {
-        console.log("Login failed: Missing credentials.");
-        // Send JSON error
-        return res.status(400).json({ success: false, message: "Username and password are required." });
+      console.log("Login failed: Missing credentials.");
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "Username and password are required.",
+        });
     }
-
+  
     try {
-        // Check if a session already exists for the user (Optional, but okay)
-        // if (req.session.user) {
-        //     console.log("User already logged in:", req.session.user.username);
-        //     // Send JSON indicating already logged in and where to go
-        //     return res.status(200).json({ success: true, redirectUrl: '/home', message: 'Already logged in.' });
-        // }
-
-        // Fetch user from the database
-        const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
-        const { rows } = await pool.query(query, [username]);
-
-        if (rows.length === 0) {
-            console.log(`Login failed: User not found for ${username}.`);
-            // Send JSON error
-            return res.status(401).json({ success: false, message: "Invalid credentials." });
+      const query =
+        "SELECT id, email, password, userType, verified FROM users WHERE email = $1";
+      const { rows } = await pool.query(query, [username]);
+  
+      if (rows.length === 0) {
+        console.log(`Login failed: User not found for ${username}.`);
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid credentials." });
+      }
+  
+      const user = rows[0];
+  
+      if (!user.verified) {
+        console.log(`Login failed: Account not verified for ${user.email}`);
+        return res
+          .status(401)
+          .json({
+            success: false,
+            message: "Account not verified. Please check your email.",
+          });
+      }
+  
+      const isMatch = await bcrypt.compare(password, user.password);
+  
+      if (!isMatch) {
+        console.log(`Login failed: Incorrect password for ${user.email}.`);
+        return res
+          .status(401)
+          .json({ success: false, message: "Invalid credentials." });
+      }
+  
+      console.log("Login successful for:", user.email);
+  
+      const sessionUser = {
+        id: user.id,
+        username: user.email,
+        userType: user.userType,
+      };
+      req.session.user = sessionUser;
+  
+      console.log("hardkkkkkkk 1 Session before save:", req.session);
+      console.log("hardikkkkkkkkkkk Session before save:", req.session.user);
+  
+      req.session.save(async (err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          await logUserActivity(
+            "LOGIN",
+            { email: username },
+            null,
+            "FAILED - Session Save Error"
+          ).catch((e) => console.error("Error logging failed login:", e));
+          return res
+            .status(500)
+            .json({
+              success: false,
+              message: "Server error during login (session save).",
+            });
         }
-
-        const user = rows[0];
-
-        if (!user.verified) {
-            console.log(`Login failed: Account not verified for ${user.email}`);
-            // Send JSON error
-            return res.status(401).json({ success: false, message: "Account not verified. Please check your email." });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-
-        if (!isMatch) {
-            console.log(`Login failed: Incorrect password for ${user.email}.`);
-             // Send JSON error
-            return res.status(401).json({ success: false, message: "Invalid credentials." });
-        }
-
-        console.log("Login successful for:", user.email);
-
-        // Prepare user data for session
-        const sessionUser = {
-            id: user.id,
-            username: user.email, // Use email as username consistently
-            userType: user.userType
-        };
-        req.session.user = sessionUser;
-
-
-        console.log("hardkkkkkkk 1 Session before save:", req.session); // Log session before saving
-        console.log("hardikkkkkkkkkkk Session before save:", req.session.user);
-        // Ensure session is saved before sending response
-// Save session asynchronously
-req.session.save(async (err) => {
-    if (err) {
-        console.error("Session save error:", err);
-        await logUserActivity("LOGIN", { email: username }, null, `FAILED - Session Save Error: ${err.message}`).catch(e => console.error("Error logging failed login:", e));
-        return res.status(500).json({ success: false, message: "Server error during login (session save)." });
+  
+        console.log("Session saved successfully:", req.session);
+        res
+          .status(200)
+          .json({
+            success: true,
+            message: "Login successful!",
+            redirectUrl: "/home",
+          });
+      });
+    } catch (error) {
+      console.error("❌ Login process error:", error);
+      await logUserActivity(
+        "LOGIN",
+        { email: username },
+        null,
+        "FAILED - Server Error"
+      ).catch((e) => console.error("Error logging failed login:", e));
+      res
+        .status(500)
+        .json({ success: false, message: "Server error during login." });
     }
-
-    console.log("Session saved successfully, Session ID:", req.sessionID);
-    console.log("Session content after save:", req.session);
-
-    await logUserActivity("LOGIN", sessionUser, null, "SUCCESS");
-    res.status(200).json({ success: true, message: "Login successful! Redirecting...", redirectUrl: "/home" });
-});
-
+  });
+  
 
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
