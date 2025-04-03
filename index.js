@@ -153,7 +153,7 @@ app.use(cookieParser());
 
 
 // In your main server file (index.js/app.js)
-const policyRoutes = require('./routes/policyRoutes');
+// const policyRoutes = require('./routes/policyRoutes');
 app.use('/api/policies', policyRoutes);
 
 
