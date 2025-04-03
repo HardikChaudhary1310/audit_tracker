@@ -44,7 +44,7 @@ if (!fs.existsSync(logDir)) {
 // --- Policy Routes (Keep as is) ---
 const policyRoutes = require('./routes/routes');
 const cookieParser = require('cookie-parser');
-app.use(cookieParser());
+
 
 
 const app = express();
@@ -80,7 +80,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb', parameterLimit: 1000
 app.set("views", path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 app.use(cors()); // Consider configuring CORS more restrictively for production
-
+app.use(cookieParser());
 
 // --- Validation Functions (Keep as is) ---
 const isValidEmail = (username) => {
