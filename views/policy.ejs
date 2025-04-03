@@ -215,36 +215,6 @@
                         
                         </div>
                     </li>
-                    <!-- Example policy item with proper data attributes -->
-<li>
-    <a href="/policies/audit/har.pdf" 
-       class="sub-policy" 
-       download 
-       data-policy-id="audit-001"
-       data-filename="har.pdf">
-       Sample Policy
-    </a>
-    <div class="action-buttons">
-        <a href="/policies/audit/har.pdf" 
-           class="download-link" 
-           download 
-           data-policy-id="audit-001"
-           data-filename="har.pdf">
-           Download
-        </a>
-        <a href="/policies/audit/har.pdf" 
-           class="view-button" 
-           data-policy-id="audit-001"
-           data-filename="har.pdf">
-           View
-        </a>
-        <a href="#" 
-           class="delete-button" 
-           data-filename="har.pdf">
-           Delete
-        </a>
-    </div>
-</li>
                     <li>
                         <a href="/policies/audit/Hardik-Resume-New.pdf" class="sub-policy" download style="color: whitesmoke;" data-policy-id="54321">SSFB_Gunman Age Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
@@ -639,100 +609,24 @@ const handleLogin = (username, password) => {
 //     });
 // });
 
+document.querySelectorAll('.download-link').forEach(button => {
+    button.addEventListener('click', function (event) {
 
-// Enhanced tracking functions
-const trackPolicyAction = async (actionType, policyId, filename) => {
-    try {
-        const response = await fetch(`/track-${actionType.toLowerCase()}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                policyId,
-                filename,
-                actionType: actionType.toUpperCase() 
-            }),
-            credentials: 'include' // Important for session cookies
-        });
+        event.preventDefault(); // Prevent default behavior (e.g., navigating to the link)
+
+        // Retrieve the policy ID, user ID, and username
+        const policyId = this.getAttribute('data-policy-id');  // Correctly retrieve the data-policy-id attribute
+       // const policyId = this.getAttribute('data-filename');  // e.g., "Hardik-Resume-New.pdf"
+        const userId = 'ID1741331579847';  // The ID you get from your session
+        const username = 'aryaman@shivalikbank.com';  // The username from your session
         
-        if (!response.ok) throw new Error('Tracking failed');
-        return await response.json();
-    } catch (error) {
-        console.error(`Error tracking ${actionType}:`, error);
-    }
-};
-
-// Unified handler for both view and download
-const handlePolicyAction = async (action, element) => {
-    event.preventDefault();
-    const policyId = element.dataset.policyId;
-    const filename = element.dataset.filename || policyId;
-    const url = element.href;
-    
-    await trackPolicyAction(action, policyId, filename);
-    
-    if (action === 'DOWNLOAD') {
-        window.location.href = url; // Triggers download
-    } else {
-        window.open(url, '_blank'); // Opens in new tab
-    }
-};
-
-document.addEventListener("DOMContentLoaded", function() {
-    // View buttons
-    document.querySelectorAll('.view-button').forEach(button => {
-        button.addEventListener('click', (e) => {
-            handlePolicyAction('VIEW', e.currentTarget);
-        });
-    });
-    
-    // Download buttons
-    document.querySelectorAll('.download-link').forEach(button => {
-        button.addEventListener('click', (e) => {
-            handlePolicyAction('DOWNLOAD', e.currentTarget);
-        });
-    });
-    
-    // Delete buttons (admin only)
-    document.querySelectorAll('.delete-button').forEach(button => {
-        button.addEventListener('click', async function(e) {
-            e.preventDefault();
-            const filename = this.dataset.filename;
-            if (confirm(`Delete ${filename}?`)) {
-                try {
-                    const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, {
-                        method: 'DELETE',
-                        credentials: 'include'
-                    });
-                    if (response.ok) {
-                        this.closest('li').remove();
-                    }
-                } catch (error) {
-                    console.error("Delete error:", error);
-                }
-            }
-        });
+        // Call the function to track the download
+        trackPolicyDownload(policyId, userId, username);
+        // Optionally, open the policy in a new tab after tracking
+        const policyUrl = this.getAttribute('href');  // Assuming the link has a URL to open
+        window.open(policyUrl, '_blank');
     });
 });
-
-
-// document.querySelectorAll('.download-link').forEach(button => {
-//     button.addEventListener('click', function (event) {
-
-//         event.preventDefault(); // Prevent default behavior (e.g., navigating to the link)
-
-//         // Retrieve the policy ID, user ID, and username
-//         const policyId = this.getAttribute('data-policy-id');  // Correctly retrieve the data-policy-id attribute
-//        // const policyId = this.getAttribute('data-filename');  // e.g., "Hardik-Resume-New.pdf"
-//         const userId = 'ID1741331579847';  // The ID you get from your session
-//         const username = 'aryaman@shivalikbank.com';  // The username from your session
-        
-//         // Call the function to track the download
-//         trackPolicyDownload(policyId, userId, username);
-//         // Optionally, open the policy in a new tab after tracking
-//         const policyUrl = this.getAttribute('href');  // Assuming the link has a URL to open
-//         window.open(policyUrl, '_blank');
-//     });
-// });
 
 
 document.querySelectorAll('.view-button').forEach(button => {
