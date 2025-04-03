@@ -608,7 +608,17 @@ app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make as
          }
     }
 });
-
+app.post('/log-activity', async (req, res) => {
+    const { actionType, username, policyId, status } = req.body;
+    
+    try {
+      const result = await logUserActivity(actionType, { username }, policyId, status);
+      res.status(200).json({ success: true, message: 'Activity logged successfully', data: result });
+    } catch (error) {
+      console.error('Error logging activity:', error);
+      res.status(500).json({ success: false, message: 'Error logging activity' });
+    }
+  });
 
 // --- Delete Policy Route (Keep as is - File System Operation) ---
 app.delete('/delete-policy/:filename', mockUserAuth, (req, res) => {
