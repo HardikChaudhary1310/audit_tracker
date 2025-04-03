@@ -48,26 +48,32 @@ const cookieParser = require('cookie-parser');
 
 
 const app = express();
+
+
+app.use(cookieParser()); // Ensure this is before session middleware
 app.use(session({
     store: new pgSession({
         pool: pool, // Database pool
         tableName: 'user_sessions' // Table to store sessions
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
-    resave: false, // Avoid resaving the session unless the session data changes
-    saveUninitialized: true,// Avoid creating a session if no data is stored
+    resave: false,
+    saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
-        httpOnly: true, // Don't allow client-side JS to access the cookie
-        maxAge: 1000 * 60 * 60 * 24 // Session expiration in milliseconds
+        secure: process.env.NODE_ENV === 'production', // Ensure HTTPS in production
+        httpOnly: true,
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
+
 app.use((req, res, next) => {
-    console.log("Current Session ID:", req.sessionID);
-    console.log("Session User Data:", req.session.user);
+    console.log("Current Session ID:", req.sessionID); // Check if session ID is being generated
+    console.log("Session User Data:", req.session.user); // Check if session user data is set
+    console.log("Session Cookie Data:", req.cookies); // Check the cookie sent with the request
     next();
 });
+
 
 
 app.use(morgan('dev'));
