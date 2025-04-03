@@ -313,7 +313,39 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 
 // --- Login Route (Using PostgreSQL) ---
-app.get("/home", (req, res) => {
+// app.get("/home", (req, res) => {
+//     console.log("--- DEBUG START ---");
+//     console.log("Request Session ID:", req.sessionID);
+//     console.log("Cookie Session ID:", req.cookies['auditTracker.sid']);
+//     console.log("Session:", req.session);
+//     console.log("Session User:", req.session?.user);
+//     console.log("Cookies:", req.cookies);
+//     console.log("--- DEBUG END ---");
+
+//     try {
+//         const result = await pool.query(
+//             'SELECT sess FROM user_sessions WHERE sid = $1', 
+//             [req.cookies['auditTracker.sid']]
+//         );
+        
+//         if (result.rows.length > 0) {
+//             console.log('Session found in DB:', result.rows[0].sess);
+//         } else {
+//             console.log('⚠️ Session NOT FOUND in database');
+//         }
+//     } catch (err) {
+//         console.error('Session verification error:', err);
+//     }
+
+//     if (!req.session.user) {
+//         console.log("No user in session, redirecting to login");
+//         return res.redirect("/");
+//     }
+
+//     res.render("home", { user: req.session.user });
+// });
+  
+app.get("/home", async (req, res) => { // Make the callback async
     console.log("--- DEBUG START ---");
     console.log("Request Session ID:", req.sessionID);
     console.log("Cookie Session ID:", req.cookies['auditTracker.sid']);
@@ -321,15 +353,53 @@ app.get("/home", (req, res) => {
     console.log("Session User:", req.session?.user);
     console.log("Cookies:", req.cookies);
     console.log("--- DEBUG END ---");
+    
+    let dbSessionData = null; // Variable to store session data from DB
+    
+    try {
+        // Query the session from database using the cookie session ID
+        const result = await pool.query(
+            'SELECT sess FROM user_sessions WHERE sid = $1', 
+            [req.cookies['auditTracker.sid'] || req.sessionID]
+        );
+        
+        if (result.rows.length > 0) {
+            dbSessionData = result.rows[0].sess;
+            console.log('Session found in DB:', dbSessionData);
+            
+            // If session exists in DB but not in memory, restore it
+            if (!req.session.user && dbSessionData.user) {
+                console.log('Restoring user session from DB');
+                req.session.user = dbSessionData.user;
+                await new Promise((resolve, reject) => {
+                    req.session.save(err => {
+                        if (err) {
+                            console.error('Error saving restored session:', err);
+                            reject(err);
+                        } else {
+                            resolve();
+                        }
+                    });
+                });
+            }
+        } else {
+            console.log('⚠️ Session NOT FOUND in database');
+        }
+    } catch (err) {
+        console.error('Session verification error:', err);
+    }
 
-    if (!req.session.user) {
+    // Final check - use either in-memory session or DB-restored session
+    const userData = req.session.user || (dbSessionData?.user || null);
+    
+    if (!userData) {
         console.log("No user in session, redirecting to login");
         return res.redirect("/");
     }
 
-    res.render("home", { user: req.session.user });
+    console.log("User authenticated:", userData.email);
+    res.render("home", { user: userData });
 });
-  
   
 
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
