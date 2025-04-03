@@ -1,47 +1,68 @@
-// models/userActivity.js
 const pool = require('./db');
 
 const logUserActivity = async (actionType, userData, policyId, status, additionalData = {}) => {
-    // Ensure required fields have proper values
-    const userId = userData?.id || null;
-    const username = userData?.email || userData?.username || 'anonymous@example.com'; // Must be valid email format
-    const safePolicyId = policyId || 'default_policy_id'; // Can't be null or 'N/A'
-    const ipAddress = additionalData.ip || '0.0.0.0';
-    const userAgent = additionalData.userAgent || 'unknown';
+    // Validate required parameters
+    if (!actionType || !userData) {
+        throw new Error('Missing required parameters');
+    }
+
+    // Prepare data with strict validation
+    const userId = userData.id || null; // Can be null but must be valid if provided
+    const username = userData.email || userData.username || 'system@shivalikbank.com';
+    const safePolicyId = policyId ? String(policyId).substring(0, 100) : 'system_default_policy';
+    const ipAddress = additionalData.ip || req?.ip || '0.0.0.0';
+    const userAgent = additionalData.userAgent || req?.get('User-Agent') || 'unknown';
 
     const client = await pool.connect();
     
     try {
+        console.log('Attempting to log activity:', {
+            actionType, userId, username, safePolicyId, status
+        });
+
         await client.query('BEGIN');
 
-        // 1. First insert into activities table (since it has stricter constraints)
-        const activitiesQuery = `
-            INSERT INTO activities 
-                (action_type, email, policy_id, user_id, ip_address, user_agent)
-            VALUES 
-                ($1, $2, $3, $4, $5, $6)
-            RETURNING id;
+        // 1. First insert into activities table (more restrictive)
+        const activitiesInsert = `
+            INSERT INTO activities (
+                action_type, 
+                email, 
+                policy_id, 
+                user_id, 
+                ip_address, 
+                user_agent
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6
+            ) RETURNING id;
         `;
-        
-        const activitiesResult = await client.query(activitiesQuery, [
-            actionType, 
-            username,
+
+        const activitiesRes = await client.query(activitiesInsert, [
+            actionType.substring(0, 20), // Ensure fits VARCHAR(20)
+            username.substring(0, 255),  // Ensure fits VARCHAR(255)
             safePolicyId,
-            userId, // This can be null but must match a users.id if not null
-            ipAddress,
-            userAgent
+            userId, // NULL allowed but must match users.id if not null
+            ipAddress.substring(0, 45),
+            userAgent.substring(0, 500) // Truncate if needed for text field
         ]);
 
-        // 2. Then insert into user_activity (less restrictive)
-        const userActivityQuery = `
-            INSERT INTO user_activity 
-                (action_type, user_id, username, policy_id, status, ip_address, user_agent)
-            VALUES 
-                ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id;
+        console.log('Activities insert result:', activitiesRes.rows[0]);
+
+        // 2. Then insert into user_activity
+        const userActivityInsert = `
+            INSERT INTO user_activity (
+                action_type, 
+                user_id, 
+                username, 
+                policy_id, 
+                status, 
+                ip_address, 
+                user_agent
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7
+            ) RETURNING id;
         `;
-        
-        await client.query(userActivityQuery, [
+
+        await client.query(userActivityInsert, [
             actionType,
             userId,
             username,
@@ -52,16 +73,13 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
         ]);
 
         await client.query('COMMIT');
-        
-        console.log('✅ Successfully inserted into activities table with ID:', 
-                   activitiesResult.rows[0]?.id);
-        
-        return activitiesResult.rows[0];
+        return activitiesRes.rows[0];
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('❌ Transaction failed:', {
-            error: err.message,
+        console.error('DATABASE ERROR DETAILS:', {
+            message: err.message,
+            code: err.code,
             query: err.query,
             parameters: err.parameters
         });

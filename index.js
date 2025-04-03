@@ -795,27 +795,46 @@ app.use('/track-*', (req, res, next) => {
 // Track policy view
 // Track policy view
 // Track policy view
+// Track policy view with detailed error handling
 app.post('/track-view', mockUserAuth, async (req, res) => {
-    const { policyId, filename } = req.body;
-    const user = req.user;
-    
     try {
-        const result = await logUserActivity('VIEW', user, policyId, "Viewed", {
-            ip: req.ip,
-            userAgent: req.get('User-Agent')
-        });
+        const { policyId, filename } = req.body;
         
-        console.log('View tracking result:', result);
+        if (!policyId) {
+            return res.status(400).json({ 
+                error: 'policyId is required',
+                received: req.body 
+            });
+        }
+
+        const result = await logUserActivity(
+            'VIEW', 
+            req.user, 
+            policyId, 
+            'Viewed', 
+            {
+                ip: req.ip,
+                userAgent: req.get('User-Agent')
+            }
+        );
+
+        console.log('Tracking result:', result);
         res.json({ 
             success: true,
             activityId: result.id 
         });
-        
+
     } catch (err) {
-        console.error('View tracking failed:', err);
+        console.error('TRACKING ERROR:', {
+            error: err.message,
+            stack: err.stack,
+            body: req.body,
+            user: req.user
+        });
+        
         res.status(500).json({ 
             error: 'Tracking failed',
-            details: err.message 
+            details: process.env.NODE_ENV === 'development' ? err.message : null
         });
     }
 });
