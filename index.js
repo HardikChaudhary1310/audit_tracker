@@ -498,39 +498,29 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
 // Combined route for VIEW and CLICK using logUserActivity
-app.post('/track-policy-click', mockUserAuth, async (req, res) => { // Make async
-    const { policyId, actionType, filename } = req.body; // actionType should be 'VIEW' or 'CLICK'
-    const user = req.user; // Get user from middleware
+app.post('/track-policy-click', mockUserAuth, async (req, res) => {
+    const { policyId, filename } = req.body;
+    const user = req.user;
 
     if (!user || !user.id) {
-         console.error("Tracking Error: User not authenticated or missing ID.");
-         return res.status(401).json({ message: "User authentication required." });
+        return res.status(401).json({ message: "Unauthorized" });
     }
-    if (!policyId || !actionType || !['VIEW', 'CLICK'].includes(actionType)) {
-        return res.status(400).json({ message: 'Valid Policy ID and Action Type (VIEW/CLICK) are required' });
-    }
-    const safeFilename = filename || policyId; // Use filename if provided, else policyId
 
-    console.log(`Tracking ${actionType} for policy: ${safeFilename} (ID: ${policyId}), User: ${user.username} (ID: ${user.id})`);
+    const safeFilename = filename || policyId;
 
     try {
-        // Log using the centralized function
-        await logUserActivity(actionType, user, policyId, `Success - ${actionType}ed`);
-
-        // Optional: If you still need the separate 'activities' table
-        /*
-        const insertActivitiesQuery = `
-            INSERT INTO activities (action_type, email, policy_id, user_id)
-            VALUES ($1, $2, $3, $4)`;
-        await pool.query(insertActivitiesQuery, [actionType, user.username, policyId, user.id]);
-        console.log(`Also logged to 'activities' table.`);
-        */
-
-        res.status(200).json({ message: `${actionType} tracked successfully for ${safeFilename}` });
-
+        await logUserActivity('CLICK', user, policyId, "Success", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            data: {
+                filename: safeFilename,
+                referrer: req.get('Referer')
+            }
+        });
+        res.status(200).json({ success: true });
     } catch (err) {
-        console.error(`❌ Error tracking ${actionType} for policy ${policyId}:`, err);
-        res.status(500).json({ message: `Server error while tracking ${actionType}` });
+        console.error('Tracking error:', err);
+        res.status(500).json({ message: "Tracking failed" });
     }
 });
 
@@ -646,89 +636,15 @@ app.post("/login", async (req, res) => {
     }
 });
 // Download Policy Route
-app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
-    const { filename } = req.params;
-    const decodedFilename = decodeURIComponent(filename);
-    const user = req.user; // Get user from middleware
-    const policyId = decodedFilename; // Use filename as policyId for logging
-
-     if (!user || !user.id) {
-         console.error("Download Error: User not authenticated or missing ID.");
-         // Don't return JSON here, maybe redirect or show an error page
-         return res.status(401).send("Authentication required to download files.");
-    }
-
-    console.log(`Download request for: ${decodedFilename}, User: ${user.username} (ID: ${user.id})`);
-
-    // Define potential file paths (adjust if your structure is different)
-    const possiblePaths = [
-        path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
-        path.join(__dirname, 'public', 'policies', decodedFilename),
-    ];
-
-    let filePath = null;
-    for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-            filePath = p;
-            break;
-        }
-    }
-
-    if (!filePath) {
-        console.error(`File not found for download: ${decodedFilename}`);
-        // Log failed download attempt
-        await logUserActivity('DOWNLOAD', user, policyId, "FAILED - File Not Found").catch(e => console.error("Error logging failed download:", e));
-        return res.status(404).send('File not found');
-    }
-
-    try {
-        // Log successful download activity *before* sending file
-        await logUserActivity('DOWNLOAD', user, policyId, "Success - Download Started");
-
-        // Optional: Log to 'activities' table if needed
-        /*
-        const insertActivitiesQuery = `
-            INSERT INTO activities (action_type, email, policy_id, user_id)
-            VALUES ($1, $2, $3, $4)`;
-        await pool.query(insertActivitiesQuery, ['DOWNLOAD', user.username, policyId, user.id]);
-        */
-
-        // Send the file for download
-        res.download(filePath, decodedFilename, (err) => {
-            if (err) {
-                // An error occurred after headers were sent, log it but can't send new response
-                console.error(`Error during file transmission for ${decodedFilename}:`, err);
-                // You might log this specific failure state if needed
-                 logUserActivity('DOWNLOAD', user, policyId, "FAILED - Transmission Error").catch(e => console.error("Error logging failed transmission:", e));
-            } else {
-                console.log(`File ${decodedFilename} sent successfully to ${user.username}`);
-                // Optional: Log completion if needed, but 'Started' is usually sufficient
-            }
-        });
-
-    } catch (err) {
-        console.error(`❌ Server error during download prep for ${decodedFilename}:`, err);
-         await logUserActivity('DOWNLOAD', user, policyId, "FAILED - Server Error").catch(e => console.error("Error logging server error:", e));
-        // Avoid sending JSON if headers might have been sent
-        if (!res.headersSent) {
-             res.status(500).send('Server error while processing download');
-        }
-    }
-});
-
-// View Policy Route
-app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make async
+app.get('/download-policy/:filename', mockUserAuth, async (req, res) => {
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user;
     const policyId = decodedFilename;
 
     if (!user || !user.id) {
-         console.error("View Error: User not authenticated or missing ID.");
-         return res.status(401).send("Authentication required to view files.");
+        return res.status(401).send("Authentication required");
     }
-
-    console.log(`View request for: ${decodedFilename}, User: ${user.username} (ID: ${user.id})`);
 
     const possiblePaths = [
         path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
@@ -744,39 +660,116 @@ app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make as
     }
 
     if (!filePath) {
-        console.error(`File not found for viewing: ${decodedFilename}`);
-        await logUserActivity('VIEW', user, policyId, "FAILED - File Not Found").catch(e => console.error("Error logging failed view:", e));
+        await logUserActivity('DOWNLOAD', user, policyId, "FAILED - File Not Found", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent')
+        });
         return res.status(404).send('File not found');
     }
 
     try {
-        // Log successful view activity
-        await logUserActivity('VIEW', user, policyId, "Success - Viewed");
+        // Log the download attempt
+        await logUserActivity('DOWNLOAD', user, policyId, "Started", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            data: {
+                filename: decodedFilename,
+                path: filePath
+            }
+        });
 
-        // Optional: Log to 'activities' table if needed
-        /*
-        const insertActivitiesQuery = `
-            INSERT INTO activities (action_type, email, policy_id, user_id)
-            VALUES ($1, $2, $3, $4)`;
-        await pool.query(insertActivitiesQuery, ['VIEW', user.username, policyId, user.id]);
-        */
-
-        // Send the file for inline viewing
-        res.sendFile(filePath, (err) => {
-             if (err) {
-                 console.error(`Error sending file for view ${decodedFilename}:`, err);
-                  logUserActivity('VIEW', user, policyId, "FAILED - Transmission Error").catch(e => console.error("Error logging failed view transmission:", e));
-             } else {
-                 console.log(`File ${decodedFilename} sent for viewing to ${user.username}`);
-             }
+        res.download(filePath, decodedFilename, async (err) => {
+            if (err) {
+                await logUserActivity('DOWNLOAD', user, policyId, "FAILED - Transmission Error", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    error: err.message
+                });
+            } else {
+                // Log successful completion
+                await logUserActivity('DOWNLOAD', user, policyId, "Completed", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    data: {
+                        filesize: fs.statSync(filePath).size,
+                        mimetype: mime.getType(filePath)
+                    }
+                });
+            }
         });
 
     } catch (err) {
-        console.error(`❌ Server error during view prep for ${decodedFilename}:`, err);
-         await logUserActivity('VIEW', user, policyId, "FAILED - Server Error").catch(e => console.error("Error logging server error:", e));
-         if (!res.headersSent) {
-             res.status(500).send('Server error while processing view request');
-         }
+        console.error(`Server error: ${err}`);
+        await logUserActivity('DOWNLOAD', user, policyId, "FAILED - Server Error", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            error: err.message
+        });
+        res.status(500).send('Server error');
+    }
+});
+// View Policy Route
+app.get('/view-policy/:filename', mockUserAuth, async (req, res) => {
+    const { filename } = req.params;
+    const decodedFilename = decodeURIComponent(filename);
+    const user = req.user;
+    const policyId = decodedFilename;
+
+    if (!user || !user.id) {
+        return res.status(401).send("Authentication required");
+    }
+
+    const possiblePaths = [
+        path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
+        path.join(__dirname, 'public', 'policies', decodedFilename),
+    ];
+
+    let filePath = null;
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+            filePath = p;
+            break;
+        }
+    }
+
+    if (!filePath) {
+        await logUserActivity('VIEW', user, policyId, "FAILED - File Not Found", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent')
+        });
+        return res.status(404).send('File not found');
+    }
+
+    try {
+        // Log the view activity with additional context
+        await logUserActivity('VIEW', user, policyId, "Success - Viewed", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            data: {
+                filename: decodedFilename,
+                path: filePath
+            }
+        });
+
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error(`Error sending file: ${err}`);
+                logUserActivity('VIEW', user, policyId, "FAILED - Transmission Error", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    error: err.message
+                });
+            }
+        });
+
+    } catch (err) {
+        console.error(`Server error: ${err}`);
+        await logUserActivity('VIEW', user, policyId, "FAILED - Server Error", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            error: err.message
+        });
+        res.status(500).send('Server error');
     }
 });
 app.post('/log-activity', async (req, res) => {
