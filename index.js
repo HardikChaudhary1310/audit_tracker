@@ -780,7 +780,19 @@ app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make as
     }
 });
 
-
+// Add this before your routes to log all tracking requests
+app.use('/track-*', (req, res, next) => {
+    console.log('\n--- Tracking Request ---');
+    console.log('URL:', req.originalUrl);
+    console.log('Method:', req.method);
+    console.log('Body:', req.body);
+    console.log('User:', req.user);
+    console.log('IP:', req.ip);
+    console.log('User Agent:', req.get('User-Agent'));
+    console.log('--- End Tracking Request ---\n');
+    next();
+});
+// Track policy view
 // Track policy view
 // Track policy view
 app.post('/track-view', mockUserAuth, async (req, res) => {
@@ -788,13 +800,23 @@ app.post('/track-view', mockUserAuth, async (req, res) => {
     const user = req.user;
     
     try {
-        await logUserActivity('VIEW', user, policyId, "Viewed", {
+        const result = await logUserActivity('VIEW', user, policyId, "Viewed", {
             ip: req.ip,
             userAgent: req.get('User-Agent')
         });
-        res.json({ success: true });
+        
+        console.log('View tracking result:', result);
+        res.json({ 
+            success: true,
+            activityId: result.id 
+        });
+        
     } catch (err) {
-        res.status(500).json({ error: 'Tracking failed' });
+        console.error('View tracking failed:', err);
+        res.status(500).json({ 
+            error: 'Tracking failed',
+            details: err.message 
+        });
     }
 });
 
