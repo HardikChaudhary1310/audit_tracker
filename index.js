@@ -53,16 +53,25 @@ const app = express();
 app.use(cookieParser()); // Ensure this is before session middleware
 app.use(session({
     store: new pgSession({
-        pool: pool, // Database pool
-        tableName: 'user_sessions' // Table to store sessions
+        pool: pool,  // PostgreSQL connection pool
+        tableName: 'user_sessions', // Table to store sessions
+        // Custom serialize and unserialize functions
+        serialize: function (session) {
+            // Convert session data to JSON
+            return JSON.stringify(session);
+        },
+        unserialize: function (session) {
+            // Parse session data from JSON
+            return JSON.parse(session);
+        }
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Ensure HTTPS in production
+        secure: process.env.NODE_ENV === 'production',  // Ensure secure cookie in production
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24
+        maxAge: 1000 * 60 * 60 * 24  // Session expires in 1 day
     }
 }));
 
