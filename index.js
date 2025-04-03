@@ -43,6 +43,8 @@ if (!fs.existsSync(logDir)) {
 
 // --- Policy Routes (Keep as is) ---
 const policyRoutes = require('./routes/routes');
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 
 const app = express();
@@ -53,7 +55,7 @@ app.use(session({
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false, // Avoid resaving the session unless the session data changes
-    saveUninitialized: false, // Avoid creating a session if no data is stored
+    saveUninitialized: true,// Avoid creating a session if no data is stored
     cookie: {
         secure: process.env.NODE_ENV === 'production', // Set true for HTTPS
         httpOnly: true, // Don't allow client-side JS to access the cookie
@@ -417,8 +419,8 @@ app.post("/login", async (req, res) => {
         req.session.user = sessionUser;
 
 
-        console.log("Session before save:", req.session); // Log session before saving
-
+        console.log("hardkkkkkkk 1 Session before save:", req.session); // Log session before saving
+        console.log("hardikkkkkkkkkkk Session before save:", req.session.user);
         // Ensure session is saved before sending response
         req.session.save(async (err) => { // Make callback async if logging depends on it
             if (err) {
@@ -429,8 +431,8 @@ app.post("/login", async (req, res) => {
                 return res.status(500).json({ success: false, message: "Server error during login (session save)." });
             }
 
-            console.log("Session saved successfully, Session ID:", req.sessionID);
-            console.log("Session content after save:", req.session);
+            console.log("Session saved successfully hardikkk, Session ID:", req.sessionID);
+            console.log("Session content after save hardikkk:", req.session);
 
             // Log the successful login AFTER session save
             await logUserActivity("LOGIN", sessionUser, null, "SUCCESS"); // Use the user object directly
