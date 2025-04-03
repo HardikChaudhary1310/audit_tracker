@@ -210,8 +210,8 @@
                     <li>
                         <a href="/policies/audit/har.pdf" class="sub-policy" download style="color: whitesmoke;" data-policy-id="12345">SSFB_ATM Opening on Holiday and After Banking Hours Policy_Ver_2.0.pdf</a>
                         <div class="action-buttons">
-                            <a href="/public/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;" data-policy-id="12345">Download</a>
-                            <a href="/public/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf" data-policy-id="12345">View</a>
+                            <a href="/policies/audit/har.pdf" class="download-link" download style="color: whitesmoke;" data-policy-id="12345">Download</a>
+                            <a href="/policies/audit/har.pdf" class="view-button" style="color: whitesmoke;" data-filename="har.pdf" data-policy-id="12345">View</a>
                         
                         </div>
                     </li>
@@ -454,6 +454,80 @@
     </div>
 
     <script>
+
+// Unified policy action handler
+async function handlePolicyAction(action, element) {
+    event.preventDefault();
+    const policyId = element.dataset.policyId;
+    const filename = element.dataset.filename || policyId;
+    const url = element.href;
+    
+    try {
+        // Track the action
+        await fetch(`/track-${action.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ policyId, filename }),
+            credentials: 'include'
+        });
+        
+        // Proceed with the action
+        if (action === 'DOWNLOAD') {
+            window.location.href = url; // Triggers download
+        } else {
+            window.open(url, '_blank'); // Opens in new tab
+        }
+    } catch (error) {
+        console.error(`${action} tracking failed:`, error);
+        // Fallback to direct access if tracking fails
+        if (action === 'DOWNLOAD') {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+}
+
+// Initialize event listeners
+document.addEventListener("DOMContentLoaded", function() {
+    // View buttons
+    document.querySelectorAll('.view-button').forEach(button => {
+        button.addEventListener('click', (e) => {
+            handlePolicyAction('VIEW', e.currentTarget);
+        });
+    });
+    
+    // Download buttons
+    document.querySelectorAll('.download-link').forEach(button => {
+        button.addEventListener('click', (e) => {
+            handlePolicyAction('DOWNLOAD', e.currentTarget);
+        });
+    });
+    
+    // Delete buttons
+    document.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const filename = this.dataset.filename;
+            if (confirm(`Delete ${filename}?`)) {
+                try {
+                    const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+                    if (response.ok) {
+                        this.closest('li').remove();
+                    }
+                } catch (error) {
+                    console.error("Delete error:", error);
+                }
+            }
+        });
+    });
+});
+
+
+
 
         function togglePolicy(policyItem)
          {
