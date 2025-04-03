@@ -55,27 +55,41 @@ app.use(session({
     store: new pgSession({
         pool: pool,
         tableName: 'user_sessions',
-        createTableIfMissing: true, // Add this to ensure table exists
-        pruneSessionInterval: 60 // Clean up expired sessions every 60 minutes
+        createTableIfMissing: true,
+        pruneSessionInterval: 60,
+        // Add explicit serializer/deserializer
+        serializer: JSON.stringify,
+        deserializer: JSON.parse,
+        // Add error handler
+        errorLog: console.error
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
-    saveUninitialized: false, // Change to false for security
+    saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Only true in production
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        sameSite: 'lax'
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: 'lax',
+        // Add these for better compatibility
+        domain: process.env.COOKIE_DOMAIN || 'localhost',
+        path: '/'
     },
-    name: 'auditTracker.sid' // Give your session cookie a specific name
+    name: 'auditTracker.sid',
+    // Add rolling sessions to prevent session fixation
+    rolling: true
 }));
   
 
 // This middleware runs after session is set up and will log session details
+// Add this after session middleware
 app.use((req, res, next) => {
-    console.log("Current Session ID:", req.sessionID);
-    console.log("Session User Data:", req.session.user); // Ensure the user data is available
-    console.log("Session Cookie Data:", req.cookies); // Check the cookies to verify that the session cookie is present
+    console.log('\n--- Session Debug ---');
+    console.log('Session ID:', req.sessionID);
+    console.log('Session:', req.session);
+    console.log('Cookies:', req.cookies);
+    console.log('Headers:', req.headers['cookie']);
+    console.log('--- End Session Debug ---\n');
     next();
 });
 
