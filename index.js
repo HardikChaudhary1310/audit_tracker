@@ -55,34 +55,30 @@ app.use(session({
     store: new pgSession({
         pool: pool,  // PostgreSQL connection pool
         tableName: 'user_sessions', // Table to store sessions
-        // Custom serialize and unserialize functions
         serialize: function (session) {
-            // Convert session data to JSON
-            return JSON.stringify(session);
+            return JSON.stringify(session); // Convert session to JSON
         },
         unserialize: function (session) {
-            // Parse session data from JSON
-            return JSON.parse(session);
+            return JSON.parse(session); // Convert session back from JSON
         }
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',  // Ensure secure cookie in production
+        secure: process.env.NODE_ENV === 'production', // Set secure cookie in production
         httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24  // Session expires in 1 day
+        maxAge: 1000 * 60 * 60 * 24 // Session expires in 1 day
     }
 }));
 
-
+// This middleware runs after session is set up and will log session details
 app.use((req, res, next) => {
-    console.log("Current Session ID:", req.sessionID); // Check if session ID is being generated
-    console.log("Session User Data:", req.session.user); // Check if session user data is set
-    console.log("Session Cookie Data:", req.cookies); // Check the cookie sent with the request
+    console.log("Current Session ID:", req.sessionID);
+    console.log("Session User Data:", req.session.user); // Ensure the user data is available
+    console.log("Session Cookie Data:", req.cookies); // Check the cookies to verify that the session cookie is present
     next();
 });
-
 
 
 app.use(morgan('dev'));
@@ -437,31 +433,29 @@ app.post("/login", async (req, res) => {
         console.log("hardkkkkkkk 1 Session before save:", req.session); // Log session before saving
         console.log("hardikkkkkkkkkkk Session before save:", req.session.user);
         // Ensure session is saved before sending response
-        req.session.save(async (err) => { // Make callback async if logging depends on it
-            if (err) {
-                console.error("Session save error:", err);
-                // Log failure even if session save fails
-                await logUserActivity("LOGIN", { email: username }, null, "FAILED - Session Save Error").catch(e => console.error("Error logging failed login:", e));
-                // Send JSON error
-                return res.status(500).json({ success: false, message: "Server error during login (session save)." });
-            }
+// Save session asynchronously
+req.session.save(async (err) => {
+    if (err) {
+        console.error("Session save error:", err);
+        await logUserActivity("LOGIN", { email: username }, null, "FAILED - Session Save Error").catch(e => console.error("Error logging failed login:", e));
+        return res.status(500).json({ success: false, message: "Server error during login (session save)." });
+    }
 
-            console.log("Session saved successfully hardikkk, Session ID:", req.sessionID);
-            console.log("Session content after save hardikkk:", req.session);
+    // Log after session is saved to ensure data is correctly stored
+    console.log("Session saved successfully, Session ID:", req.sessionID);
+    console.log("Session content after save:", req.session);
 
-            // Log the successful login AFTER session save
-            await logUserActivity("LOGIN", sessionUser, null, "SUCCESS"); // Use the user object directly
+    // Log successful login
+    await logUserActivity("LOGIN", sessionUser, null, "SUCCESS");
 
-            // --- MODIFICATION ---
-            // Instead of redirecting, send a success JSON response
-            // containing the URL the frontend should navigate to.
-            res.status(200).json({
-                success: true,
-                message: "Login successful! Redirecting...",
-                redirectUrl: "/home" // Tell the frontend where to go
-            });
-            // --- END MODIFICATION ---
-        });
+    // Send success response
+    res.status(200).json({
+        success: true,
+        message: "Login successful! Redirecting...",
+        redirectUrl: "/home" // Redirect URL after login
+    });
+});
+
 
     } catch (error) {
         console.error("❌ Login process error:", error);
