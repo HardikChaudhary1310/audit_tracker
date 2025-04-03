@@ -57,43 +57,62 @@ app.use(session({
         tableName: 'user_sessions',
         createTableIfMissing: true,
         pruneSessionInterval: 60,
-        // Add explicit serializer/deserializer
-        serializer: JSON.stringify,
-        deserializer: JSON.parse,
-        // Add error handler
+        // Add these critical settings:
+        ttl: 86400, // 24 hours in seconds
+        schemaName: 'public',
+        // Error handling
         errorLog: console.error
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
+        secure: process.env.NODE_ENV === 'production', // false in development
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: 'lax',
-        // Add these for better compatibility
-        domain: process.env.COOKIE_DOMAIN || 'localhost',
-        path: '/'
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+        domain: process.env.COOKIE_DOMAIN || 'localhost'
     },
     name: 'auditTracker.sid',
-    // Add rolling sessions to prevent session fixation
+    // Add this to help with session reloading
     rolling: true
 }));
   
 
 // This middleware runs after session is set up and will log session details
 // Add this after session middleware
-app.use((req, res, next) => {
-    console.log('\n--- Session Debug ---');
-    console.log('Session ID:', req.sessionID);
-    console.log('Session:', req.session);
-    console.log('Cookies:', req.cookies);
-    console.log('Headers:', req.headers['cookie']);
-    console.log('--- End Session Debug ---\n');
+// app.use((req, res, next) => {
+//     console.log('\n--- Session Debug ---');
+//     console.log('Session ID:', req.sessionID);
+//     console.log('Session:', req.session);
+//     console.log('Cookies:', req.cookies);
+//     console.log('Headers:', req.headers['cookie']);
+//     console.log('--- End Session Debug ---\n');
+//     next();
+// });
+
+// Add this after session middleware
+app.use(async (req, res, next) => {
+    console.log('\n--- SESSION VERIFICATION ---');
+    
+    // Verify session exists in DB
+    try {
+        const result = await pool.query(
+            'SELECT sess FROM user_sessions WHERE sid = $1', 
+            [req.sessionID]
+        );
+        
+        if (result.rows.length > 0) {
+            console.log('Session found in DB:', result.rows[0].sess);
+        } else {
+            console.log('⚠️ Session NOT FOUND in database');
+        }
+    } catch (err) {
+        console.error('Session verification error:', err);
+    }
+    
     next();
 });
-
-
 app.use(morgan('dev'));
 
 const PORT = process.env.PORT || 3001; // Use environment variable for Port
@@ -295,11 +314,13 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 // --- Login Route (Using PostgreSQL) ---
 app.get("/home", (req, res) => {
-    // Debugging logs
-    console.log("Session ID:", req.sessionID);
+    console.log("--- DEBUG START ---");
+    console.log("Request Session ID:", req.sessionID);
+    console.log("Cookie Session ID:", req.cookies['auditTracker.sid']);
     console.log("Session:", req.session);
-    console.log("Session User:", req.session.user);
+    console.log("Session User:", req.session?.user);
     console.log("Cookies:", req.cookies);
+    console.log("--- DEBUG END ---");
 
     if (!req.session.user) {
         console.log("No user in session, redirecting to login");
