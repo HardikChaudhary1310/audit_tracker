@@ -455,50 +455,45 @@
 
     I<script>
         // Unified policy action handler with dynamic user info
-        async function handlePolicyAction(action, element) {
-            event.preventDefault();
-            const policyId = element.dataset.policyId;
-            const filename = element.dataset.filename || policyId;
-            const url = element.href;
-            
-            // Get user info dynamically (choose one method)
-            const userId = document.body.dataset.userId || sessionStorage.getItem('userId');
-            const username = document.body.dataset.username || sessionStorage.getItem('username');
-            
-            // Fallback for demonstration (remove in production)
-            if (!userId || !username) {
-                console.warn('User information not found, using fallback values');
-                // In a real app, you might want to redirect to login instead
-            }
-            
-            try {
-                await fetch(`/track-${action.toLowerCase()}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        policyId, 
-                        filename,
-                        userId: userId || 'unknown',
-                        username: username || 'unknown@example.com'
-                    }),
-                    credentials: 'include'
-                });
-                
-                if (action === 'DOWNLOAD') {
-                    window.location.href = url;
-                } else {
-                    window.open(url, '_blank');
-                }
-            } catch (error) {
-                console.error(`${action} tracking failed:`, error);
-                if (action === 'DOWNLOAD') {
-                    window.location.href = url;
-                } else {
-                    window.open(url, '_blank');
-                }
-            }
+// Unified policy action handler with dynamic user info
+async function handlePolicyAction(action, element) {
+    event.preventDefault();
+    const policyId = element.dataset.policyId;
+    const filename = element.dataset.filename || policyId;
+    const url = element.href;
+    
+    try {
+        // Track the action
+        const response = await fetch(`/track-${action.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                policyId, 
+                filename
+            }),
+            credentials: 'include'
+        });
+        
+        if (!response.ok) {
+            throw new Error('Tracking failed');
         }
         
+        // Proceed with the action
+        if (action === 'DOWNLOAD') {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
+    } catch (error) {
+        console.error(`${action} tracking failed:`, error);
+        // Fallback to direct access if tracking fails
+        if (action === 'DOWNLOAD') {
+            window.location.href = url;
+        } else {
+            window.open(url, '_blank');
+        }
+    }
+}
         
         // Update the toggle function
         function togglePolicy(button) {

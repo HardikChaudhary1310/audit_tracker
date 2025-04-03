@@ -782,6 +782,7 @@ app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make as
 
 
 // Track policy view
+// Track policy view
 app.post('/track-view', mockUserAuth, async (req, res) => {
     const { policyId, filename } = req.body;
     const user = req.user;
@@ -812,7 +813,6 @@ app.post('/track-download', mockUserAuth, async (req, res) => {
         res.status(500).json({ error: 'Tracking failed' });
     }
 });
-
 // Serve policy files
 app.get('/public/policies/:category/:filename', (req, res) => {
     const { category, filename } = req.params;

@@ -1,44 +1,77 @@
 // models/userActivity.js
-const pool = require('./db'); // Import the PostgreSQL pool connection
+const pool = require('./db');
 
-const logUserActivity = async (actionType, userData, policyId, status) => {
-    // Ensure userData is somewhat valid, default to nulls or placeholders if needed
-    // Adapt how you get user ID - using email as ID might not be ideal.
-    // If you have a numeric user ID in your 'users' table, pass that instead.
-    const userId = userData?.id || null; // Prefer actual user ID if available
-    const username = userData?.email || userData?.username || 'anonymous'; // Get email/username
-    const safePolicyId = policyId || 'N/A'; // Ensure policyId is not undefined
+const logUserActivity = async (actionType, userData, policyId, status, additionalData = {}) => {
+    const userId = userData?.id || null;
+    const username = userData?.email || userData?.username || 'anonymous';
+    const safePolicyId = policyId || 'N/A';
+    const ipAddress = additionalData.ip || null;
+    const userAgent = additionalData.userAgent || null;
 
-    // PostgreSQL uses $1, $2, etc. for placeholders
-    const query = `
-        INSERT INTO user_activity (action_type, user_id, username, policy_id, status)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id;  -- Optional: return the ID of the inserted row
-    `;
-
+    // Start a transaction
+    const client = await pool.connect();
+    
     try {
-        console.log('Attempting to log activity:', { actionType, userId, username, safePolicyId, status });
+        await client.query('BEGIN');
 
-        // Execute the SQL query using the pool
-        // Pass parameters as an array matching the $1, $2 order
-        const result = await pool.query(query, [
+        // Log to user_activity table
+        const userActivityQuery = `
+            INSERT INTO user_activity (action_type, user_id, username, policy_id, status, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            RETURNING id;
+        `;
+        const userActivityResult = await client.query(userActivityQuery, [
             actionType,
-            userId,     // Using null if no ID provided
+            userId,
+            username,
+            safePolicyId,
+            status,
+            ipAddress,
+            userAgent
+        ]);
+
+        // Also log to activities table
+        const activitiesQuery = `
+            INSERT INTO activities (action_type, email, policy_id, user_id, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id;
+        `;
+        const activitiesResult = await client.query(activitiesQuery, [
+            actionType,
+            username,
+            safePolicyId,
+            userId,
+            ipAddress,
+            userAgent
+        ]);
+
+        await client.query('COMMIT');
+        
+        console.log('✅ Activity logged to both tables:', {
+            user_activity_id: userActivityResult.rows[0]?.id,
+            activities_id: activitiesResult.rows[0]?.id
+        });
+        
+        return {
+            user_activity: userActivityResult.rows[0],
+            activities: activitiesResult.rows[0]
+        };
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('❌ Error inserting activity:', err);
+        console.error('Error Details:', { 
+            code: err.code, 
+            detail: err.detail,
+            actionType,
+            userId,
             username,
             safePolicyId,
             status
-        ]);
-
-        console.log('✅ User activity logged successfully. Inserted ID:', result.rows[0]?.id || 'N/A');
-        return result; // Return the full result object from pg
-
-    } catch (err) {
-        console.error('❌ Error inserting activity into user_policy_activity:', err);
-        // Provide more context on the error if possible
-        console.error('Error Details:', { code: err.code, detail: err.detail });
-        console.error('Failed Query Values:', { actionType, userId, username, safePolicyId, status });
-        // It's important to throw the error so the calling function knows something went wrong
+        });
         throw err;
+    } finally {
+        client.release();
     }
 };
 
