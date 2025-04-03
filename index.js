@@ -140,9 +140,9 @@ const mockUserAuth = (req, res, next) => {
 
 
 // --- Signup Route (Using PostgreSQL) ---
-app.post("/signup", async (req, res) => { // Make async
-    const { username, password, confirmPassword } = req.body; // 'username' here is the email
-    console.log("Signup request received:", { email: username }); // Log email
+app.post("/signup", async (req, res) => {
+    const { username, password, confirmPassword } = req.body;
+    console.log("Signup request received:", { email: username });
 
     // Validate email format
     if (!isValidEmail(username)) {
@@ -174,16 +174,15 @@ app.post("/signup", async (req, res) => { // Make async
         const userType = username.toLowerCase() === 'admin@shivalikbank.com' ? 'admin' : 'user';
 
         // Insert the new user into the database
-        // Note: 'username' column now stores the email as well for consistency if needed
         const insertQuery = `
             INSERT INTO users (username, email, password, verified, userType)
             VALUES ($1, $2, $3, $4, $5)
-            RETURNING id`; // Return the new user's ID
+            RETURNING id`; 
         const newUserResult = await pool.query(insertQuery, [
-            username, // Storing email in username column too
-            username, // Storing email in email column
+            username,
+            username,
             hashedPassword,
-            false, // Not verified initially
+            false, 
             userType
         ]);
 
@@ -199,23 +198,24 @@ app.post("/signup", async (req, res) => { // Make async
             from: process.env.GMAIL_USER,
             to: username,
             subject: "Verify Your Email For Audit Tracker Portal",
-            // Consider using an HTML template for a nicer email
-            text: `Hello ${username},\n\nThank you for signing up!\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour. If you did not sign up, please ignore this email.\n\n(For testing/demo purposes, your entered password was: ${password})` // Inform user about password in demo/testing, REMOVE FOR PRODUCTION
+            text: `Hello ${username},\n\nThank you for signing up!\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour. If you did not sign up, please ignore this email.`
         };
 
-        transporter.sendMail(mailOptions, async (error, info) => { // Make callback async
+        transporter.sendMail(mailOptions, async (error, info) => {
             if (error) {
                 console.error("Error sending verification email:", error);
-                // Log failure, but maybe don't block signup completely? Or handle differently.
                 await logUserActivity("SIGNUP", { id: newUserId, email: username }, null, "FAILED - Email Send Error");
-                // It's tricky whether to return 500 here or still 200 but with a warning
                 return res.status(500).json({ message: "Signup complete, but failed to send verification email. Contact support." });
             }
 
             console.log("Verification email sent:", info.response);
-            // Log successful signup AFTER email attempt
             await logUserActivity("SIGNUP", { id: newUserId, email: username }, null, "SUCCESS - Verification Email Sent");
-            res.status(200).json({ message: "Signup successful! Check your email to verify your account." });
+
+            // Send a JSON response with the redirect URL
+            res.status(200).json({
+                message: "Signup successful! Check your email to verify your account.",
+                redirectUrl: "/home" // This is what the frontend should use to redirect
+            });
         });
 
     } catch (err) {
