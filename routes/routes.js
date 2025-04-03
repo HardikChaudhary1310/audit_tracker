@@ -69,6 +69,59 @@ router.post('/track-policy-click', async (req, res) => {
     }
 });
 
+// In your routes file (e.g., routes.js)
+router.post('/track-view', async (req, res) => {
+    const { policyId, filename } = req.body;
+    const user = req.user; // From session
+    
+    try {
+        const result = await pool.query(
+            `INSERT INTO activities 
+             (action_type, email, policy_id, user_id, ip_address, user_agent) 
+             VALUES ($1, $2, $3, $4, $5, $6) 
+             RETURNING *`,
+            [
+                'VIEW',
+                user.email,
+                policyId || filename,
+                user.id,
+                req.ip,
+                req.get('User-Agent')
+            ]
+        );
+        
+        res.json({ success: true, activity: result.rows[0] });
+    } catch (err) {
+        console.error('View tracking error:', err);
+        res.status(500).json({ error: 'Failed to track view' });
+    }
+});
 
+router.post('/track-download', async (req, res) => {
+    const { policyId, filename } = req.body;
+    const user = req.user;
+    
+    try {
+        const result = await pool.query(
+            `INSERT INTO activities 
+             (action_type, email, policy_id, user_id, ip_address, user_agent) 
+             VALUES ($1, $2, $3, $4, $5, $6) 
+             RETURNING *`,
+            [
+                'DOWNLOAD',
+                user.email,
+                policyId || filename,
+                user.id,
+                req.ip,
+                req.get('User-Agent')
+            ]
+        );
+        
+        res.json({ success: true, activity: result.rows[0] });
+    } catch (err) {
+        console.error('Download tracking error:', err);
+        res.status(500).json({ error: 'Failed to track download' });
+    }
+});
 
 module.exports = router;

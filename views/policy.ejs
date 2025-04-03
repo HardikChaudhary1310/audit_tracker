@@ -767,6 +767,36 @@ document.querySelectorAll('.delete-button').forEach(button => {
 });
 
 
+// Track policy view
+async function trackPolicyView(policyId, filename) {
+    try {
+        const response = await fetch('/track-view', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ policyId, filename }),
+            credentials: 'include' // For session cookies
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('View tracking failed:', error);
+    }
+}
+
+// Track policy download 
+async function trackPolicyDownload(policyId, filename) {
+    try {
+        const response = await fetch('/track-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ policyId, filename }),
+            credentials: 'include'
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Download tracking failed:', error);
+    }
+}
+
         });
     </script>
     
