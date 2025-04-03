@@ -2,6 +2,8 @@
 const pool = require('./db');
 
 const logUserActivity = async (actionType, userData, policyId, status, additionalData = {}) => {
+    console.log('Attempting to log activity:', { actionType, userData, policyId, status, additionalData });
+    
     const userId = userData?.id || null;
     const username = userData?.email || userData?.username || 'anonymous';
     const safePolicyId = policyId || 'N/A';
@@ -21,23 +23,29 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
         RETURNING id;
     `;
 
+    const params = [
+        actionType,
+        userId,
+        username,
+        safePolicyId,
+        status,
+        additionalData.ip || null,
+        additionalData.userAgent || null,
+        additionalData.data ? JSON.stringify(additionalData.data) : null
+    ];
+
+    console.log('Executing query with params:', { query, params });
+
     try {
-        const result = await pool.query(query, [
-            actionType,
-            userId,
-            username,
-            safePolicyId,
-            status,
-            additionalData.ip || null,
-            additionalData.userAgent || null,
-            additionalData.data ? JSON.stringify(additionalData.data) : null
-        ]);
-        
+        const result = await pool.query(query, params);
+        console.log('Activity logged successfully:', result.rows[0]);
         return result.rows[0].id;
     } catch (err) {
-        console.error('Error logging activity:', err);
+        console.error('❌ Error logging activity:', {
+            error: err,
+            query: query,
+            params: params
+        });
         throw err;
     }
 };
-
-module.exports = { logUserActivity };
