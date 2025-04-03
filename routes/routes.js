@@ -3,12 +3,78 @@ const path = require('path');
 const fs = require('fs');
 const moment = require('moment'); // Make sure to include moment for date formatting
 const router = express.Router();
+const { logPolicyActivity } = require('../models/userActivity');
 // const { logUserActivity } = require('./models/userActivity'); // Import the logUserActivity function
 
 
 const app = express();
 app.use(express.json());  // To parse incoming JSON requests
 
+// Middleware to validate policy actions
+const validatePolicyAction = (req, res, next) => {
+    const { policyId } = req.body;
+    if (!policyId) {
+        return res.status(400).json({ 
+            success: false,
+            message: 'Policy ID is required'
+        });
+    }
+    next();
+};
+
+// Track policy view
+router.post('/track-view', validatePolicyAction, async (req, res) => {
+    try {
+        const { policyId, filename } = req.body;
+        const user = req.user; // From your auth middleware
+
+        const activity = await logPolicyActivity('VIEW', user, policyId, {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            filename
+        });
+
+        res.json({ 
+            success: true,
+            activityId: activity.id,
+            message: 'View tracked successfully'
+        });
+
+    } catch (error) {
+        console.error('View tracking failed:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to track policy view'
+        });
+    }
+});
+
+// Track policy download
+router.post('/track-download', validatePolicyAction, async (req, res) => {
+    try {
+        const { policyId, filename } = req.body;
+        const user = req.user;
+
+        const activity = await logPolicyActivity('DOWNLOAD', user, policyId, {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            filename
+        });
+
+        res.json({ 
+            success: true,
+            activityId: activity.id,
+            message: 'Download tracked successfully'
+        });
+
+    } catch (error) {
+        console.error('Download tracking failed:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Failed to track policy download'
+        });
+    }
+});
 
 
 router.get('/download-policy/:filename', async (req, res) => {

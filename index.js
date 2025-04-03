@@ -151,6 +151,13 @@ app.set('view engine', 'ejs');
 app.use(cors()); // Consider configuring CORS more restrictively for production
 app.use(cookieParser());
 
+
+// In your main server file (index.js/app.js)
+const policyRoutes = require('./routes/policyRoutes');
+app.use('/api/policies', policyRoutes);
+
+
+
 // --- Validation Functions (Keep as is) ---
 const isValidEmail = (username) => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@shivalikbank\.com$/;

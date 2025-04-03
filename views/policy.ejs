@@ -495,6 +495,53 @@ async function handlePolicyAction(action, element) {
     }
 }
         
+// Unified policy action handler
+async function trackPolicyAction(action, element) {
+    const policyId = element.dataset.policyId;
+    const filename = element.dataset.filename || policyId;
+    
+    try {
+        const response = await fetch(`/api/policies/track-${action.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ policyId, filename }),
+            credentials: 'include'
+        });
+
+        if (!response.ok) throw new Error('Tracking failed');
+        
+        const result = await response.json();
+        console.log(`${action} tracked:`, result);
+        return result;
+
+    } catch (error) {
+        console.error(`Error tracking ${action}:`, error);
+        // Fallback action if tracking fails
+        return { success: false };
+    }
+}
+
+// Example usage in your frontend
+document.querySelectorAll('.view-button').forEach(button => {
+    button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const trackingResult = await trackPolicyAction('VIEW', e.currentTarget);
+        if (trackingResult.success) {
+            window.open(e.currentTarget.href, '_blank');
+        }
+    });
+});
+
+document.querySelectorAll('.download-link').forEach(button => {
+    button.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const trackingResult = await trackPolicyAction('DOWNLOAD', e.currentTarget);
+        if (trackingResult.success) {
+            window.location.href = e.currentTarget.href;
+        }
+    });
+});
+
         // Update the toggle function
         function togglePolicy(button) {
             const isExpanded = button.getAttribute('aria-expanded') === 'true';
