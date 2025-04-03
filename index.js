@@ -53,24 +53,26 @@ const app = express();
 app.use(cookieParser()); // Ensure this is before session middleware
 app.use(session({
     store: new pgSession({
-        pool: pool,  // PostgreSQL connection pool
-        tableName: 'user_sessions', // Table to store sessions
-        serialize: function (session) {
-            return JSON.stringify(session); // Convert session to JSON
-        },
-        unserialize: function (session) {
-            return JSON.parse(session); // Convert session back from JSON
-        }
+      pool: pool,
+      tableName: 'user_sessions',
+      serialize: function (session) {
+        return JSON.stringify(session); // Convert session to JSON
+      },
+      unserialize: function (session) {
+        return JSON.parse(session); // Convert JSON back from JSON
+      }
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
     saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // Set secure cookie in production
-        httpOnly: true,
-        maxAge: 1000 * 60 * 60 * 24 // Session expires in 1 day
+      secure: process.env.NODE_ENV === 'production', // Set secure cookie in production
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24, // Session expires in 1 day
+      sameSite: 'lax' // Recommended for cross-site compatibility
     }
-}));
+  }));
+  
 
 // This middleware runs after session is set up and will log session details
 app.use((req, res, next) => {
@@ -282,19 +284,15 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 // --- Login Route (Using PostgreSQL) ---
 
-
 app.get("/home", (req, res) => {
-    console.log("Session Object:", req.session);
-    console.log("Session User Data:", req.session.user);
-
     if (!req.session.user) {
-        console.log("❌ No active session user found. Redirecting to login.");
-        return res.redirect("/");
+      console.log("No active session user found.");
+      return res.redirect("/");
     }
-
-    // Proceed to render home page with user data
+    console.log("Session User Data:", req.session.user);
     res.render("home", { user: req.session.user });
-});
+  });
+  
 
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
@@ -437,34 +435,17 @@ app.post("/login", async (req, res) => {
 req.session.save(async (err) => {
     if (err) {
         console.error("Session save error:", err);
-        await logUserActivity("LOGIN", { email: username }, null, "FAILED - Session Save Error").catch(e => console.error("Error logging failed login:", e));
+        await logUserActivity("LOGIN", { email: username }, null, `FAILED - Session Save Error: ${err.message}`).catch(e => console.error("Error logging failed login:", e));
         return res.status(500).json({ success: false, message: "Server error during login (session save)." });
     }
 
-    // Log after session is saved to ensure data is correctly stored
     console.log("Session saved successfully, Session ID:", req.sessionID);
     console.log("Session content after save:", req.session);
 
-    // Log successful login
     await logUserActivity("LOGIN", sessionUser, null, "SUCCESS");
-
-    // Send success response
-    res.status(200).json({
-        success: true,
-        message: "Login successful! Redirecting...",
-        redirectUrl: "/home" // Redirect URL after login
-    });
+    res.status(200).json({ success: true, message: "Login successful! Redirecting...", redirectUrl: "/home" });
 });
 
-
-    } catch (error) {
-        console.error("❌ Login process error:", error);
-        // Log generic error
-         await logUserActivity("LOGIN", { email: username }, null, "FAILED - Server Error").catch(e => console.error("Error logging failed login:", e));
-        // Send JSON error
-        res.status(500).json({ success: false, message: "Server error during login." });
-    }
-});
 
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
