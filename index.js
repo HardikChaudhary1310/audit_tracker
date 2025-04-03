@@ -117,24 +117,24 @@ const isValidPassword = (password) => {
 
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
 const mockUserAuth = (req, res, next) => {
-    console.log("Session Object:", req.session); // Log session object for debugging
-    console.log("Session Object:", req.session); // Log the full session object
-    console.log("Session Cookie:", req.cookies); // Log cookies to check if connect.sid is present
-
-    const sessionUser = req.session?.user; // Check if session user is set
-    console.log("Session User:", sessionUser); // Log user data from session
-
+    console.log("Session Object:", req.session);
+    console.log("Session Object:", req.session);
+    console.log("Session Cookie:", req.cookies);
+  
+    const sessionUser = req.session?.user;
+    console.log("Session User:", sessionUser);
+  
     if (!sessionUser) {
-        console.log("❌ No active session user found. Redirecting to login.");
-        return res.redirect('/'); // Redirect if no session user found
+      console.log("❌ No active session user found. Redirecting to login.");
+      return res.redirect("/");
     }
-
-    // If session user exists, assign it to req.user
-    req.user = sessionUser; 
-    console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
-
-    next(); // Proceed to the next middleware or route
-};
+  
+    req.user = sessionUser;
+    console.log("User Data in mockUserAuth:", req.user);
+  
+    next();
+  };
+  
 
 
 
@@ -283,15 +283,16 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 
 // --- Login Route (Using PostgreSQL) ---
-
 app.get("/home", (req, res) => {
+    console.log("Session Object:", req.session);
+    console.log("Session User Data:", req.session.user);
     if (!req.session.user) {
-      console.log("No active session user found.");
+      console.log("❌ No active session user found. Redirecting to login.");
       return res.redirect("/");
     }
-    console.log("Session User Data:", req.session.user);
     res.render("home", { user: req.session.user });
   });
+  
   
 
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
