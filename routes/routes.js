@@ -124,4 +124,12 @@ router.post('/track-download', async (req, res) => {
     }
 });
 
+// In your route handler (Node.js/Express)
+router.get('/policies', (req, res) => {
+    res.render('policies', {
+      userId: req.user.id,        // From session/auth
+      username: req.user.username // From session/auth
+    });
+  });
+
 module.exports = router;
