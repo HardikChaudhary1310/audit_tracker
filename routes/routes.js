@@ -49,17 +49,21 @@ router.post('/track-view', validatePolicyAction, async (req, res) => {
     }
 });
 
+
 // Track policy download
-router.post('/track-download', validatePolicyAction, async (req, res) => {
+router.post('/track-download', async (req, res) => {
     try {
         const { policyId, filename } = req.body;
-        const user = req.user;
+        const user = req.user; // From your auth middleware
 
-        const activity = await logPolicyActivity('DOWNLOAD', user, policyId, {
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
-            filename
-        });
+        if (!policyId) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Policy ID is required'
+            });
+        }
+
+        const activity = await logDownloadActivity(user, policyId, filename, req);
 
         res.json({ 
             success: true,
@@ -71,7 +75,8 @@ router.post('/track-download', validatePolicyAction, async (req, res) => {
         console.error('Download tracking failed:', error);
         res.status(500).json({ 
             success: false,
-            message: 'Failed to track policy download'
+            message: 'Failed to track policy download',
+            error: process.env.NODE_ENV === 'development' ? error.message : null
         });
     }
 });

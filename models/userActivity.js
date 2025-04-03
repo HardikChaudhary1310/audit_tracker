@@ -1,54 +1,54 @@
+// models/userActivity.js
 const pool = require('./db');
 
-const logUserActivity = async (actionType, userData, policyId, status, additionalData = {}) => {
-    const userId = userData?.id || null;
-    const username = userData?.email || userData?.username || 'system@shivalikbank.com';
-    const safePolicyId = policyId || 'system_default_policy';
-    const ipAddress = additionalData.ip || '0.0.0.0';
-    const userAgent = additionalData.userAgent || 'unknown';
+const logDownloadActivity = async (user, policyId, filename, req) => {
+    if (!user || !user.id) {
+        throw new Error('User information required for download tracking');
+    }
 
     const client = await pool.connect();
     
     try {
         await client.query('BEGIN');
 
-        // 1. Insert into user_activity table (existing)
-        const userActivityQuery = `
+        // Insert into user_activity table
+        const query = `
             INSERT INTO user_activity (
-                action_type, user_id, username, policy_id, status, ip_address, user_agent
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id;
+                action_type, 
+                user_id, 
+                username, 
+                policy_id, 
+                status, 
+                ip_address, 
+                user_agent,
+                additional_data,
+                created_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, NOW()
+            ) RETURNING *;
         `;
-        await client.query(userActivityQuery, [
-            actionType, userId, username, safePolicyId, 
-            status, ipAddress, userAgent
-        ]);
 
-        // 2. NEW: Insert into activities table
-        const activitiesQuery = `
-            INSERT INTO activities (
-                action_type, email, policy_id, user_id, ip_address, user_agent
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id;
-        `;
-        const activitiesResult = await client.query(activitiesQuery, [
-            actionType, username, safePolicyId, userId,
-            ipAddress, userAgent
+        const result = await client.query(query, [
+            'DOWNLOAD',
+            user.id,
+            user.email,
+            policyId,
+            'SUCCESS',
+            req.ip,
+            req.get('User-Agent'),
+            JSON.stringify({ filename }) // Store additional metadata
         ]);
 
         await client.query('COMMIT');
-        
-        console.log('✅ Successfully inserted into both tables. Activity ID:', 
-                   activitiesResult.rows[0]?.id);
-        
-        return activitiesResult.rows[0];
+        return result.rows[0];
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('❌ Transaction failed:', {
+        console.error('Error logging download activity:', {
             error: err.message,
-            query: err.query,
-            parameters: err.parameters
+            userId: user?.id,
+            policyId,
+            filename
         });
         throw err;
     } finally {
@@ -56,4 +56,4 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
     }
 };
 
-module.exports = { logUserActivity };
+module.exports = { logDownloadActivity };

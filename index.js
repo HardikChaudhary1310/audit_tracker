@@ -709,74 +709,47 @@ app.post("/login", async (req, res) => {
         res.status(500).json({ success: false, message: "Server error during login." });
     }
 });
-// Download Policy Route
-app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
+// In your main routes file
+app.get('/download-policy/:filename', mockUserAuth, async (req, res) => {
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
-    const user = req.user; // Get user from middleware
-    const policyId = decodedFilename; // Use filename as policyId for logging
-
-     if (!user || !user.id) {
-         console.error("Download Error: User not authenticated or missing ID.");
-         // Don't return JSON here, maybe redirect or show an error page
-         return res.status(401).send("Authentication required to download files.");
-    }
-
-    console.log(`Download request for: ${decodedFilename}, User: ${user.username} (ID: ${user.id})`);
-
-    // Define potential file paths (adjust if your structure is different)
-    const possiblePaths = [
-        path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
-        path.join(__dirname, 'public', 'policies', decodedFilename),
-    ];
-
-    let filePath = null;
-    for (const p of possiblePaths) {
-        if (fs.existsSync(p)) {
-            filePath = p;
-            break;
-        }
-    }
-
-    if (!filePath) {
-        console.error(`File not found for download: ${decodedFilename}`);
-        // Log failed download attempt
-        await logUserActivity('DOWNLOAD', user, policyId, "FAILED - File Not Found").catch(e => console.error("Error logging failed download:", e));
-        return res.status(404).send('File not found');
-    }
+    const user = req.user;
 
     try {
-        // Log successful download activity *before* sending file
-        await logUserActivity('DOWNLOAD', user, policyId, "Success - Download Started");
+        // 1. First track the download activity
+        const trackingResult = await fetch('/api/policies/track-download', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Cookie': req.headers.cookie // Pass session cookie
+            },
+            body: JSON.stringify({ 
+                policyId: decodedFilename,
+                filename: decodedFilename
+            })
+        });
 
-        // Optional: Log to 'activities' table if needed
-        /*
-        const insertActivitiesQuery = `
-            INSERT INTO activities (action_type, email, policy_id, user_id)
-            VALUES ($1, $2, $3, $4)`;
-        await pool.query(insertActivitiesQuery, ['DOWNLOAD', user.username, policyId, user.id]);
-        */
+        if (!trackingResult.ok) {
+            throw new Error('Download tracking failed');
+        }
 
-        // Send the file for download
+        // 2. Then serve the file
+        const filePath = path.join(__dirname, 'public', 'policies', decodedFilename);
+        
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).send('File not found');
+        }
+
         res.download(filePath, decodedFilename, (err) => {
             if (err) {
-                // An error occurred after headers were sent, log it but can't send new response
-                console.error(`Error during file transmission for ${decodedFilename}:`, err);
-                // You might log this specific failure state if needed
-                 logUserActivity('DOWNLOAD', user, policyId, "FAILED - Transmission Error").catch(e => console.error("Error logging failed transmission:", e));
-            } else {
-                console.log(`File ${decodedFilename} sent successfully to ${user.username}`);
-                // Optional: Log completion if needed, but 'Started' is usually sufficient
+                console.error('Download error:', err);
+                // Optionally log failed download attempt
             }
         });
 
     } catch (err) {
-        console.error(`❌ Server error during download prep for ${decodedFilename}:`, err);
-         await logUserActivity('DOWNLOAD', user, policyId, "FAILED - Server Error").catch(e => console.error("Error logging server error:", e));
-        // Avoid sending JSON if headers might have been sent
-        if (!res.headersSent) {
-             res.status(500).send('Server error while processing download');
-        }
+        console.error('Policy download failed:', err);
+        res.status(500).send('Error downloading file');
     }
 });
 

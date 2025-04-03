@@ -494,6 +494,43 @@ async function handlePolicyAction(action, element) {
         }
     }
 }
+
+// Unified download handler
+async function handleDownload(element) {
+    const policyId = element.dataset.policyId;
+    const filename = element.dataset.filename || policyId;
+    const url = element.href;
+    
+    try {
+        // 1. Track the download
+        const trackingResponse = await fetch('/api/policies/track-download', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ policyId, filename }),
+            credentials: 'include'
+        });
+
+        if (!trackingResponse.ok) {
+            throw new Error('Tracking failed');
+        }
+
+        // 2. Proceed with download
+        window.location.href = url;
+
+    } catch (error) {
+        console.error('Download tracking failed:', error);
+        // Fallback to direct download if tracking fails
+        window.location.href = url;
+    }
+}
+
+// Attach to all download buttons
+document.querySelectorAll('.download-link').forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        handleDownload(e.currentTarget);
+    });
+});
         
 // Unified policy action handler
 async function trackPolicyAction(action, element) {
