@@ -51,33 +51,59 @@ const app = express();
 
 
 app.use(cookieParser()); // Ensure this is before session middleware
+// app.use(session({
+//     store: new pgSession({
+//         pool: pool,
+//         tableName: 'user_sessions',
+//         createTableIfMissing: true,
+//         pruneSessionInterval: 60,
+//         // Add these critical settings:
+//         ttl: 86400, // 24 hours in seconds
+//         schemaName: 'public',
+//         // Error handling
+//         errorLog: console.error
+//     }),
+//     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: {
+//         secure: process.env.NODE_ENV === 'production', // false in development
+//         httpOnly: true,
+//         maxAge: 24 * 60 * 60 * 1000, // 1 day
+//         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+//         domain: process.env.COOKIE_DOMAIN || 'localhost'
+//     },
+//     name: 'auditTracker.sid',
+//     // Add this to help with session reloading
+//     rolling: true
+// }));
+  
+
 app.use(session({
     store: new pgSession({
         pool: pool,
         tableName: 'user_sessions',
         createTableIfMissing: true,
         pruneSessionInterval: 60,
-        // Add these critical settings:
-        ttl: 86400, // 24 hours in seconds
-        schemaName: 'public',
-        // Error handling
-        errorLog: console.error
+        ttl: 86400, // 24 hours
+        // Add these critical error handlers
+        dispose: (sessionId) => console.log('Session disposed:', sessionId),
+        reapInterval: 3600, // Cleanup interval in seconds
     }),
     secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // false in development
+        secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
         maxAge: 24 * 60 * 60 * 1000, // 1 day
         sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.COOKIE_DOMAIN || 'localhost'
+        domain: process.env.COOKIE_DOMAIN || undefined // Better for localhost
     },
     name: 'auditTracker.sid',
-    // Add this to help with session reloading
-    rolling: true
+    rolling: true, // Reset maxAge on every request
+    unset: 'destroy' // Destroy session when unset
 }));
-  
 
 // This middleware runs after session is set up and will log session details
 // Add this after session middleware
@@ -344,20 +370,15 @@ app.get("/verify-email", async (req, res) => { // Make async
 
 //     res.render("home", { user: req.session.user });
 // });
-  
-app.get("/home", async (req, res) => { // Make the callback async
-    console.log("--- DEBUG START ---");
+const sessionRestorationMiddleware = async (req, res, next) => {
+    console.log("\n--- SESSION VERIFICATION ---");
     console.log("Request Session ID:", req.sessionID);
     console.log("Cookie Session ID:", req.cookies['auditTracker.sid']);
-    console.log("Session:", req.session);
-    console.log("Session User:", req.session?.user);
-    console.log("Cookies:", req.cookies);
-    console.log("--- DEBUG END ---");
     
-    let dbSessionData = null; // Variable to store session data from DB
+    let dbSessionData = null;
     
     try {
-        // Query the session from database using the cookie session ID
+        // Query the session from database
         const result = await pool.query(
             'SELECT sess FROM user_sessions WHERE sid = $1', 
             [req.cookies['auditTracker.sid'] || req.sessionID]
@@ -367,18 +388,14 @@ app.get("/home", async (req, res) => { // Make the callback async
             dbSessionData = result.rows[0].sess;
             console.log('Session found in DB:', dbSessionData);
             
-            // If session exists in DB but not in memory, restore it
+            // Restore session if needed
             if (!req.session.user && dbSessionData.user) {
                 console.log('Restoring user session from DB');
                 req.session.user = dbSessionData.user;
                 await new Promise((resolve, reject) => {
                     req.session.save(err => {
-                        if (err) {
-                            console.error('Error saving restored session:', err);
-                            reject(err);
-                        } else {
-                            resolve();
-                        }
+                        if (err) reject(err);
+                        else resolve();
                     });
                 });
             }
@@ -389,19 +406,95 @@ app.get("/home", async (req, res) => { // Make the callback async
         console.error('Session verification error:', err);
     }
 
-    // Final check - use either in-memory session or DB-restored session
-    const userData = req.session.user || (dbSessionData?.user || null);
+    // Attach user data to request for all routes
+    req.authenticatedUser = req.session.user || (dbSessionData?.user || null);
     
-    if (!userData) {
+    if (!req.authenticatedUser) {
         console.log("No user in session, redirecting to login");
         return res.redirect("/");
     }
+    
+    console.log("User authenticated:", req.authenticatedUser.email);
+    next();
+}; 
 
-    console.log("User authenticated:", userData.email);
-    res.render("home", { user: userData });
-});
+
+// app.get("/home", async (req, res) => { // Make the callback async
+
+//     console.log("--- DEBUG START ---");
+//     console.log("Request Session ID:", req.sessionID);
+//     console.log("Cookie Session ID:", req.cookies['auditTracker.sid']);
+//     console.log("Session:", req.session);
+//     console.log("Session User:", req.session?.user);
+//     console.log("Cookies:", req.cookies);
+//     console.log("--- DEBUG END ---");
+    
+//     let dbSessionData = null; // Variable to store session data from DB
+    
+//     try {
+//         // Query the session from database using the cookie session ID
+//         const result = await pool.query(
+//             'SELECT sess FROM user_sessions WHERE sid = $1', 
+//             [req.cookies['auditTracker.sid'] || req.sessionID]
+//         );
+        
+//         if (result.rows.length > 0) {
+//             dbSessionData = result.rows[0].sess;
+//             console.log('Session found in DB:', dbSessionData);
+            
+//             // If session exists in DB but not in memory, restore it
+//             if (!req.session.user && dbSessionData.user) {
+//                 console.log('Restoring user session from DB');
+//                 req.session.user = dbSessionData.user;
+//                 await new Promise((resolve, reject) => {
+//                     req.session.save(err => {
+//                         if (err) {
+//                             console.error('Error saving restored session:', err);
+//                             reject(err);
+//                         } else {
+//                             resolve();
+//                         }
+//                     });
+//                 });
+//             }
+//         } else {
+//             console.log('⚠️ Session NOT FOUND in database');
+//         }
+//     } catch (err) {
+//         console.error('Session verification error:', err);
+//     }
+
+//     // Final check - use either in-memory session or DB-restored session
+//     const userData = req.session.user || (dbSessionData?.user || null);
+    
+//     if (!userData) {
+//         console.log("No user in session, redirecting to login");
+//         return res.redirect("/");
+//     }
+
+//     console.log("User authenticated:", userData.email);
+//     res.render("home", { user: userData });
+// });
   
+// Home route
+app.get("/home", sessionRestorationMiddleware, (req, res) => {
+    res.render("home", { user: req.authenticatedUser });
+});
 
+// Policy route
+app.get("/policy", sessionRestorationMiddleware, (req, res) => {
+    res.render("policy", { user: req.authenticatedUser });
+});
+
+// Manuals route
+app.get("/manuals", sessionRestorationMiddleware, (req, res) => {
+    res.render("manuals", { user: req.authenticatedUser });
+});
+
+// Circular route
+app.get("/circular", sessionRestorationMiddleware, (req, res) => {
+    res.render("circular", { user: req.authenticatedUser });
+});
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
 // Combined route for VIEW and CLICK using logUserActivity
@@ -742,25 +835,25 @@ app.get("/", (req, res) => {
     res.render("index"); // Renders the login/signup page
 });
 
-app.get("/home", mockUserAuth, (req, res) => { // Add auth middleware
-     if (!req.session.user) return res.redirect('/'); // Redirect if not logged in
-    res.render("home", { user: req.user }); // Pass user info
-});
+// app.get("/home", mockUserAuth, (req, res) => { // Add auth middleware
+//      if (!req.session.user) return res.redirect('/'); // Redirect if not logged in
+//     res.render("home", { user: req.user }); // Pass user info
+// });
 
-app.get("/policy", mockUserAuth, (req, res) => { // Add auth middleware
-     if (!req.session.user) return res.redirect('/');
-    res.render("policy", { user: req.user });
-});
+// app.get("/policy", mockUserAuth, (req, res) => { // Add auth middleware
+//      if (!req.session.user) return res.redirect('/');
+//     res.render("policy", { user: req.user });
+// });
 
-app.get("/manuals", mockUserAuth, (req, res) => { // Add auth middleware
-     if (!req.session.user) return res.redirect('/');
-    res.render("manuals", { user: req.user });
-});
+// app.get("/manuals", mockUserAuth, (req, res) => { // Add auth middleware
+//      if (!req.session.user) return res.redirect('/');
+//     res.render("manuals", { user: req.user });
+// });
 
-app.get("/circular", mockUserAuth, (req, res) => { // Add auth middleware
-     if (!req.session.user) return res.redirect('/');
-    res.render("circular", { user: req.user });
-});
+// app.get("/circular", mockUserAuth, (req, res) => { // Add auth middleware
+//      if (!req.session.user) return res.redirect('/');
+//     res.render("circular", { user: req.user });
+// });
 
 
 // --- Logout Route ---
