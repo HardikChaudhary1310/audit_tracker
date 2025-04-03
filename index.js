@@ -637,29 +637,156 @@ app.post("/login", async (req, res) => {
 });
 // Download Policy Route
 app.get('/view-policy/:filename', mockUserAuth, async (req, res) => {
-    console.log('\n--- Starting View Policy ---');
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user;
     const policyId = decodedFilename;
 
-    console.log('User attempting view:', user);
-    console.log('Policy details:', { filename, decodedFilename, policyId });
+    console.log('\n--- Policy View Attempt ---');
+    console.log('User:', user);
+    console.log('Policy:', decodedFilename);
 
-    // ... rest of your existing view code ...
+    if (!user || !user.id) {
+        console.log('Unauthorized view attempt');
+        return res.status(401).send("Authentication required");
+    }
+
+    const possiblePaths = [
+        path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
+        path.join(__dirname, 'public', 'policies', decodedFilename),
+    ];
+
+    let filePath = null;
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+            filePath = p;
+            break;
+        }
+    }
+
+    if (!filePath) {
+        console.log('Policy file not found');
+        await logUserActivity('VIEW', user, policyId, "FAILED - File Not Found", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent')
+        });
+        return res.status(404).send('File not found');
+    }
+
+    try {
+        console.log('Logging policy view');
+        await logUserActivity('VIEW', user, policyId, "Success - Viewed", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            data: {
+                filename: decodedFilename,
+                path: filePath,
+                filesize: fs.statSync(filePath).size
+            }
+        });
+
+        console.log('Sending policy file');
+        res.sendFile(filePath, (err) => {
+            if (err) {
+                console.error('File send error:', err);
+                logUserActivity('VIEW', user, policyId, "FAILED - Transmission Error", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    error: err.message
+                });
+            }
+        });
+
+    } catch (err) {
+        console.error('View error:', err);
+        await logUserActivity('VIEW', user, policyId, "FAILED - Server Error", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            error: err.message
+        });
+        res.status(500).send('Server error');
+    }
 });
 
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => {
-    console.log('\n--- Starting Download Policy ---');
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user;
     const policyId = decodedFilename;
 
-    console.log('User attempting download:', user);
-    console.log('Policy details:', { filename, decodedFilename, policyId });
+    console.log('\n--- Policy Download Attempt ---');
+    console.log('User:', user);
+    console.log('Policy:', decodedFilename);
 
-    // ... rest of your existing download code ...
+    if (!user || !user.id) {
+        console.log('Unauthorized download attempt');
+        return res.status(401).send("Authentication required");
+    }
+
+    const possiblePaths = [
+        path.join(__dirname, 'public', 'policies', 'audit', decodedFilename),
+        path.join(__dirname, 'public', 'policies', decodedFilename),
+    ];
+
+    let filePath = null;
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) {
+            filePath = p;
+            break;
+        }
+    }
+
+    if (!filePath) {
+        console.log('Policy file not found');
+        await logUserActivity('DOWNLOAD', user, policyId, "FAILED - File Not Found", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent')
+        });
+        return res.status(404).send('File not found');
+    }
+
+    try {
+        console.log('Logging download attempt');
+        await logUserActivity('DOWNLOAD', user, policyId, "Started", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            data: {
+                filename: decodedFilename,
+                path: filePath
+            }
+        });
+
+        console.log('Sending file for download');
+        res.download(filePath, decodedFilename, async (err) => {
+            if (err) {
+                console.error('Download error:', err);
+                await logUserActivity('DOWNLOAD', user, policyId, "FAILED - Transmission Error", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    error: err.message
+                });
+            } else {
+                console.log('Download completed successfully');
+                await logUserActivity('DOWNLOAD', user, policyId, "Completed", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent'),
+                    data: {
+                        filesize: fs.statSync(filePath).size,
+                        mimetype: mime.getType(filePath)
+                    }
+                });
+            }
+        });
+
+    } catch (err) {
+        console.error('Download processing error:', err);
+        await logUserActivity('DOWNLOAD', user, policyId, "FAILED - Server Error", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            error: err.message
+        });
+        res.status(500).send('Server error');
+    }
 });
 
 app.get('/test-log', async (req, res) => {
