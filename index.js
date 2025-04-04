@@ -447,62 +447,7 @@ const sessionRestorationMiddleware = async (req, res, next) => {
 }; 
 
 
-// app.get("/home", async (req, res) => { // Make the callback async
 
-//     console.log("--- DEBUG START ---");
-//     console.log("Request Session ID:", req.sessionID);
-//     console.log("Cookie Session ID:", req.cookies['auditTracker.sid']);
-//     console.log("Session:", req.session);
-//     console.log("Session User:", req.session?.user);
-//     console.log("Cookies:", req.cookies);
-//     console.log("--- DEBUG END ---");
-    
-//     let dbSessionData = null; // Variable to store session data from DB
-    
-//     try {
-//         // Query the session from database using the cookie session ID
-//         const result = await pool.query(
-//             'SELECT sess FROM user_sessions WHERE sid = $1', 
-//             [req.cookies['auditTracker.sid'] || req.sessionID]
-//         );
-        
-//         if (result.rows.length > 0) {
-//             dbSessionData = result.rows[0].sess;
-//             console.log('Session found in DB:', dbSessionData);
-            
-//             // If session exists in DB but not in memory, restore it
-//             if (!req.session.user && dbSessionData.user) {
-//                 console.log('Restoring user session from DB');
-//                 req.session.user = dbSessionData.user;
-//                 await new Promise((resolve, reject) => {
-//                     req.session.save(err => {
-//                         if (err) {
-//                             console.error('Error saving restored session:', err);
-//                             reject(err);
-//                         } else {
-//                             resolve();
-//                         }
-//                     });
-//                 });
-//             }
-//         } else {
-//             console.log('⚠️ Session NOT FOUND in database');
-//         }
-//     } catch (err) {
-//         console.error('Session verification error:', err);
-//     }
-
-//     // Final check - use either in-memory session or DB-restored session
-//     const userData = req.session.user || (dbSessionData?.user || null);
-    
-//     if (!userData) {
-//         console.log("No user in session, redirecting to login");
-//         return res.redirect("/");
-//     }
-
-//     console.log("User authenticated:", userData.email);
-//     res.render("home", { user: userData });
-// });
   
 // Home route
 app.get("/home", sessionRestorationMiddleware, (req, res) => {
@@ -563,15 +508,15 @@ const requireAuth = async (req, res, next) => {
 app.post('/track-download', sessionRestorationMiddleware, async (req, res) => {
     try {
         const { policyId, filename } = req.body;
-        
+        const user = req.authenticatedUser; 
         // Insert with NULL handling
         const result = await pool.query(
             `INSERT INTO policy_tracking 
             (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
             [
-                req.user.id,
-                req.user.email,
+                user.id,
+                user.email,
                 policyId || null, // Explicit NULL if not provided
                 'DOWNLOAD',
                 filename,

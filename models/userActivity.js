@@ -13,8 +13,8 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
         const userId = userData?.id ?? null; // Using nullish coalescing
         const username = userData?.email || userData?.username || 'system@shivalikbank.com';
         const safePolicyId = policyId ?? null; // Explicit null instead of 'system_default'
-        const ipAddress = additionalData.ip || req?.ip || '0.0.0.0'; // Added req.ip fallback
-        const userAgent = additionalData.userAgent || req?.get('User-Agent') || 'unknown';
+        const ipAddress = additionalData.ip  || '0.0.0.0';// Added req.ip fallback
+        const userAgent = additionalData.userAgent || 'unknown';
 
         // Main activity log
         const userActivityQuery = `
