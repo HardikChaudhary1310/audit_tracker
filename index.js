@@ -173,23 +173,20 @@ const isValidPassword = (password) => {
 
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
 const mockUserAuth = (req, res, next) => {
-    console.log("Session Object:", req.session);
-    console.log("Session Object:", req.session);
-    console.log("Session Cookie:", req.cookies);
-  
-    const sessionUser = req.session?.user;
-    console.log("Session User:", sessionUser);
-  
-    if (!sessionUser) {
-      console.log("❌ No active session user found. Redirecting to login.");
-      return res.redirect("/");
+    console.log('Session verification:', {
+        sessionID: req.sessionID,
+        user: req.session.user,
+        cookies: req.cookies
+    });
+    
+    if (!req.session.user) {
+        console.log('No user in session, redirecting to login');
+        return res.status(401).json({ error: 'Unauthorized' });
     }
-  
-    req.user = sessionUser;
-    console.log("User Data in mockUserAuth:", req.user);
-  
+    
+    req.user = req.session.user;
     next();
-  };
+};
   
 
 
@@ -551,13 +548,23 @@ app.get('/test-db', async (req, res) => {
   });
 
 
-// In your index.js (backend)
+// Enhanced tracking routes with more logging
 app.post('/track-download', mockUserAuth, async (req, res) => {
+    console.log('Download tracking request:', {
+        body: req.body,
+        user: req.user,
+        ip: req.ip
+    });
+
     try {
         const { policyId, filename } = req.body;
         const user = req.user;
 
-        // Insert into database
+        if (!user || !user.id) {
+            console.error('Unauthorized download tracking attempt');
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
         const result = await pool.query(
             `INSERT INTO policy_tracking 
             (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
@@ -565,26 +572,33 @@ app.post('/track-download', mockUserAuth, async (req, res) => {
             [user.id, user.email, policyId, 'DOWNLOAD', filename, req.ip, req.get('User-Agent')]
         );
 
-        // Return JSON response
-        res.json({ 
-            success: true,
-            trackingId: result.rows[0].id 
-        });
+        console.log('Download tracked in DB:', result.rows[0].id);
+        res.json({ success: true, trackingId: result.rows[0].id });
     } catch (error) {
-        console.error('Download tracking error:', error);
-        res.status(500).json({ 
-            success: false,
-            error: error.message 
+        console.error('Download tracking error:', {
+            error: error.message,
+            stack: error.stack
         });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
 
 app.post('/track-view', mockUserAuth, async (req, res) => {
+    console.log('View tracking request:', {
+        body: req.body,
+        user: req.user,
+        ip: req.ip
+    });
+
     try {
         const { policyId, filename } = req.body;
         const user = req.user;
 
-        // Insert into database
+        if (!user || !user.id) {
+            console.error('Unauthorized view tracking attempt');
+            return res.status(401).json({ success: false, error: 'Unauthorized' });
+        }
+
         const result = await pool.query(
             `INSERT INTO policy_tracking 
             (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
@@ -592,21 +606,16 @@ app.post('/track-view', mockUserAuth, async (req, res) => {
             [user.id, user.email, policyId, 'VIEW', filename, req.ip, req.get('User-Agent')]
         );
 
-        // Return JSON response
-        res.json({ 
-            success: true,
-            trackingId: result.rows[0].id 
-        });
+        console.log('View tracked in DB:', result.rows[0].id);
+        res.json({ success: true, trackingId: result.rows[0].id });
     } catch (error) {
-        console.error('View tracking error:', error);
-        res.status(500).json({ 
-            success: false,
-            error: error.message 
+        console.error('View tracking error:', {
+            error: error.message,
+            stack: error.stack
         });
+        res.status(500).json({ success: false, error: error.message });
     }
 });
-
-
 app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
     if (req.user.userType !== 'admin') {
         return res.status(403).send('Access denied');
@@ -631,7 +640,20 @@ app.get('/test-auth', mockUserAuth, (req, res) => {
     res.json({ user: req.user });
   });
 
-
+  app.get('/test-db-insert', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `INSERT INTO policy_tracking 
+            (user_id, username, policy_id, action_type, file_path)
+            VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+            [1, 'test@example.com', 'test123', 'DOWNLOAD', 'test.pdf']
+        );
+        res.json({ success: true, id: result.rows[0].id });
+    } catch (err) {
+        console.error('DB insert test failed:', err);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
 
 app.post('/track-policy-click', mockUserAuth, async (req, res) => {
     const { policyId, filename, actionType } = req.body;
