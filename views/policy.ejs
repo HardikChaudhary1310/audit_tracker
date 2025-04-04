@@ -455,95 +455,12 @@
 
     <script>
 
-function togglePolicy(policyItem) {
+
+// Define togglePolicy in global scope
+window.togglePolicy = function(policyItem) {
     policyItem.classList.toggle('open');
-}
-
-        // Function to handle the policy download (tracks the download before proceeding)
-async function handleDownload(policyId) {
-    try {
-        const currentUser = { id: "USER_ID_HERE" }; // Replace with actual user ID from your session/auth
-    
-        // Track the download event
-       // await trackPolicyDownload(policyId); // Track the download
-
-        // Wait a bit to ensure the tracking is completed before proceeding with the download
-        // Open the file in a new tab for download
-        window.location.href = `/api/download-policy/${policyId}`;
-    } catch (error) {
-        console.error("Error tracking download:", error);
-        alert("Failed to track the download. Please try again.");
-    }
-}
-
-
-
-
-const handleLogin = (username, password) => {
-    fetch('/login', {  // Use relative path
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Store user info in sessionStorage
-            sessionStorage.setItem('currentUser', JSON.stringify(data.user));
-            window.location.href = '/home';  // Redirect on success
-        } else {
-            alert(data.message || 'Login failed');
-        }
-    })
-    .catch(error => {
-        console.error('Login error:', error);
-        alert('Login error occurred');
-    });
 };
 
-
-//// this one we have to use ::::
-                // Function to track policy click
-//                 const trackPolicyClick = (filename) => {
-//             fetch('http://localhost:3001/track-policy-click', {
-//                 method: 'POST',
-//                 headers: {
-//                     'Content-Type': 'application/json',
-//                 },
-//                 body: JSON.stringify({ filename: filename }),
-//             })
-//             .then((response) => response.json())
-//             .then((data) => {
-//                 console.log('Policy click tracked:', data);
-//             })
-//             .catch((error) => {
-//                 console.error('Error tracking click:', error);
-//             });
-//         };
-
-
-// /// this oneeeee ::::
-// const trackPolicyDownload = (policyId) => {
-//     console.log("Tracking policy download for:", policyId); // Debugging
- 
-//     fetch('/track-download', {
-//     method: 'POST',
-//     headers: { 'Content-Type': 'application/json' },
-//     body: JSON.stringify({ policyId }),
-// })
-// .then(response => {
-//     if (!response.ok) {
-//         throw new Error(`HTTP error! Status: ${response.status}`);
-//     }
-//     return response.json().catch(() => ({ message: "Non-JSON response received" }));
-// })
-// .then(data => console.log('Policy download tracked:', data))
-// .catch(error => console.error('Error tracking download:', error));
- 
-// };
-
-
-// Unified tracking function
 // Unified tracking function
 const trackPolicyAction = async (actionType, policyId, filename) => {
     try {
@@ -565,118 +482,14 @@ const trackPolicyAction = async (actionType, policyId, filename) => {
     }
 };
 
-// Specific wrappers for convenience
+// Specific wrappers
 const trackPolicyDownload = (policyId, filename) => 
     trackPolicyAction('DOWNLOAD', policyId, filename);
 
 const trackPolicyView = (policyId, filename) => 
     trackPolicyAction('VIEW', policyId, filename);
 
-
-        // Document ready function to handle event listeners for download buttons
-
-    
-           
-            
-
-
-    //        document.querySelectorAll('.delete-button').forEach(button => {
-    // button.addEventListener('click', async function (event) {
-    //     event.preventDefault();
-    //     const filename = this.getAttribute('data-filename');
-    //     const confirmDelete = confirm(`Are you sure you want to delete ${filename}?`);
-        
-    //     if (confirmDelete) {
-    //         try {
-    //             const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, { 
-    //                 method: 'DELETE' 
-    //             });
-
-    //             if (response.ok) {
-    //                 alert(`${filename} deleted successfully`);
-    //                 this.closest('li').remove();
-    //             } else {
-    //                 const errorMsg = await response.json();
-    //                 alert(`Failed to delete the file: ${errorMsg.message}`);
-    //             }
-    //         } catch (error) {
-    //             console.error("Error deleting policy:", error);
-    //             alert("Failed to delete the policy. Please try again.");
-    //         }
-    //     }
-    // });
-//});
-
-
-// Adding event listeners for download buttons
-// document.querySelectorAll('.download-link').forEach(button => {
-//     button.addEventListener('click', function (event) {
-//         const policyId = this.getAttribute('data-policy-id');  // Get the unique policy ID
-
-//         // Track the download
-//         trackPolicyDownload(policyId);
-//     });
-// });
-
-const trackAction = async (action, policyId, filename) => {
-  console.log(`Attempting to track ${action}:`, { policyId, filename });
-  
-  try {
-    const response = await fetch(`/track-${action.toLowerCase()}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        policyId, 
-        filename,
-        _debug: new Date().toISOString() 
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log(`${action} tracking success:`, data);
-    return data;
-  } catch (error) {
-    console.error(`${action} tracking failed:`, error);
-    // Still allow the action even if tracking fails
-    return { success: false, error: error.message };
-  }
-};
-
-// Event listeners with enhanced logging
-document.querySelectorAll('.download-link').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const url = btn.href;
-    const filename = url.split('/').pop();
-    const policyId = btn.dataset.policyId;
-    
-    console.log('Download initiated:', { url, filename, policyId });
-    
-    const trackingResult = await trackAction('DOWNLOAD', policyId, filename);
-    window.open(url, '_blank');
-  });
-});
-
-document.querySelectorAll('.view-button').forEach(btn => {
-  btn.addEventListener('click', async (e) => {
-    e.preventDefault();
-    const url = btn.href;
-    const filename = btn.dataset.filename;
-    const policyId = btn.dataset.policyId;
-    
-    console.log('View initiated:', { url, filename, policyId });
-    
-    const trackingResult = await trackAction('VIEW', policyId, filename);
-    window.open(url, '_blank');
-  });
-});
-
-
-// Event listeners for download and view buttons
+// Event listeners
 document.addEventListener("DOMContentLoaded", function() {
     // Download buttons
     document.querySelectorAll('.download-link').forEach(button => {
@@ -687,11 +500,11 @@ document.addEventListener("DOMContentLoaded", function() {
             const policyId = this.getAttribute('data-policy-id');
             
             try {
-                await trackPolicyAction('DOWNLOAD', policyId, filename);
+                await trackPolicyDownload(policyId, filename);
                 window.open(policyUrl, '_blank');
             } catch (error) {
                 console.error('Download tracking failed:', error);
-                window.open(policyUrl, '_blank'); // Still allow download even if tracking fails
+                window.open(policyUrl, '_blank');
             }
         });
     });
@@ -705,116 +518,43 @@ document.addEventListener("DOMContentLoaded", function() {
             const policyId = this.getAttribute('data-policy-id');
             
             try {
-                await trackPolicyAction('VIEW', policyId, filename);
+                await trackPolicyView(policyId, filename);
                 window.open(policyUrl, '_blank');
             } catch (error) {
                 console.error('View tracking failed:', error);
-                window.open(policyUrl, '_blank'); // Still allow view even if tracking fails
+                window.open(policyUrl, '_blank');
             }
         });
     });
-});
 
-// Tracking click function (if needed elsewhere)
-// const trackPolicyClick = (filename) => {
-//     fetch('/track-policy-click', {
-//         method: 'POST',
-//         headers: {
-//             'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify({ filename: filename }),
-//     })
-//     .then((response) => response.json())
-//     .then((data) => {
-//         console.log('Policy click tracked:', data);
-//     })
-//     .catch((error) => {
-//         console.error('Error tracking click:', error);
-//     });
-// };
-
-// Tracking download function
-// const trackPolicyDownload = (policyId) => {
-//     console.log("Tracking policy download for:", policyId); // Debugging
-
-//     fetch('/track-download', {
-//         method: 'POST',
-//         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ policyId }),  // Send unique policy ID
-//     })
-//     .then(response => {
-//         if (!response.ok) {
-//             throw new Error(`HTTP error! Status: ${response.status}`);
-//         }
-//         return response.json().catch(() => ({ message: "Non-JSON response received" }));
-//     })
-//     .then(data => console.log('Policy download tracked:', data))
-//     .catch(error => console.error('Error tracking download:', error));
-// };
-
-
-// Function to track policy downloads
-const trackPolicyDownload = (policyId, filename) => {
-    fetch('/track-download', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            policyId: policyId,
-            filename: filename
-        })
-    })
-    .then(response => response.json())
-    .then(data => console.log('Download tracked:', data))
-    .catch(error => console.error('Error tracking download:', error));
-};
-
-// Function to track policy views
-const trackPolicyClick = (policyId, filename, actionType = 'VIEW') => {
-    fetch('/track-policy-click', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            policyId: policyId,
-            filename: filename,
-            actionType: actionType
-        })
-    })
-    .then(response => response.json())
-    .then(data => console.log(`${actionType} tracked:`, data))
-    .catch(error => console.error('Error tracking click:', error));
-};
-
-document.querySelectorAll('.delete-button').forEach(button => {
-    button.addEventListener('click', async function (event) {
-        event.preventDefault();
-        const filename = this.getAttribute('data-filename');
-        const confirmDelete = confirm(`Are you sure you want to delete ${filename}?`);
-
-        if (confirmDelete) {
-            try {
-                const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, {
-                    method: 'DELETE',
-                });
-
-                if (response.ok) {
-                    alert(`${filename} deleted successfully`);
-                    this.closest('li').remove();
-                } else {
-                    const errorMsg = await response.json();
-                    alert(`Failed to delete the file: ${errorMsg.message}`);
+    // Delete buttons
+    document.querySelectorAll('.delete-button').forEach(button => {
+        button.addEventListener('click', async function(event) {
+            event.preventDefault();
+            const filename = this.getAttribute('data-filename');
+            
+            if (confirm(`Delete ${filename}?`)) {
+                try {
+                    const response = await fetch(`/delete-policy/${encodeURIComponent(filename)}`, {
+                        method: 'DELETE'
+                    });
+                    
+                    if (response.ok) {
+                        this.closest('li').remove();
+                    } else {
+                        const error = await response.json();
+                        alert(error.message || 'Delete failed');
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    alert('Delete failed');
                 }
-            } catch (error) {
-                console.error("Error deleting policy:", error);
-                alert("Failed to delete the policy. Please try again.");
             }
-        }
+        });
     });
 });
-
-
-        });
-    </script>
-    
+</script>
+ 
     
 </body>
 </html>
