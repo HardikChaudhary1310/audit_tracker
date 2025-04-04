@@ -6,13 +6,12 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
     try {
         await client.query('BEGIN');
 
-        // Prepare data
+        // Prepare data with defaults
         const userId = userData?.id || null;
-        const username = userData?.email || userData?.username || 'unknown';
+        const username = userData?.email || userData?.username || 'system@shivalikbank.com';
         const safePolicyId = policyId || 'system_default';
-        const ipAddress = additionalData.ip || req?.ip || '0.0.0.0';
-        const userAgent = additionalData.userAgent || req?.get('User-Agent') || 'unknown';
-        const filePath = additionalData.filePath || null;
+        const ipAddress = additionalData.ip || '0.0.0.0';
+        const userAgent = additionalData.userAgent || 'unknown';
 
         // Insert into user_activity table
         const userActivityQuery = `
@@ -33,33 +32,33 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
             JSON.stringify(additionalData)
         ]);
 
-        // Insert into policy_tracking table for relevant actions
-        if (['VIEW', 'DOWNLOAD', 'CLICK'].includes(actionType)) {
-            const policyTrackingQuery = `
-                INSERT INTO policy_tracking (
-                    user_id, username, policy_id, action_type,
-                    file_path, ip_address, user_agent, additional_data
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                RETURNING id;
-            `;
-            await client.query(policyTrackingQuery, [
-                userId,
-                username,
-                safePolicyId,
-                actionType,
-                filePath,
-                ipAddress,
-                userAgent,
-                JSON.stringify(additionalData)
-            ]);
-        }
+        // Insert into activities table
+        const activitiesQuery = `
+            INSERT INTO activities (
+                action_type, email, policy_id, user_id,
+                ip_address, user_agent
+            ) VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING id;
+        `;
+        const activitiesResult = await client.query(activitiesQuery, [
+            actionType,
+            username,
+            safePolicyId,
+            userId,
+            ipAddress,
+            userAgent
+        ]);
 
         await client.query('COMMIT');
-        return { success: true };
+        return activitiesResult.rows[0];
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('Activity Logging Error:', err);
+        console.error('Activity Logging Error:', {
+            error: err.message,
+            query: err.query,
+            parameters: err.parameters
+        });
         throw err;
     } finally {
         client.release();
