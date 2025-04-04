@@ -6,15 +6,15 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
     try {
         await client.query('BEGIN');
 
-        // Prepare data with defaults
+        // Prepare data
         const userId = userData?.id || null;
-        const username = userData?.email || userData?.username || 'system@shivalikbank.com';
+        const username = userData?.email || userData?.username || 'unknown';
         const safePolicyId = policyId || 'system_default';
-        const ipAddress = additionalData.ip || '0.0.0.0';
-        const userAgent = additionalData.userAgent || 'unknown';
+        const ipAddress = additionalData.ip || req?.ip || '0.0.0.0';
+        const userAgent = additionalData.userAgent || req?.get('User-Agent') || 'unknown';
         const filePath = additionalData.filePath || null;
 
-        // Insert into user_activity table (general activity log)
+        // Insert into user_activity table
         const userActivityQuery = `
             INSERT INTO user_activity (
                 action_type, user_id, username, policy_id, status,
@@ -33,7 +33,7 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
             JSON.stringify(additionalData)
         ]);
 
-        // Insert into policy_tracking table (specific for policy actions)
+        // Insert into policy_tracking table for relevant actions
         if (['VIEW', 'DOWNLOAD', 'CLICK'].includes(actionType)) {
             const policyTrackingQuery = `
                 INSERT INTO policy_tracking (
@@ -59,11 +59,7 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
 
     } catch (err) {
         await client.query('ROLLBACK');
-        console.error('Activity Logging Error:', {
-            error: err.message,
-            query: err.query,
-            parameters: err.parameters
-        });
+        console.error('Activity Logging Error:', err);
         throw err;
     } finally {
         client.release();

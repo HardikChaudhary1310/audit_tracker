@@ -455,10 +455,9 @@
 
     <script>
 
-        function togglePolicy(policyItem)
-         {
-            policyItem.classList.toggle('open');
-        }
+function togglePolicy(policyItem) {
+    policyItem.classList.toggle('open');
+}
 
         // Function to handle the policy download (tracks the download before proceeding)
 async function handleDownload(policyId) {
@@ -481,23 +480,24 @@ async function handleDownload(policyId) {
 
 
 const handleLogin = (username, password) => {
-    console.log('Logging in with:', { username, password });
-    fetch('http://localhost:3001/login', {
+    fetch('/login', {  // Use relative path
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            username: username,
-            password: password
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
     })
     .then(response => response.json())
     .then(data => {
-        console.log('Login successful:', data);
+        if (data.success) {
+            // Store user info in sessionStorage
+            sessionStorage.setItem('currentUser', JSON.stringify(data.user));
+            window.location.href = '/home';  // Redirect on success
+        } else {
+            alert(data.message || 'Login failed');
+        }
     })
     .catch(error => {
         console.error('Login error:', error);
+        alert('Login error occurred');
     });
 };
 
@@ -543,7 +543,31 @@ const handleLogin = (username, password) => {
 // };
 
 
+// Unified tracking function
+const trackPolicyAction = (actionType, policyId, filename) => {
+    const currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || {};
+    
+    fetch(`/track-${actionType.toLowerCase()}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            policyId,
+            filename,
+            userId: currentUser.id,
+            username: currentUser.email
+        })
+    })
+    .then(response => response.json())
+    .then(data => console.log(`${actionType} tracked:`, data))
+    .catch(error => console.error(`Error tracking ${actionType}:`, error));
+};
 
+// Specific wrappers for convenience
+const trackPolicyDownload = (policyId, filename) => 
+    trackPolicyAction('DOWNLOAD', policyId, filename);
+
+const trackPolicyView = (policyId, filename) => 
+    trackPolicyAction('VIEW', policyId, filename);
 
 
         // Document ready function to handle event listeners for download buttons
@@ -629,41 +653,36 @@ document.querySelectorAll('.download-link').forEach(button => {
 });
 
 
-document.querySelectorAll('.view-button').forEach(button => {
-    button.addEventListener('click', async function (event) {
-        event.preventDefault(); // Prevent default behavior (e.g., if it's a link)
+document.addEventListener("DOMContentLoaded", function () {
+    // Handle Download Buttons
+    document.querySelectorAll('.download-link').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const policyUrl = this.getAttribute('href');
+            const filename = policyUrl.split('/').pop();
+            const policyId = this.getAttribute('data-policy-id');
+            
+            // Track then download
+            trackPolicyDownload(policyId, filename)
+                .then(() => window.open(policyUrl, '_blank'))
+                .catch(err => console.error('Download failed:', err));
+        });
+    });
 
-        const filename = this.getAttribute('data-filename');
-        const policyId = this.getAttribute('data-policy-id');  // Get the unique policy ID
-        const policyUrl = this.getAttribute('href');  // Get the URL of the policy
-
-        try {
-            // Send a request to track the policy view with the unique ID
-            const response = await fetch('/track-policy-click', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    policyId: policyId,  // Send unique policy ID
-                    filename: filename,  // Send policy filename
-                    actionType: 'VIEW',  // Action type is 'VIEW'
-                }),
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                console.log('Policy view tracked:', data);
-                alert(`You are now viewing: ${filename}`);
-                window.open(policyUrl, '_blank');  // Open the policy in a new tab
-            } else {
-                const errorMsg = await response.json();
-                alert(`Failed to track view for the file: ${errorMsg.message}`);
-            }
-        } catch (error) {
-            console.error("Error tracking policy view:", error);
-            alert("Failed to track the view. Please try again.");
-        }
+    // Handle View Buttons
+    document.querySelectorAll('.view-button').forEach(button => {
+        button.addEventListener('click', function (event) {
+            event.preventDefault();
+            const policyUrl = this.getAttribute('href');
+            const filename = this.getAttribute('data-filename');
+            const policyId = this.getAttribute('data-policy-id');
+            
+            // Track the view
+            trackPolicyClick(policyId, filename, 'VIEW');
+            
+            // Open the file in a new tab after tracking
+            window.open(policyUrl, '_blank');
+        });
     });
 });
 
@@ -705,15 +724,14 @@ document.querySelectorAll('.view-button').forEach(button => {
 // };
 
 
-// Example of tracking a download
-const trackPolicyDownload = (policyId, userId, username) => {
+// Function to track policy downloads
+const trackPolicyDownload = (policyId, filename) => {
     fetch('/track-download', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            userId: userId,        // Send user ID
-            username: username,    // Send username (or email)
-            policyId: policyId     // Send policy ID
+            policyId: policyId,
+            filename: filename
         })
     })
     .then(response => response.json())
@@ -721,23 +739,21 @@ const trackPolicyDownload = (policyId, userId, username) => {
     .catch(error => console.error('Error tracking download:', error));
 };
 
-// Example of tracking a click or view
-const trackPolicyClick = (policyId, userId, username, actionType) => {
+// Function to track policy views
+const trackPolicyClick = (policyId, filename, actionType = 'VIEW') => {
     fetch('/track-policy-click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            userId: userId,        // Send user ID
-            username: username,    // Send username (or email)
-            policyId: policyId,    // Send policy ID
-            actionType: actionType // Send action type ('VIEW' or 'CLICK')
+            policyId: policyId,
+            filename: filename,
+            actionType: actionType
         })
     })
     .then(response => response.json())
     .then(data => console.log(`${actionType} tracked:`, data))
     .catch(error => console.error('Error tracking click:', error));
 };
-
 
 document.querySelectorAll('.delete-button').forEach(button => {
     button.addEventListener('click', async function (event) {

@@ -525,28 +525,6 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 });
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
-// Combined route for VIEW and CLICK using logUserActivity
-app.post('/track-policy-click', mockUserAuth, async (req, res) => {
-    const { policyId, actionType, filename } = req.body;
-    const user = req.user;
-
-    if (!user || !user.id) {
-        return res.status(401).json({ message: "User authentication required." });
-    }
-
-    try {
-        await logUserActivity(actionType, user, policyId, "Success", {
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
-            filePath: filename ? `/policies/${filename}` : null
-        });
-        res.status(200).json({ message: `${actionType} tracked successfully` });
-    } catch (err) {
-        console.error(`Error tracking ${actionType}:`, err);
-        res.status(500).json({ message: `Server error while tracking ${actionType}` });
-    }
-});
-
 app.post('/track-download', mockUserAuth, async (req, res) => {
     const { policyId, filename } = req.body;
     const user = req.user;
@@ -559,7 +537,7 @@ app.post('/track-download', mockUserAuth, async (req, res) => {
         await logUserActivity('DOWNLOAD', user, policyId, "Success", {
             ip: req.ip,
             userAgent: req.get('User-Agent'),
-            filePath: filename ? `/policies/${filename}` : null
+            filePath: filename
         });
         res.status(200).json({ message: "Download tracked successfully" });
     } catch (err) {
@@ -568,6 +546,26 @@ app.post('/track-download', mockUserAuth, async (req, res) => {
     }
 });
 
+app.post('/track-policy-click', mockUserAuth, async (req, res) => {
+    const { policyId, filename, actionType } = req.body;
+    const user = req.user;
+
+    if (!user || !user.id) {
+        return res.status(401).json({ message: "User authentication required." });
+    }
+
+    try {
+        await logUserActivity(actionType, user, policyId, "Success", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            filePath: filename
+        });
+        res.status(200).json({ message: `${actionType} tracked successfully` });
+    } catch (err) {
+        console.error(`Error tracking ${actionType}:`, err);
+        res.status(500).json({ message: `Server error while tracking ${actionType}` });
+    }
+});
 app.get('/policy-stats/:policyId', mockUserAuth, async (req, res) => {
     const { policyId } = req.params;
     
