@@ -12,8 +12,9 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
         const safePolicyId = policyId || 'system_default';
         const ipAddress = additionalData.ip || '0.0.0.0';
         const userAgent = additionalData.userAgent || 'unknown';
+        const filePath = additionalData.filePath || null;
 
-        // Insert into user_activity table
+        // Insert into user_activity table (general activity log)
         const userActivityQuery = `
             INSERT INTO user_activity (
                 action_type, user_id, username, policy_id, status,
@@ -32,25 +33,29 @@ const logUserActivity = async (actionType, userData, policyId, status, additiona
             JSON.stringify(additionalData)
         ]);
 
-        // Insert into activities table
-        const activitiesQuery = `
-            INSERT INTO activities (
-                action_type, email, policy_id, user_id,
-                ip_address, user_agent
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id;
-        `;
-        const activitiesResult = await client.query(activitiesQuery, [
-            actionType,
-            username,
-            safePolicyId,
-            userId,
-            ipAddress,
-            userAgent
-        ]);
+        // Insert into policy_tracking table (specific for policy actions)
+        if (['VIEW', 'DOWNLOAD', 'CLICK'].includes(actionType)) {
+            const policyTrackingQuery = `
+                INSERT INTO policy_tracking (
+                    user_id, username, policy_id, action_type,
+                    file_path, ip_address, user_agent, additional_data
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                RETURNING id;
+            `;
+            await client.query(policyTrackingQuery, [
+                userId,
+                username,
+                safePolicyId,
+                actionType,
+                filePath,
+                ipAddress,
+                userAgent,
+                JSON.stringify(additionalData)
+            ]);
+        }
 
         await client.query('COMMIT');
-        return activitiesResult.rows[0];
+        return { success: true };
 
     } catch (err) {
         await client.query('ROLLBACK');

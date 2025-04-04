@@ -526,79 +526,108 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
 // Combined route for VIEW and CLICK using logUserActivity
-app.post('/track-policy-click', mockUserAuth, async (req, res) => { // Make async
-    const { policyId, actionType, filename } = req.body; // actionType should be 'VIEW' or 'CLICK'
-    const user = req.user; // Get user from middleware
+app.post('/track-policy-click', mockUserAuth, async (req, res) => {
+    const { policyId, actionType, filename } = req.body;
+    const user = req.user;
 
     if (!user || !user.id) {
-         console.error("Tracking Error: User not authenticated or missing ID.");
-         return res.status(401).json({ message: "User authentication required." });
+        return res.status(401).json({ message: "User authentication required." });
     }
-    if (!policyId || !actionType || !['VIEW', 'CLICK'].includes(actionType)) {
-        return res.status(400).json({ message: 'Valid Policy ID and Action Type (VIEW/CLICK) are required' });
-    }
-    const safeFilename = filename || policyId; // Use filename if provided, else policyId
-
-    console.log(`Tracking ${actionType} for policy: ${safeFilename} (ID: ${policyId}), User: ${user.username} (ID: ${user.id})`);
 
     try {
-        // Log using the centralized function
-        await logUserActivity(actionType, user, policyId, `Success - ${actionType}ed`);
-
-        // Optional: If you still need the separate 'activities' table
-        /*
-        const insertActivitiesQuery = `
-            INSERT INTO activities (action_type, email, policy_id, user_id)
-            VALUES ($1, $2, $3, $4)`;
-        await pool.query(insertActivitiesQuery, [actionType, user.username, policyId, user.id]);
-        console.log(`Also logged to 'activities' table.`);
-        */
-
-        res.status(200).json({ message: `${actionType} tracked successfully for ${safeFilename}` });
-
+        await logUserActivity(actionType, user, policyId, "Success", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            filePath: filename ? `/policies/${filename}` : null
+        });
+        res.status(200).json({ message: `${actionType} tracked successfully` });
     } catch (err) {
-        console.error(`❌ Error tracking ${actionType} for policy ${policyId}:`, err);
+        console.error(`Error tracking ${actionType}:`, err);
         res.status(500).json({ message: `Server error while tracking ${actionType}` });
     }
 });
 
-
-// Route for DOWNLOAD using logUserActivity
-app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
+app.post('/track-download', mockUserAuth, async (req, res) => {
     const { policyId, filename } = req.body;
-    const user = req.user; // Get user from middleware
+    const user = req.user;
 
-     if (!user || !user.id) {
-         console.error("Tracking Error: User not authenticated or missing ID.");
-         return res.status(401).json({ message: "User authentication required." });
+    if (!user || !user.id) {
+        return res.status(401).json({ message: "User authentication required." });
     }
-    if (!policyId) {
-        return res.status(400).json({ message: "Policy ID is required" });
-    }
-     const safeFilename = filename || policyId;
-
-    console.log(`Tracking DOWNLOAD for policy: ${safeFilename} (ID: ${policyId}), User: ${user.username} (ID: ${user.id})`);
 
     try {
-        // Log using the centralized function
-        await logUserActivity('DOWNLOAD', user, policyId, "Success - Downloaded");
-
-        // Optional: If you still need the separate 'activities' table
-        /*
-        const insertActivitiesQuery = `
-            INSERT INTO activities (action_type, email, policy_id, user_id)
-            VALUES ($1, $2, $3, $4)`;
-        await pool.query(insertActivitiesQuery, ['DOWNLOAD', user.username, policyId, user.id]);
-        console.log(`Also logged to 'activities' table.`);
-        */
-
+        await logUserActivity('DOWNLOAD', user, policyId, "Success", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            filePath: filename ? `/policies/${filename}` : null
+        });
         res.status(200).json({ message: "Download tracked successfully" });
-
     } catch (err) {
-        console.error(`❌ Error tracking DOWNLOAD for policy ${policyId}:`, err);
+        console.error('Error tracking download:', err);
         res.status(500).json({ message: "Server error while tracking download" });
     }
 });
+
+app.get('/policy-stats/:policyId', mockUserAuth, async (req, res) => {
+    const { policyId } = req.params;
+    
+    try {
+        const statsQuery = `
+            SELECT 
+                action_type,
+                COUNT(*) as count,
+                COUNT(DISTINCT user_id) as unique_users,
+                MIN(timestamp) as first_occurrence,
+                MAX(timestamp) as last_occurrence
+            FROM policy_tracking
+            WHERE policy_id = $1
+            GROUP BY action_type
+        `;
+        
+        const { rows } = await pool.query(statsQuery, [policyId]);
+        res.json(rows);
+    } catch (err) {
+        console.error('Error fetching policy stats:', err);
+        res.status(500).json({ message: "Error fetching policy statistics" });
+    }
+});
+
+// Route for DOWNLOAD using logUserActivity
+// app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
+//     const { policyId, filename } = req.body;
+//     const user = req.user; // Get user from middleware
+
+//      if (!user || !user.id) {
+//          console.error("Tracking Error: User not authenticated or missing ID.");
+//          return res.status(401).json({ message: "User authentication required." });
+//     }
+//     if (!policyId) {
+//         return res.status(400).json({ message: "Policy ID is required" });
+//     }
+//      const safeFilename = filename || policyId;
+
+//     console.log(`Tracking DOWNLOAD for policy: ${safeFilename} (ID: ${policyId}), User: ${user.username} (ID: ${user.id})`);
+
+//     try {
+//         // Log using the centralized function
+//         await logUserActivity('DOWNLOAD', user, policyId, "Success - Downloaded");
+
+//         // Optional: If you still need the separate 'activities' table
+//         /*
+//         const insertActivitiesQuery = `
+//             INSERT INTO activities (action_type, email, policy_id, user_id)
+//             VALUES ($1, $2, $3, $4)`;
+//         await pool.query(insertActivitiesQuery, ['DOWNLOAD', user.username, policyId, user.id]);
+//         console.log(`Also logged to 'activities' table.`);
+//         */
+
+//         res.status(200).json({ message: "Download tracked successfully" });
+
+//     } catch (err) {
+//         console.error(`❌ Error tracking DOWNLOAD for policy ${policyId}:`, err);
+//         res.status(500).json({ message: "Server error while tracking download" });
+//     }
+// });
 
 // --- Login Route (Using PostgreSQL) ---
 // --- Login Route (Using PostgreSQL) ---
