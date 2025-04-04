@@ -461,37 +461,26 @@
         
         // Enhanced tracking function
         const trackPolicyAction = async (actionType, policyId, filename) => {
-            try {
-                const response = await fetch(`/track-${actionType.toLowerCase()}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        policyId: policyId,
-                        filename: filename
-                    }),
-                    credentials: 'include' // Important for session cookies
-                });
-        
-                // Check if response is JSON
-                const contentType = response.headers.get('content-type');
-                if (!contentType?.includes('application/json')) {
-                    const text = await response.text();
-                    throw new Error(`Expected JSON, got: ${text.substring(0, 100)}...`);
-                }
-        
-                const data = await response.json();
-                
-                if (!response.ok) {
-                    throw new Error(data.error || `Tracking failed with status ${response.status}`);
-                }
-        
-                console.log(`${actionType} tracked successfully:`, data);
-                return data;
-            } catch (error) {
-                console.error(`Error tracking ${actionType}:`, error);
-                throw error;
-            }
-        };
+    try {
+        const response = await fetch(`/track-${actionType.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest' // Helps identify AJAX requests
+            },
+            body: JSON.stringify({ 
+                policyId, 
+                filename 
+            }),
+            credentials: 'include' // CRUCIAL for sending cookies
+        });
+
+        // ... rest of your error handling
+    } catch (error) {
+        console.error(`Error tracking ${actionType}:`, error);
+        throw error;
+    }
+};
         
         // Set up event listeners when DOM loads
         document.addEventListener("DOMContentLoaded", function() {

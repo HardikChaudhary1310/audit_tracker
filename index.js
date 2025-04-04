@@ -81,24 +81,24 @@ app.use(cookieParser()); // Ensure this is before session middleware
 
 app.use(session({
     store: new pgSession({
-      pool: pool,
-      tableName: 'user_sessions',
-      serialize: function (session) {
-        return JSON.stringify(session);
-      },
-      unserialize: function (session) {
-        return JSON.parse(session);
-      }
+        pool: pool,
+        tableName: 'user_sessions',
+        createTableIfMissing: true,
+        ttl: 86400, // 24 hours
+        dispose: (sessionId) => console.log('Session disposed:', sessionId)
     }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+    secret: process.env.SESSION_SECRET || 'your-secret-key',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
-      httpOnly: true,
-      maxAge: 1000 * 60 * 60 * 24
-    }
-  }));
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    },
+    name: 'auditTracker.sid',
+    rolling: true
+}));
   
 
 // This middleware runs after session is set up and will log session details
@@ -168,26 +168,45 @@ const isValidPassword = (password) => {
 
 
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
-const mockUserAuth = (req, res, next) => {
-    console.log("Session Object:", req.session); // Log session object for debugging
-    console.log("Session Cookie:", req.cookies); // Log cookies to check if connect.sid is present
+// const mockUserAuth = (req, res, next) => {
+//     console.log("Session Object:", req.session); // Log session object for debugging
+//     console.log("Session Cookie:", req.cookies); // Log cookies to check if connect.sid is present
   
-    const sessionUser = req.session?.user; // Check if session user is set
-    console.log("Session User:", sessionUser); // Log user data from session
+//     const sessionUser = req.session?.user; // Check if session user is set
+//     console.log("Session User:", sessionUser); // Log user data from session
   
-    if (!sessionUser) {
-      console.log("❌ No active session user found. Redirecting to login.");
-      return res.status(401).json({ success: false, error: "Unauthorized" }); // Return unauthorized response
-    }
+//     if (!sessionUser) {
+//       console.log("❌ No active session user found. Redirecting to login.");
+//       return res.status(401).json({ success: false, error: "Unauthorized" }); // Return unauthorized response
+//     }
   
-    req.user = sessionUser; 
-    console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
+//     req.user = sessionUser; 
+//     console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
   
-    next(); // Proceed to the next middleware or route
-  };
+//     next(); // Proceed to the next middleware or route
+//   };
   
   
+const requireAuth = (req, res, next) => {
+    console.log('Session check:', {
+        sessionID: req.sessionID,
+        session: req.session,
+        cookies: req.cookies
+    });
 
+    if (!req.session?.user) {
+        console.log('User not authenticated - Session:', req.session);
+        return res.status(401).json({ 
+            success: false, 
+            error: 'Not authenticated',
+            session: req.session // For debugging
+        });
+    }
+
+    req.user = req.session.user;
+    console.log('User authenticated:', req.user.email);
+    next();
+};
 
 
 
@@ -548,7 +567,7 @@ app.get('/test-db', async (req, res) => {
 
 
 // Enhanced tracking routes with more logging
-app.post('/track-download', mockUserAuth, async (req, res) => {
+app.post('/track-download', requireAuth, async (req, res) => {
     console.log('Download tracking request:', { body: req.body, user: req.user });
   
     try {
@@ -575,7 +594,7 @@ app.post('/track-download', mockUserAuth, async (req, res) => {
     }
   });
   
-app.post('/track-view', mockUserAuth, async (req, res) => {
+  app.post('/track-view', requireAuth, async (req, res) => {
     console.log('View tracking request:', {
         body: req.body,
         user: req.user,
