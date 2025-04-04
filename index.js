@@ -627,7 +627,7 @@ app.post('/track-download', requireAuth, async (req, res) => {
         res.status(500).json({ success: false, error: error.message });
     }
 });
-app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
+app.get('/admin/policy-stats', requireAuth, async (req, res) => {
     if (req.user.userType !== 'admin') {
         return res.status(403).send('Access denied');
     }
@@ -647,7 +647,7 @@ app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
 
 
 
-app.get('/test-auth', mockUserAuth, (req, res) => {
+app.get('/test-auth', requireAuth, (req, res) => {
     res.json({ user: req.user });
   });
 
@@ -666,7 +666,7 @@ app.get('/test-auth', mockUserAuth, (req, res) => {
     }
 });
 
-app.post('/track-policy-click', mockUserAuth, async (req, res) => {
+app.post('/track-policy-click', requireAuth, async (req, res) => {
     const { policyId, filename, actionType } = req.body;
     const user = req.user;
 
@@ -686,7 +686,7 @@ app.post('/track-policy-click', mockUserAuth, async (req, res) => {
         res.status(500).json({ message: `Server error while tracking ${actionType}` });
     }
 });
-app.get('/policy-stats/:policyId', mockUserAuth, async (req, res) => {
+app.get('/policy-stats/:policyId', requireAuth, async (req, res) => {
     const { policyId } = req.params;
     
     try {
@@ -803,7 +803,7 @@ app.post("/login", async (req, res) => {
   });
   
 // Download Policy Route
-app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
+app.get('/download-policy/:filename', requireAuth, async (req, res) => { // Make async
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user; // Get user from middleware
@@ -874,7 +874,7 @@ app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Mak
 });
 
 // View Policy Route
-app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make async
+app.get('/view-policy/:filename', requireAuth, async (req, res) => { // Make async
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user;
@@ -949,7 +949,7 @@ app.post('/log-activity', async (req, res) => {
   });
 
 // --- Delete Policy Route (Keep as is - File System Operation) ---
-app.delete('/delete-policy/:filename', mockUserAuth, (req, res) => {
+app.delete('/delete-policy/:filename', requireAuth, (req, res) => {
     // ... (keep existing implementation, maybe add logging?) ...
     // Consider adding logging here too using logUserActivity
     const { filename } = req.params;
@@ -1014,7 +1014,7 @@ app.get("/", (req, res) => {
 
 
 // --- Logout Route ---
-app.get('/logout', mockUserAuth, (req, res) => {
+app.get('/logout', requireAuth, (req, res) => {
     const user = req.user; // Get user info before destroying session
     req.session.destroy(async (err) => { // Make async for logging
         if (err) {
@@ -1035,7 +1035,7 @@ app.get('/logout', mockUserAuth, (req, res) => {
 // --- View Data Route (Needs Database Query) ---
 // THIS IS A SECURITY RISK if it shows sensitive data.
 // Consider restricting access (admin only) and selecting specific columns.
-app.get("/viewData", mockUserAuth, async (req, res) => { // Make async
+app.get("/viewData", requireAuth, async (req, res) => {// Make async
      // Check if user is admin
      if (req.user?.userType !== 'admin') {
          return res.status(403).json({ message: 'Forbidden: Access restricted to administrators.' });
