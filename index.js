@@ -526,7 +526,7 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
 // Combined route for VIEW and CLICK using logUserActivity
-app.post('/track-policy-click', mockUserAuth, async (req, res) => { // Make async
+app.post('/track-policy-click', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { policyId, actionType, filename } = req.body; // actionType should be 'VIEW' or 'CLICK'
     const user = req.user; // Get user from middleware
 
@@ -564,7 +564,7 @@ app.post('/track-policy-click', mockUserAuth, async (req, res) => { // Make asyn
 
 
 // Route for DOWNLOAD using logUserActivity
-app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
+app.post('/track-download', sessionRestorationMiddleware, async (req, res) => {  // Make async
     const { policyId, filename } = req.body;
     const user = req.user; // Get user from middleware
 
@@ -739,7 +739,7 @@ app.post("/login", async (req, res) => {
     }
 });
 // Download Policy Route
-app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
+app.get('/download-policy/:filename', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user; // Get user from middleware
@@ -810,7 +810,7 @@ app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Mak
 });
 
 // View Policy Route
-app.get('/view-policy/:filename', mockUserAuth, async (req, res) => { // Make async
+app.get('/view-policy/:filename', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
     const user = req.user;
