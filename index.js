@@ -591,7 +591,8 @@ app.post('/track-download', requireAuth, async (req, res) => {
 // Combined route for VIEW and CLICK using logUserActivity
 app.post('/track-policy-click', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { policyId, actionType, filename } = req.body; // actionType should be 'VIEW' or 'CLICK'
-    const user = req.user; // Get user from middleware
+    const user = req.authenticatedUser;
+    console.log(user);
 
     if (!user || !user.id) {
          console.error("Tracking Error: User not authenticated or missing ID.");
