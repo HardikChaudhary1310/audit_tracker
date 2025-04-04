@@ -577,11 +577,15 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 // --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
+    let userId = null; // To store user ID for logging if found
 
+    // Basic input validation
     if (!username || !password) {
-        return res.status(400).json({ 
-            success: false, 
-            message: "Username and password are required." 
+        // Log failed attempt (Missing Credentials) - actorInfo might be incomplete
+        await logUserActivity("LOGIN", { email: username || 'N/A' }, null, "FAILED - Missing Credentials");
+        return res.status(400).json({
+            success: false,
+            message: "Username and password are required."
         });
     }
 
@@ -590,23 +594,34 @@ app.post("/login", async (req, res) => {
         const { rows } = await pool.query(query, [username]);
 
         if (rows.length === 0) {
+            // Log failed attempt (User Not Found)
+            await logUserActivity("LOGIN", { email: username }, null, "FAILED - Invalid Credentials");
             return res.status(401).json({ success: false, message: "Invalid credentials." });
         }
 
         const user = rows[0];
+        userId = user.id; // Store user ID for potential logging later
 
+        // Check if account is verified
         if (!user.verified) {
-            return res.status(401).json({ 
-                success: false, 
-                message: "Account not verified. Please check your email." 
+            // Log failed attempt (Not Verified)
+            await logUserActivity("LOGIN", { id: userId, email: username }, null, "FAILED - Not Verified");
+            return res.status(401).json({
+                success: false,
+                message: "Account not verified. Please check your email."
             });
         }
 
+        // Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
+            // Log failed attempt (Incorrect Password)
+            await logUserActivity("LOGIN", { id: userId, email: username }, null, "FAILED - Invalid Credentials");
             return res.status(401).json({ success: false, message: "Invalid credentials." });
         }
+
+        // --- Login Successful ---
 
         // Create session user object
         req.session.user = {
@@ -615,33 +630,55 @@ app.post("/login", async (req, res) => {
             userType: user.userType
         };
 
+        // Optional: Update last login timestamp in the users table
+        try {
+            const updateLastLoginQuery = 'UPDATE users SET last_login_at = NOW() WHERE id = $1';
+            await pool.query(updateLastLoginQuery, [user.id]);
+            console.log(`Updated last_login_at for user ID: ${user.id}`);
+        } catch (updateErr) {
+            console.error("Error updating last login time:", updateErr);
+            // Decide if this error should prevent login - probably not, just log it.
+            await logUserActivity("LOGIN", { id: userId, email: username }, null, "WARNING - Failed to update last_login_at");
+        }
+
+
         // Save session before responding
-        req.session.save(err => {
+        req.session.save(async err => { // Make callback async for logging
             if (err) {
                 console.error("Session save error:", err);
-                return res.status(500).json({ 
-                    success: false, 
-                    message: "Server error during login." 
+                // Log session save failure
+                await logUserActivity("LOGIN", { id: userId, email: username }, null, "FAILED - Session Save Error");
+                return res.status(500).json({
+                    success: false,
+                    message: "Server error during login."
                 });
             }
-            
-            // Set cookie manually if needed
+
+            // Log successful login *after* session is potentially saved
+            await logUserActivity("LOGIN", { id: userId, email: username }, null, "SUCCESS");
+
+            // Set cookie manually if needed (often handled by session middleware)
             res.cookie('auditTracker.sid', req.sessionID, {
-                maxAge: 24 * 60 * 60 * 1000,
+                maxAge: 24 * 60 * 60 * 1000, // 1 day
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
+                secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+                sameSite: 'lax' // Or 'strict' depending on your needs
             });
 
-            return res.status(200).json({ 
-                success: true, 
-                message: "Login successful!", 
-                redirectUrl: "/home" 
+            // Send success response
+            return res.status(200).json({
+                success: true,
+                message: "Login successful!",
+                redirectUrl: "/home"
             });
         });
 
     } catch (error) {
         console.error("Login process error:", error);
+        // Log general server error during login
+        // Use userId if available, otherwise just the attempted username
+        const actorInfo = userId ? { id: userId, email: username } : { email: username };
+        await logUserActivity("LOGIN", actorInfo, null, "FAILED - Server Error");
         res.status(500).json({ success: false, message: "Server error during login." });
     }
 });
