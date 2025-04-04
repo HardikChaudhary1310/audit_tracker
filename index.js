@@ -525,44 +525,102 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 });
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
-// Track policy download
-app.post('/track-download', mockUserAuth, async (req, res) => {
-    try {
-        const { policyId, filename } = req.body;
-        const user = req.user;
-
-        await logUserActivity('DOWNLOAD', user, policyId, "Success", {
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
-            filePath: filename
-        });
-
-        res.status(200).json({ success: true, message: "Download tracked" });
-    } catch (error) {
-        console.error('Download tracking error:', error);
-        res.status(500).json({ success: false, message: "Error tracking download" });
+app.use((req, res, next) => {
+    if (req.path.startsWith('/track-')) {
+      console.log('\n--- TRACKING REQUEST ---');
+      console.log('Path:', req.path);
+      console.log('Method:', req.method);
+      console.log('User:', req.user || 'Unauthenticated');
+      console.log('Body:', req.body);
+      console.log('IP:', req.ip);
+      console.log('User Agent:', req.get('User-Agent'));
+      console.log('--- END TRACKING REQUEST ---\n');
     }
-});
+    next();
+  });
 
-// Track policy view
-app.post('/track-view', mockUserAuth, async (req, res) => {
+// Add this test route to check DB connection
+app.get('/test-db', async (req, res) => {
     try {
-        const { policyId, filename } = req.body;
-        const user = req.user;
-
-        await logUserActivity('VIEW', user, policyId, "Success", {
-            ip: req.ip,
-            userAgent: req.get('User-Agent'),
-            filePath: filename
-        });
-
-        res.status(200).json({ success: true, message: "View tracked" });
-    } catch (error) {
-        console.error('View tracking error:', error);
-        res.status(500).json({ success: false, message: "Error tracking view" });
+      const result = await pool.query('SELECT NOW() as current_time');
+      res.json({ dbConnected: true, time: result.rows[0].current_time });
+    } catch (err) {
+      console.error('Database connection error:', err);
+      res.status(500).json({ dbConnected: false, error: err.message });
     }
-});
+  });
 
+
+  app.post('/track-download', mockUserAuth, async (req, res) => {
+    try {
+      const { policyId, filename } = req.body;
+      const user = req.user;
+  
+      console.log('Starting download tracking:', { user, policyId, filename });
+  
+      // Insert into policy_tracking
+      const insertQuery = `
+        INSERT INTO policy_tracking (
+          user_id, username, policy_id, action_type, 
+          file_path, ip_address, user_agent
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+      `;
+      
+      const values = [
+        user.id,
+        user.email,
+        policyId,
+        'DOWNLOAD',
+        filename,
+        req.ip,
+        req.get('User-Agent')
+      ];
+  
+      const result = await pool.query(insertQuery, values);
+      console.log('Inserted record ID:', result.rows[0].id);
+  
+      res.json({ success: true, insertedId: result.rows[0].id });
+    } catch (err) {
+      console.error('DOWNLOAD TRACKING ERROR:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
+  
+  app.post('/track-view', mockUserAuth, async (req, res) => {
+    try {
+      const { policyId, filename } = req.body;
+      const user = req.user;
+  
+      console.log('Starting view tracking:', { user, policyId, filename });
+  
+      const insertQuery = `
+        INSERT INTO policy_tracking (
+          user_id, username, policy_id, action_type, 
+          file_path, ip_address, user_agent
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
+      `;
+      
+      const values = [
+        user.id,
+        user.email,
+        policyId,
+        'VIEW',
+        filename,
+        req.ip,
+        req.get('User-Agent')
+      ];
+  
+      const result = await pool.query(insertQuery, values);
+      console.log('Inserted record ID:', result.rows[0].id);
+  
+      res.json({ success: true, insertedId: result.rows[0].id });
+    } catch (err) {
+      console.error('VIEW TRACKING ERROR:', err);
+      res.status(500).json({ success: false, error: err.message });
+    }
+  });
 app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
     if (req.user.userType !== 'admin') {
         return res.status(403).send('Access denied');
@@ -580,7 +638,9 @@ app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
+app.get('/test-auth', mockUserAuth, (req, res) => {
+    res.json({ user: req.user });
+  });
 app.post('/track-policy-click', mockUserAuth, async (req, res) => {
     const { policyId, filename, actionType } = req.body;
     const user = req.user;

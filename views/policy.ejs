@@ -574,25 +574,7 @@ const trackPolicyView = (policyId, filename) =>
 
 
         // Document ready function to handle event listeners for download buttons
-        document.addEventListener("DOMContentLoaded", function () {
-            // Handle Download Buttons
-            document.querySelectorAll('.download-link').forEach(button => {
-                button.addEventListener('click', function (event) {
-                    event.preventDefault(); // Prevent default anchor behavior
-    
-                    const policyUrl = this.getAttribute('href');
-                    console.log("policy url", policyUrl);
-                    const policyId = policyUrl.split('/').pop(); // Extract file name as policyId
-                    console.log("policy id", policyId);
 
-                    // Track the click event for the policy
-                   trackPolicyClick(policyId); // Track click event for the policy
-    
-                    // Now call the function to track download and open the file
-                    trackPolicyDownload(policyId);
-                    handleDownload(policyId); // Initiates the download
-                });
-            });
     
            
             
@@ -636,23 +618,61 @@ const trackPolicyView = (policyId, filename) =>
 //     });
 // });
 
-document.querySelectorAll('.download-link').forEach(button => {
-    button.addEventListener('click', function (event) {
-
-        event.preventDefault(); // Prevent default behavior (e.g., navigating to the link)
-
-        // Retrieve the policy ID, user ID, and username
-        const policyId = this.getAttribute('data-policy-id');  // Correctly retrieve the data-policy-id attribute
-       // const policyId = this.getAttribute('data-filename');  // e.g., "Hardik-Resume-New.pdf"
-        const userId = 'ID1741331579847';  // The ID you get from your session
-        const username = 'aryaman@shivalikbank.com';  // The username from your session
-        
-        // Call the function to track the download
-        trackPolicyDownload(policyId, userId, username);
-        // Optionally, open the policy in a new tab after tracking
-        const policyUrl = this.getAttribute('href');  // Assuming the link has a URL to open
-        window.open(policyUrl, '_blank');
+const trackAction = async (action, policyId, filename) => {
+  console.log(`Attempting to track ${action}:`, { policyId, filename });
+  
+  try {
+    const response = await fetch(`/track-${action.toLowerCase()}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        policyId, 
+        filename,
+        _debug: new Date().toISOString() 
+      })
     });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`${action} tracking success:`, data);
+    return data;
+  } catch (error) {
+    console.error(`${action} tracking failed:`, error);
+    // Still allow the action even if tracking fails
+    return { success: false, error: error.message };
+  }
+};
+
+// Event listeners with enhanced logging
+document.querySelectorAll('.download-link').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const url = btn.href;
+    const filename = url.split('/').pop();
+    const policyId = btn.dataset.policyId;
+    
+    console.log('Download initiated:', { url, filename, policyId });
+    
+    const trackingResult = await trackAction('DOWNLOAD', policyId, filename);
+    window.open(url, '_blank');
+  });
+});
+
+document.querySelectorAll('.view-button').forEach(btn => {
+  btn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const url = btn.href;
+    const filename = btn.dataset.filename;
+    const policyId = btn.dataset.policyId;
+    
+    console.log('View initiated:', { url, filename, policyId });
+    
+    const trackingResult = await trackAction('VIEW', policyId, filename);
+    window.open(url, '_blank');
+  });
 });
 
 
