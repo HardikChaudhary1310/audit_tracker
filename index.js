@@ -525,24 +525,59 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 });
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
+// Track policy download
 app.post('/track-download', mockUserAuth, async (req, res) => {
-    const { policyId, filename } = req.body;
-    const user = req.user;
-
-    if (!user || !user.id) {
-        return res.status(401).json({ message: "User authentication required." });
-    }
-
     try {
+        const { policyId, filename } = req.body;
+        const user = req.user;
+
         await logUserActivity('DOWNLOAD', user, policyId, "Success", {
             ip: req.ip,
             userAgent: req.get('User-Agent'),
             filePath: filename
         });
-        res.status(200).json({ message: "Download tracked successfully" });
-    } catch (err) {
-        console.error('Error tracking download:', err);
-        res.status(500).json({ message: "Server error while tracking download" });
+
+        res.status(200).json({ success: true, message: "Download tracked" });
+    } catch (error) {
+        console.error('Download tracking error:', error);
+        res.status(500).json({ success: false, message: "Error tracking download" });
+    }
+});
+
+// Track policy view
+app.post('/track-view', mockUserAuth, async (req, res) => {
+    try {
+        const { policyId, filename } = req.body;
+        const user = req.user;
+
+        await logUserActivity('VIEW', user, policyId, "Success", {
+            ip: req.ip,
+            userAgent: req.get('User-Agent'),
+            filePath: filename
+        });
+
+        res.status(200).json({ success: true, message: "View tracked" });
+    } catch (error) {
+        console.error('View tracking error:', error);
+        res.status(500).json({ success: false, message: "Error tracking view" });
+    }
+});
+
+app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
+    if (req.user.userType !== 'admin') {
+        return res.status(403).send('Access denied');
+    }
+
+    try {
+        const { rows } = await pool.query(`
+            SELECT * FROM policy_tracking 
+            ORDER BY timestamp DESC 
+            LIMIT 100
+        `);
+        res.json(rows);
+    } catch (error) {
+        console.error('Error fetching policy stats:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 

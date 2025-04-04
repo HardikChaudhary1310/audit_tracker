@@ -544,22 +544,25 @@ const handleLogin = (username, password) => {
 
 
 // Unified tracking function
-const trackPolicyAction = (actionType, policyId, filename) => {
-    const currentUser = JSON.parse(sessionStorage.getItem('currentUser')) || {};
-    
-    fetch(`/track-${actionType.toLowerCase()}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            policyId,
-            filename,
-            userId: currentUser.id,
-            username: currentUser.email
-        })
-    })
-    .then(response => response.json())
-    .then(data => console.log(`${actionType} tracked:`, data))
-    .catch(error => console.error(`Error tracking ${actionType}:`, error));
+// Unified tracking function
+const trackPolicyAction = async (actionType, policyId, filename) => {
+    try {
+        const response = await fetch(`/track-${actionType.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                policyId: policyId,
+                filename: filename
+            })
+        });
+        
+        const data = await response.json();
+        console.log(`${actionType} tracked:`, data);
+        return data;
+    } catch (error) {
+        console.error(`Error tracking ${actionType}:`, error);
+        throw error;
+    }
 };
 
 // Specific wrappers for convenience
@@ -653,35 +656,41 @@ document.querySelectorAll('.download-link').forEach(button => {
 });
 
 
-document.addEventListener("DOMContentLoaded", function () {
-    // Handle Download Buttons
+// Event listeners for download and view buttons
+document.addEventListener("DOMContentLoaded", function() {
+    // Download buttons
     document.querySelectorAll('.download-link').forEach(button => {
-        button.addEventListener('click', function (event) {
+        button.addEventListener('click', async function(event) {
             event.preventDefault();
             const policyUrl = this.getAttribute('href');
             const filename = policyUrl.split('/').pop();
             const policyId = this.getAttribute('data-policy-id');
             
-            // Track then download
-            trackPolicyDownload(policyId, filename)
-                .then(() => window.open(policyUrl, '_blank'))
-                .catch(err => console.error('Download failed:', err));
+            try {
+                await trackPolicyAction('DOWNLOAD', policyId, filename);
+                window.open(policyUrl, '_blank');
+            } catch (error) {
+                console.error('Download tracking failed:', error);
+                window.open(policyUrl, '_blank'); // Still allow download even if tracking fails
+            }
         });
     });
 
-    // Handle View Buttons
+    // View buttons
     document.querySelectorAll('.view-button').forEach(button => {
-        button.addEventListener('click', function (event) {
+        button.addEventListener('click', async function(event) {
             event.preventDefault();
             const policyUrl = this.getAttribute('href');
             const filename = this.getAttribute('data-filename');
             const policyId = this.getAttribute('data-policy-id');
             
-            // Track the view
-            trackPolicyClick(policyId, filename, 'VIEW');
-            
-            // Open the file in a new tab after tracking
-            window.open(policyUrl, '_blank');
+            try {
+                await trackPolicyAction('VIEW', policyId, filename);
+                window.open(policyUrl, '_blank');
+            } catch (error) {
+                console.error('View tracking failed:', error);
+                window.open(policyUrl, '_blank'); // Still allow view even if tracking fails
+            }
         });
     });
 });
