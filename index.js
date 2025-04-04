@@ -560,7 +560,7 @@ const requireAuth = async (req, res, next) => {
 };
 
 // Updated tracking endpoint
-app.post('/track-download', requireAuth, async (req, res) => {
+app.post('/track-download', sessionRestorationMiddleware, async (req, res) => {
     try {
         const { policyId, filename } = req.body;
         
@@ -603,7 +603,7 @@ app.post('/track-policy-click', sessionRestorationMiddleware, async (req, res) =
     }
     const safeFilename = filename || policyId; // Use filename if provided, else policyId
 
-    console.log(`Tracking ${actionType} for policy: ${safeFilename} (ID: ${policyId}), User: ${user.username} (ID: ${user.id})`);
+    console.log(`Tracking ${actionType} for policy: ${safeFilename} (ID: ${policyId}), User: ${user.email} (ID: ${user.id})`);
 
     try {
         // Log using the centralized function
@@ -630,7 +630,7 @@ app.post('/track-policy-click', sessionRestorationMiddleware, async (req, res) =
 // Route for DOWNLOAD using logUserActivity
 app.post('/track-download', sessionRestorationMiddleware, async (req, res) => {  // Make async
     const { policyId, filename } = req.body;
-    const user = req.user; // Get user from middleware
+    const user = req.authenticatedUser;// Get user from middleware
 
      if (!user || !user.id) {
          console.error("Tracking Error: User not authenticated or missing ID.");
@@ -641,7 +641,7 @@ app.post('/track-download', sessionRestorationMiddleware, async (req, res) => { 
     }
      const safeFilename = filename || policyId;
 
-    console.log(`Tracking DOWNLOAD for policy: ${safeFilename} (ID: ${policyId}), User: ${user.username} (ID: ${user.id})`);
+     console.log(`Tracking DOWNLOAD for policy: ${safeFilename} (ID: ${policyId}), User: ${user.email} (ID: ${user.id})`);
 
     try {
         // Log using the centralized function
@@ -664,11 +664,11 @@ app.post('/track-download', sessionRestorationMiddleware, async (req, res) => { 
     }
 });
 
-app.post('/track-action', async (req, res) => {
+app.post('/track-action', sessionRestorationMiddleware,async (req, res) => {
     try {
         await logUserActivity(
             'DOWNLOAD', 
-            req.user, 
+            req.authenticatedUser, 
             req.body.policyId,
             'SUCCESS',
             {
@@ -824,7 +824,7 @@ app.post("/login", async (req, res) => {
 app.get('/download-policy/:filename', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
-    const user = req.user; // Get user from middleware
+    const user = req.authenticatedUser; // Get user from middleware
     const policyId = decodedFilename; // Use filename as policyId for logging
 
      if (!user || !user.id) {
@@ -895,7 +895,7 @@ app.get('/download-policy/:filename', sessionRestorationMiddleware, async (req, 
 app.get('/view-policy/:filename', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
-    const user = req.user;
+    const user = req.authenticatedUser;
     const policyId = decodedFilename;
 
     if (!user || !user.id) {
@@ -972,7 +972,7 @@ app.delete('/delete-policy/:filename', mockUserAuth, (req, res) => {
     // Consider adding logging here too using logUserActivity
     const { filename } = req.params;
     const decodedFilename = decodeURIComponent(filename);
-    const user = req.user;
+    const user = req.authenticatedUser;
     const filePath = path.join(__dirname, 'public', 'policies', 'audit', decodedFilename);
 
     // Check admin privileges
