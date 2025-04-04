@@ -1,13 +1,14 @@
-// models/userActivity.js
-const logUserActivity = async (actionType, user, policyId, status, additionalData = {}) => {
+const pool = require('./db');
+
+const logUserActivity = async (actionType, userData, policyId, status, additionalData = {}) => {
     const client = await pool.connect();
     
     try {
         await client.query('BEGIN');
 
-        // Prepare data
-        const userId = user?.id || null;
-        const username = user?.email || user?.username || 'system@shivalikbank.com';
+        // Prepare data with defaults
+        const userId = userData?.id || null;
+        const username = userData?.email || userData?.username || 'system@shivalikbank.com';
         const safePolicyId = policyId || 'system_default';
         const ipAddress = additionalData.ip || '0.0.0.0';
         const userAgent = additionalData.userAgent || 'unknown';
@@ -39,7 +40,7 @@ const logUserActivity = async (actionType, user, policyId, status, additionalDat
             ) VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id;
         `;
-        const result = await client.query(activitiesQuery, [
+        const activitiesResult = await client.query(activitiesQuery, [
             actionType,
             username,
             safePolicyId,
@@ -49,7 +50,7 @@ const logUserActivity = async (actionType, user, policyId, status, additionalDat
         ]);
 
         await client.query('COMMIT');
-        return result.rows[0];
+        return activitiesResult.rows[0];
 
     } catch (err) {
         await client.query('ROLLBACK');
@@ -63,3 +64,5 @@ const logUserActivity = async (actionType, user, policyId, status, additionalDat
         client.release();
     }
 };
+
+module.exports = { logUserActivity };
