@@ -551,76 +551,62 @@ app.get('/test-db', async (req, res) => {
   });
 
 
-  app.post('/track-download', mockUserAuth, async (req, res) => {
+// In your index.js (backend)
+app.post('/track-download', mockUserAuth, async (req, res) => {
     try {
-      const { policyId, filename } = req.body;
-      const user = req.user;
-  
-      console.log('Starting download tracking:', { user, policyId, filename });
-  
-      // Insert into policy_tracking
-      const insertQuery = `
-        INSERT INTO policy_tracking (
-          user_id, username, policy_id, action_type, 
-          file_path, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id
-      `;
-      
-      const values = [
-        user.id,
-        user.email,
-        policyId,
-        'DOWNLOAD',
-        filename,
-        req.ip,
-        req.get('User-Agent')
-      ];
-  
-      const result = await pool.query(insertQuery, values);
-      console.log('Inserted record ID:', result.rows[0].id);
-  
-      res.json({ success: true, insertedId: result.rows[0].id });
-    } catch (err) {
-      console.error('DOWNLOAD TRACKING ERROR:', err);
-      res.status(500).json({ success: false, error: err.message });
+        const { policyId, filename } = req.body;
+        const user = req.user;
+
+        // Insert into database
+        const result = await pool.query(
+            `INSERT INTO policy_tracking 
+            (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [user.id, user.email, policyId, 'DOWNLOAD', filename, req.ip, req.get('User-Agent')]
+        );
+
+        // Return JSON response
+        res.json({ 
+            success: true,
+            trackingId: result.rows[0].id 
+        });
+    } catch (error) {
+        console.error('Download tracking error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
     }
-  });
-  
-  app.post('/track-view', mockUserAuth, async (req, res) => {
+});
+
+app.post('/track-view', mockUserAuth, async (req, res) => {
     try {
-      const { policyId, filename } = req.body;
-      const user = req.user;
-  
-      console.log('Starting view tracking:', { user, policyId, filename });
-  
-      const insertQuery = `
-        INSERT INTO policy_tracking (
-          user_id, username, policy_id, action_type, 
-          file_path, ip_address, user_agent
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING id
-      `;
-      
-      const values = [
-        user.id,
-        user.email,
-        policyId,
-        'VIEW',
-        filename,
-        req.ip,
-        req.get('User-Agent')
-      ];
-  
-      const result = await pool.query(insertQuery, values);
-      console.log('Inserted record ID:', result.rows[0].id);
-  
-      res.json({ success: true, insertedId: result.rows[0].id });
-    } catch (err) {
-      console.error('VIEW TRACKING ERROR:', err);
-      res.status(500).json({ success: false, error: err.message });
+        const { policyId, filename } = req.body;
+        const user = req.user;
+
+        // Insert into database
+        const result = await pool.query(
+            `INSERT INTO policy_tracking 
+            (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [user.id, user.email, policyId, 'VIEW', filename, req.ip, req.get('User-Agent')]
+        );
+
+        // Return JSON response
+        res.json({ 
+            success: true,
+            trackingId: result.rows[0].id 
+        });
+    } catch (error) {
+        console.error('View tracking error:', error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
     }
-  });
+});
+
+
 app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
     if (req.user.userType !== 'admin') {
         return res.status(403).send('Access denied');
@@ -638,9 +624,15 @@ app.get('/admin/policy-stats', mockUserAuth, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+
+
 app.get('/test-auth', mockUserAuth, (req, res) => {
     res.json({ user: req.user });
   });
+
+
+
 app.post('/track-policy-click', mockUserAuth, async (req, res) => {
     const { policyId, filename, actionType } = req.body;
     const user = req.user;
