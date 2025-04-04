@@ -81,29 +81,25 @@ app.use(cookieParser()); // Ensure this is before session middleware
 
 app.use(session({
     store: new pgSession({
-        pool: pool,
-        tableName: 'user_sessions',
-        createTableIfMissing: true,
-        pruneSessionInterval: 60,
-        ttl: 86400, // 24 hours
-        // Add these critical error handlers
-        dispose: (sessionId) => console.log('Session disposed:', sessionId),
-        reapInterval: 3600, // Cleanup interval in seconds
+      pool: pool,
+      tableName: 'user_sessions',
+      serialize: function (session) {
+        return JSON.stringify(session);
+      },
+      unserialize: function (session) {
+        return JSON.parse(session);
+      }
     }),
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key-please-change',
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
-        secure: process.env.NODE_ENV === 'production',
-        httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-        domain: process.env.COOKIE_DOMAIN || undefined // Better for localhost
-    },
-    name: 'auditTracker.sid',
-    rolling: true, // Reset maxAge on every request
-    unset: 'destroy' // Destroy session when unset
-}));
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      maxAge: 1000 * 60 * 60 * 24
+    }
+  }));
+  
 
 // This middleware runs after session is set up and will log session details
 // Add this after session middleware
@@ -173,20 +169,23 @@ const isValidPassword = (password) => {
 
 // --- Mock User Auth Middleware (Keep as is, ensures req.user structure) ---
 const mockUserAuth = (req, res, next) => {
-    console.log('Session verification:', {
-        sessionID: req.sessionID,
-        user: req.session.user,
-        cookies: req.cookies
-    });
-    
-    if (!req.session.user) {
-        console.log('No user in session, redirecting to login');
-        return res.status(401).json({ error: 'Unauthorized' });
+    console.log("Session Object:", req.session); // Log session object for debugging
+    console.log("Session Cookie:", req.cookies); // Log cookies to check if connect.sid is present
+  
+    const sessionUser = req.session?.user; // Check if session user is set
+    console.log("Session User:", sessionUser); // Log user data from session
+  
+    if (!sessionUser) {
+      console.log("❌ No active session user found. Redirecting to login.");
+      return res.status(401).json({ success: false, error: "Unauthorized" }); // Return unauthorized response
     }
-    
-    req.user = req.session.user;
-    next();
-};
+  
+    req.user = sessionUser; 
+    console.log("User Data in mockUserAuth:", req.user); // Log user data for debugging
+  
+    next(); // Proceed to the next middleware or route
+  };
+  
   
 
 
@@ -550,39 +549,32 @@ app.get('/test-db', async (req, res) => {
 
 // Enhanced tracking routes with more logging
 app.post('/track-download', mockUserAuth, async (req, res) => {
-    console.log('Download tracking request:', {
-        body: req.body,
-        user: req.user,
-        ip: req.ip
-    });
-
+    console.log('Download tracking request:', { body: req.body, user: req.user });
+  
     try {
-        const { policyId, filename } = req.body;
-        const user = req.user;
-
-        if (!user || !user.id) {
-            console.error('Unauthorized download tracking attempt');
-            return res.status(401).json({ success: false, error: 'Unauthorized' });
-        }
-
-        const result = await pool.query(
-            `INSERT INTO policy_tracking 
-            (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
-            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [user.id, user.email, policyId, 'DOWNLOAD', filename, req.ip, req.get('User-Agent')]
-        );
-
-        console.log('Download tracked in DB:', result.rows[0].id);
-        res.json({ success: true, trackingId: result.rows[0].id });
+      const { policyId, filename } = req.body;
+      const user = req.user;
+  
+      if (!user || !user.id) {
+        console.error('Unauthorized download tracking attempt');
+        return res.status(401).json({ success: false, error: 'Unauthorized' });
+      }
+  
+      const result = await pool.query(
+        `INSERT INTO policy_tracking 
+         (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [user.id, user.email, policyId, 'DOWNLOAD', filename || '', req.ip || '', req.get('User-Agent') || '']
+      );
+  
+      console.log('Download tracked in DB:', result.rows[0].id);
+      res.json({ success: true, trackingId: result.rows[0].id });
     } catch (error) {
-        console.error('Download tracking error:', {
-            error: error.message,
-            stack: error.stack
-        });
-        res.status(500).json({ success: false, error: error.message });
+      console.error('Download tracking error:', { error });
+      res.status(500).json({ success: false });
     }
-});
-
+  });
+  
 app.post('/track-view', mockUserAuth, async (req, res) => {
     console.log('View tracking request:', {
         body: req.body,
@@ -735,145 +727,62 @@ app.get('/policy-stats/:policyId', mockUserAuth, async (req, res) => {
 //         res.status(500).json({ message: "Server error while tracking download" });
 //     }
 // });
-
-// --- Login Route (Using PostgreSQL) ---
-// --- Login Route (Using PostgreSQL) ---
-// --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    let userId = null;
-
-    // Basic validation
+  
     if (!username || !password) {
-        await logUserActivity("LOGIN_ATTEMPT", { email: username || 'unknown' }, null, 
-            "FAILED - Missing credentials", {
-                ip: req.ip,
-                userAgent: req.get('User-Agent')
-            });
-        return res.status(400).json({ 
-            success: false, 
-            message: "Username and password are required." 
-        });
+      console.log("Login failed: Missing credentials.");
+      return res.status(400).json({ success: false, message: "Username and password are required." });
     }
-
+  
     try {
-        // Check user exists
-        const { rows } = await pool.query(
-            "SELECT id, email, password, userType, verified FROM users WHERE email = $1", 
-            [username]
-        );
-
-        if (rows.length === 0) {
-            await logUserActivity("LOGIN_ATTEMPT", { email: username }, null, 
-                "FAILED - User not found", {
-                    ip: req.ip,
-                    userAgent: req.get('User-Agent')
-                });
-            return res.status(401).json({ 
-                success: false, 
-                message: "Invalid credentials." 
-            });
+      const query = 'SELECT id, email, password, userType, verified FROM users WHERE email = $1';
+      const { rows } = await pool.query(query, [username]);
+  
+      if (rows.length === 0) {
+        console.log(`Login failed: User not found for ${username}.`);
+        return res.status(401).json({ success: false, message: "Invalid credentials." });
+      }
+  
+      const user = rows[0];
+  
+      if (!user.verified) {
+        console.log(`Login failed: Account not verified for ${user.email}`);
+        return res.status(401).json({ success: false, message: "Account not verified. Please check your email." });
+      }
+  
+      const isMatch = await bcrypt.compare(password, user.password);
+  
+      if (!isMatch) {
+        console.log(`Login failed: Incorrect password for ${user.email}.`);
+        return res.status(401).json({ success: false, message: "Invalid credentials." });
+      }
+  
+      console.log("Login successful for:", user.email);
+  
+      // Prepare user data for session
+      const sessionUser = {
+        id: user.id,
+        username: user.email,
+        userType: user.userType
+      };
+      req.session.user = sessionUser;
+  
+      req.session.save(async (err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ success: false, message: "Server error during login (session save)." });
         }
-
-        const user = rows[0];
-        userId = user.id;
-
-        // Check verification status
-        if (!user.verified) {
-            await logUserActivity("LOGIN_ATTEMPT", { id: userId, email: username }, null, 
-                "FAILED - Account not verified", {
-                    ip: req.ip,
-                    userAgent: req.get('User-Agent')
-                });
-            return res.status(401).json({ 
-                success: false, 
-                message: "Account not verified. Please check your email." 
-            });
-        }
-
-        // Verify password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            await logUserActivity("LOGIN_ATTEMPT", { id: userId, email: username }, null, 
-                "FAILED - Invalid password", {
-                    ip: req.ip,
-                    userAgent: req.get('User-Agent')
-                });
-            return res.status(401).json({ 
-                success: false, 
-                message: "Invalid credentials." 
-            });
-        }
-
-        // Update last login time
-        await pool.query(
-            'UPDATE users SET last_login_at = NOW() WHERE id = $1', 
-            [userId]
-        );
-
-        // Create session
-        req.session.user = {
-            id: user.id,
-            email: user.email,
-            userType: user.userType
-        };
-
-        req.session.save(async (err) => {
-            if (err) {
-                await logUserActivity("LOGIN_ATTEMPT", { id: userId, email: username }, null, 
-                    "FAILED - Session save error", {
-                        ip: req.ip,
-                        userAgent: req.get('User-Agent'),
-                        error: err.message
-                    });
-                return res.status(500).json({ 
-                    success: false, 
-                    message: "Server error during login." 
-                });
-            }
-
-            // Successful login
-            await logUserActivity("LOGIN_SUCCESS", { id: userId, email: username }, null, 
-                "SUCCESS", {
-                    ip: req.ip,
-                    userAgent: req.get('User-Agent')
-                });
-
-            res.cookie('auditTracker.sid', req.sessionID, {
-                maxAge: 24 * 60 * 60 * 1000,
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
-            });
-
-            res.status(200).json({ 
-                success: true,
-                message: "Login successful!", 
-                redirectUrl: "/home",
-                user: {
-                    id: user.id,
-                    email: user.email,
-                    userType: user.userType
-                }
-            });
-        });
-
+  
+        console.log("Session saved successfully:", req.session);
+        res.status(200).json({ success: true, message: "Login successful!", redirectUrl: "/home" });
+      });
     } catch (error) {
-        console.error("Login process error:", error);
-        await logUserActivity("LOGIN_ATTEMPT", 
-            userId ? { id: userId, email: username } : { email: username }, 
-            null, 
-            "FAILED - Server error", {
-                ip: req.ip,
-                userAgent: req.get('User-Agent'),
-                error: error.message
-            });
-        res.status(500).json({ 
-            success: false, 
-            message: "Server error during login." 
-        });
+      console.error("❌ Login process error:", error);
+      res.status(500).json({ success: false, message: "Server error during login." });
     }
-});
+  });
+  
 // Download Policy Route
 app.get('/download-policy/:filename', mockUserAuth, async (req, res) => { // Make async
     const { filename } = req.params;
