@@ -200,89 +200,117 @@ const mockUserAuth = (req, res, next) => {
 // --- Signup Route (Using PostgreSQL) ---
 app.post("/signup", async (req, res) => {
     const { username, password, confirmPassword } = req.body;
-    console.log("Signup request received:", { email: username });
-
+    
     // Validate email format
     if (!isValidEmail(username)) {
-        await logUserActivity("SIGNUP", { email: username }, null, "FAILED - Invalid Email Format");
-        return res.status(400).json({ message: "Invalid email format. Must be @shivalikbank.com" });
+        await logUserActivity("SIGNUP_ATTEMPT", { email: username }, null, 
+            "FAILED - Invalid email format", {
+                ip: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+        return res.status(400).json({ 
+            message: "Invalid email format. Must be @shivalikbank.com" 
+        });
     }
 
     // Validate password
     if (!isValidPassword(password) || password !== confirmPassword) {
-        await logUserActivity("SIGNUP", { email: username }, null, "FAILED - Invalid Password");
-        return res.status(400).json({ message: "Password must be valid and match confirmation." });
+        await logUserActivity("SIGNUP_ATTEMPT", { email: username }, null, 
+            "FAILED - Invalid password", {
+                ip: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+        return res.status(400).json({ 
+            message: "Password must be valid and match confirmation." 
+        });
     }
 
     try {
-        // Check if user already exists in the database
-        const checkUserQuery = 'SELECT id FROM users WHERE email = $1';
-        const { rows } = await pool.query(checkUserQuery, [username]);
+        // Check existing user
+        const { rows } = await pool.query(
+            'SELECT id FROM users WHERE email = $1', 
+            [username]
+        );
 
         if (rows.length > 0) {
-            console.log("User already exists:", username);
-            await logUserActivity("SIGNUP", { email: username }, null, "FAILED - User Exists");
-            return res.status(400).json({ message: "User already exists. Please log in." });
+            await logUserActivity("SIGNUP_ATTEMPT", { email: username }, null, 
+                "FAILED - User exists", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+            return res.status(400).json({ 
+                message: "User already exists. Please log in." 
+            });
         }
 
-        // Hash the password before storing it
+        // Create new user
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Determine userType
         const userType = username.toLowerCase() === 'admin@shivalikbank.com' ? 'admin' : 'user';
 
-        // Insert the new user into the database
-        const insertQuery = `
+        const { rows: [newUser] } = await pool.query(`
             INSERT INTO users (username, email, password, verified, userType)
             VALUES ($1, $2, $3, $4, $5)
-            RETURNING id`; 
-        const newUserResult = await pool.query(insertQuery, [
-            username,
-            username,
-            hashedPassword,
-            false, 
-            userType
-        ]);
+            RETURNING id, email, userType
+        `, [username, username, hashedPassword, false, userType]);
 
-        const newUserId = newUserResult.rows[0].id;
-        console.log(`New user created with ID: ${newUserId}`);
-
-        // Generate token for email verification
-        const token = jwt.sign({ userId: newUserId, email: username }, process.env.JWT_SECRET || "DEFAULT_SECRET_KEY", { expiresIn: '1h' });
+        // Generate verification token
+        const token = jwt.sign(
+            { userId: newUser.id, email: username }, 
+            process.env.JWT_SECRET || "DEFAULT_SECRET_KEY", 
+            { expiresIn: '1h' }
+        );
 
         // Send verification email
         const verificationLink = `${process.env.BASE_URL || 'http://localhost:3001'}/verify-email?token=${token}`;
-        const mailOptions = {
+        
+        transporter.sendMail({
             from: process.env.GMAIL_USER,
             to: username,
             subject: "Verify Your Email For Audit Tracker Portal",
             text: `Hello ${username},\n\nThank you for signing up!\n\nClick the link below to verify your email:\n${verificationLink}\n\nThis link will expire in 1 hour. If you did not sign up, please ignore this email.`
-        };
-
-        transporter.sendMail(mailOptions, async (error, info) => {
+        }, async (error, info) => {
             if (error) {
-                console.error("Error sending verification email:", error);
-                await logUserActivity("SIGNUP", { id: newUserId, email: username }, null, "FAILED - Email Send Error");
-                return res.status(500).json({ message: "Signup complete, but failed to send verification email. Contact support." });
+                await logUserActivity("SIGNUP_ATTEMPT", { id: newUser.id, email: username }, null, 
+                    "FAILED - Email send error", {
+                        ip: req.ip,
+                        userAgent: req.get('User-Agent'),
+                        error: error.message
+                    });
+                return res.status(500).json({ 
+                    message: "Signup complete, but failed to send verification email. Contact support." 
+                });
             }
 
-            console.log("Verification email sent:", info.response);
-            await logUserActivity("SIGNUP", { id: newUserId, email: username }, null, "SUCCESS - Verification Email Sent");
+            await logUserActivity("SIGNUP_SUCCESS", { id: newUser.id, email: username }, null, 
+                "SUCCESS - Verification email sent", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
 
-            // Send a JSON response with the redirect URL
             res.status(200).json({
                 message: "Signup successful! Check your email to verify your account.",
-                redirectUrl: "/home" // This is what the frontend should use to redirect
+                redirectUrl: "/home",
+                user: {
+                    id: newUser.id,
+                    email: newUser.email,
+                    userType: newUser.userType
+                }
             });
         });
 
     } catch (err) {
-        console.error("❌ Error during signup process:", err);
-        await logUserActivity("SIGNUP", { email: username }, null, "FAILED - Server Error");
-        res.status(500).json({ message: "Server error during signup." });
+        console.error("Signup error:", err);
+        await logUserActivity("SIGNUP_ATTEMPT", { email: username }, null, 
+            "FAILED - Server error", {
+                ip: req.ip,
+                userAgent: req.get('User-Agent'),
+                error: err.message
+            });
+        res.status(500).json({ 
+            message: "Server error during signup." 
+        });
     }
 });
-
 
 // --- Email Verification Route (Using PostgreSQL) ---
 app.get("/verify-email", async (req, res) => { // Make async
@@ -577,109 +605,137 @@ app.post('/track-download', mockUserAuth, async (req, res) => { // Make async
 // --- Login Route (Using PostgreSQL) ---
 app.post("/login", async (req, res) => {
     const { username, password } = req.body;
-    let userId = null; // To store user ID for logging if found
+    let userId = null;
 
-    // Basic input validation
+    // Basic validation
     if (!username || !password) {
-        // Log failed attempt (Missing Credentials) - actorInfo might be incomplete
-        await logUserActivity("LOGIN", { email: username || 'N/A' }, null, "FAILED - Missing Credentials");
-        return res.status(400).json({
-            success: false,
-            message: "Username and password are required."
+        await logUserActivity("LOGIN_ATTEMPT", { email: username || 'unknown' }, null, 
+            "FAILED - Missing credentials", {
+                ip: req.ip,
+                userAgent: req.get('User-Agent')
+            });
+        return res.status(400).json({ 
+            success: false, 
+            message: "Username and password are required." 
         });
     }
 
     try {
-        const query = "SELECT id, email, password, userType, verified FROM users WHERE email = $1";
-        const { rows } = await pool.query(query, [username]);
+        // Check user exists
+        const { rows } = await pool.query(
+            "SELECT id, email, password, userType, verified FROM users WHERE email = $1", 
+            [username]
+        );
 
         if (rows.length === 0) {
-            // Log failed attempt (User Not Found)
-            await logUserActivity("LOGIN", { email: username }, null, "FAILED - Invalid Credentials");
-            return res.status(401).json({ success: false, message: "Invalid credentials." });
-        }
-
-        const user = rows[0];
-        userId = user.id; // Store user ID for potential logging later
-
-        // Check if account is verified
-        if (!user.verified) {
-            // Log failed attempt (Not Verified)
-            await logUserActivity("LOGIN", { id: userId, email: username }, null, "FAILED - Not Verified");
-            return res.status(401).json({
-                success: false,
-                message: "Account not verified. Please check your email."
+            await logUserActivity("LOGIN_ATTEMPT", { email: username }, null, 
+                "FAILED - User not found", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+            return res.status(401).json({ 
+                success: false, 
+                message: "Invalid credentials." 
             });
         }
 
-        // Compare passwords
-        const isMatch = await bcrypt.compare(password, user.password);
+        const user = rows[0];
+        userId = user.id;
 
-        if (!isMatch) {
-            // Log failed attempt (Incorrect Password)
-            await logUserActivity("LOGIN", { id: userId, email: username }, null, "FAILED - Invalid Credentials");
-            return res.status(401).json({ success: false, message: "Invalid credentials." });
+        // Check verification status
+        if (!user.verified) {
+            await logUserActivity("LOGIN_ATTEMPT", { id: userId, email: username }, null, 
+                "FAILED - Account not verified", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+            return res.status(401).json({ 
+                success: false, 
+                message: "Account not verified. Please check your email." 
+            });
         }
 
-        // --- Login Successful ---
+        // Verify password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            await logUserActivity("LOGIN_ATTEMPT", { id: userId, email: username }, null, 
+                "FAILED - Invalid password", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+            return res.status(401).json({ 
+                success: false, 
+                message: "Invalid credentials." 
+            });
+        }
 
-        // Create session user object
+        // Update last login time
+        await pool.query(
+            'UPDATE users SET last_login_at = NOW() WHERE id = $1', 
+            [userId]
+        );
+
+        // Create session
         req.session.user = {
             id: user.id,
             email: user.email,
             userType: user.userType
         };
 
-        // Optional: Update last login timestamp in the users table
-        try {
-            const updateLastLoginQuery = 'UPDATE users SET last_login_at = NOW() WHERE id = $1';
-            await pool.query(updateLastLoginQuery, [user.id]);
-            console.log(`Updated last_login_at for user ID: ${user.id}`);
-        } catch (updateErr) {
-            console.error("Error updating last login time:", updateErr);
-            // Decide if this error should prevent login - probably not, just log it.
-            await logUserActivity("LOGIN", { id: userId, email: username }, null, "WARNING - Failed to update last_login_at");
-        }
-
-
-        // Save session before responding
-        req.session.save(async err => { // Make callback async for logging
+        req.session.save(async (err) => {
             if (err) {
-                console.error("Session save error:", err);
-                // Log session save failure
-                await logUserActivity("LOGIN", { id: userId, email: username }, null, "FAILED - Session Save Error");
-                return res.status(500).json({
-                    success: false,
-                    message: "Server error during login."
+                await logUserActivity("LOGIN_ATTEMPT", { id: userId, email: username }, null, 
+                    "FAILED - Session save error", {
+                        ip: req.ip,
+                        userAgent: req.get('User-Agent'),
+                        error: err.message
+                    });
+                return res.status(500).json({ 
+                    success: false, 
+                    message: "Server error during login." 
                 });
             }
 
-            // Log successful login *after* session is potentially saved
-            await logUserActivity("LOGIN", { id: userId, email: username }, null, "SUCCESS");
+            // Successful login
+            await logUserActivity("LOGIN_SUCCESS", { id: userId, email: username }, null, 
+                "SUCCESS", {
+                    ip: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
 
-            // Set cookie manually if needed (often handled by session middleware)
             res.cookie('auditTracker.sid', req.sessionID, {
-                maxAge: 24 * 60 * 60 * 1000, // 1 day
+                maxAge: 24 * 60 * 60 * 1000,
                 httpOnly: true,
-                secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-                sameSite: 'lax' // Or 'strict' depending on your needs
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'lax'
             });
 
-            // Send success response
-            return res.status(200).json({
+            res.status(200).json({ 
                 success: true,
-                message: "Login successful!",
-                redirectUrl: "/home"
+                message: "Login successful!", 
+                redirectUrl: "/home",
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    userType: user.userType
+                }
             });
         });
 
     } catch (error) {
         console.error("Login process error:", error);
-        // Log general server error during login
-        // Use userId if available, otherwise just the attempted username
-        const actorInfo = userId ? { id: userId, email: username } : { email: username };
-        await logUserActivity("LOGIN", actorInfo, null, "FAILED - Server Error");
-        res.status(500).json({ success: false, message: "Server error during login." });
+        await logUserActivity("LOGIN_ATTEMPT", 
+            userId ? { id: userId, email: username } : { email: username }, 
+            null, 
+            "FAILED - Server error", {
+                ip: req.ip,
+                userAgent: req.get('User-Agent'),
+                error: error.message
+            });
+        res.status(500).json({ 
+            success: false, 
+            message: "Server error during login." 
+        });
     }
 });
 // Download Policy Route
