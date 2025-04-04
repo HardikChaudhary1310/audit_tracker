@@ -525,6 +525,69 @@ app.get("/circular", sessionRestorationMiddleware, (req, res) => {
 });
 // --- Activity Tracking Routes (Using PostgreSQL and logUserActivity) ---
 
+
+
+// Enhanced auth middleware
+const requireAuth = async (req, res, next) => {
+    try {
+        // Check session first
+        if (req.session?.user) {
+            req.user = req.session.user;
+            return next();
+        }
+
+        // If using JWT as fallback
+        const token = req.headers.authorization?.split(' ')[1];
+        if (token) {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            const user = await pool.query('SELECT * FROM users WHERE id = $1', [decoded.userId]);
+            if (user.rows[0]) {
+                req.user = user.rows[0];
+                return next();
+            }
+        }
+
+        console.warn('Unauthorized access attempt:', {
+            path: req.path,
+            ip: req.ip,
+            session: req.session
+        });
+        return res.status(401).json({ error: 'Authentication required' });
+    } catch (err) {
+        console.error('Auth middleware error:', err);
+        return res.status(500).json({ error: 'Authentication check failed' });
+    }
+};
+
+// Updated tracking endpoint
+app.post('/track-download', requireAuth, async (req, res) => {
+    try {
+        const { policyId, filename } = req.body;
+        
+        // Insert with NULL handling
+        const result = await pool.query(
+            `INSERT INTO policy_tracking 
+            (user_id, username, policy_id, action_type, file_path, ip_address, user_agent)
+            VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [
+                req.user.id,
+                req.user.email,
+                policyId || null, // Explicit NULL if not provided
+                'DOWNLOAD',
+                filename,
+                req.ip,
+                req.get('User-Agent')
+            ]
+        );
+        
+        res.json({ success: true, trackingId: result.rows[0].id });
+    } catch (error) {
+        console.error('Download tracking error:', error);
+        res.status(500).json({ error: 'Failed to track download' });
+    }
+});
+
+
 // Combined route for VIEW and CLICK using logUserActivity
 app.post('/track-policy-click', sessionRestorationMiddleware, async (req, res) => { // Make async
     const { policyId, actionType, filename } = req.body; // actionType should be 'VIEW' or 'CLICK'
@@ -600,6 +663,24 @@ app.post('/track-download', sessionRestorationMiddleware, async (req, res) => { 
     }
 });
 
+app.post('/track-action', async (req, res) => {
+    try {
+        await logUserActivity(
+            'DOWNLOAD', 
+            req.user, 
+            req.body.policyId,
+            'SUCCESS',
+            {
+                ip: req.ip,
+                userAgent: req.get('User-Agent'),
+                // other metadata
+            }
+        );
+        res.json({ success: true });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
 // --- Login Route (Using PostgreSQL) ---
 // --- Login Route (Using PostgreSQL) ---
 // --- Login Route (Using PostgreSQL) ---

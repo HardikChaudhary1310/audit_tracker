@@ -477,7 +477,30 @@ async function handleDownload(policyId) {
     }
 }
 
+const trackPolicyAction = async (actionType, policyId, filename) => {
+    try {
+        const response = await fetch(`/track-${actionType.toLowerCase()}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('token')}` // If using JWT
+            },
+            body: JSON.stringify({
+                policyId: policyId || null, // Handle null policyId
+                filename: filename
+            }),
+            credentials: 'include' // Crucial for session cookies
+        });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+    } catch (error) {
+        console.error(`${actionType} tracking error:`, error);
+        throw error;
+    }
+};
 
 
 const handleLogin = (username, password) => {
