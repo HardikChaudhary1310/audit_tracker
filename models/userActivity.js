@@ -1,71 +1,45 @@
-const pool = require('./db');
+// models/userActivity.js
+const pool = require('./db'); // Import the PostgreSQL pool connection
 
-const logPolicyAction = async (actionType, user, policyData, req) => {
-    if (!user || !user.id) {
-        throw new Error('User authentication required');
-    }
+const logUserActivity = async (actionType, userData, policyId, status) => {
+    // Ensure userData is somewhat valid, default to nulls or placeholders if needed
+    // Adapt how you get user ID - using email as ID might not be ideal.
+    // If you have a numeric user ID in your 'users' table, pass that instead.
+    const userId = userData?.id || null; // Prefer actual user ID if available
+    const username = userData?.email || userData?.username || 'anonymous'; // Get email/username
+    const safePolicyId = policyId || 'N/A'; // Ensure policyId is not undefined
 
-    const client = await pool.connect();
+    // PostgreSQL uses $1, $2, etc. for placeholders
+    const query = `
+        INSERT INTO user_activity (action_type, user_id, username, policy_id, status)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id;  -- Optional: return the ID of the inserted row
+    `;
+
     try {
-        await client.query('BEGIN');
+        console.log('Attempting to log activity:', { actionType, userId, username, safePolicyId, status });
 
-        // Prepare data with defaults
-        const policyId = policyData.id || 'unknown';
-        const filename = policyData.filename || policyId;
-        const ip = req.ip || '0.0.0.0';
-        const userAgent = req.get('User-Agent') || 'unknown';
-
-        // Insert into user_activity
-        const userActivityQuery = `
-            INSERT INTO user_activity (
-                action_type, user_id, username, policy_id, status, 
-                ip_address, user_agent, additional_data
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING id;
-        `;
-        await client.query(userActivityQuery, [
+        // Execute the SQL query using the pool
+        // Pass parameters as an array matching the $1, $2 order
+        const result = await pool.query(query, [
             actionType,
-            user.id,
-            user.email,
-            policyId,
-            'SUCCESS',
-            ip,
-            userAgent,
-            JSON.stringify({ filename })
+            userId,     // Using null if no ID provided
+            username,
+            safePolicyId,
+            status
         ]);
 
-        // Insert into activities
-        const activitiesQuery = `
-            INSERT INTO activities (
-                action_type, email, policy_id, user_id, 
-                ip_address, user_agent
-            ) VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id;
-        `;
-        const result = await client.query(activitiesQuery, [
-            actionType,
-            user.email,
-            policyId,
-            user.id,
-            ip,
-            userAgent
-        ]);
-
-        await client.query('COMMIT');
-        return result.rows[0];
+        console.log('✅ User activity logged successfully. Inserted ID:', result.rows[0]?.id || 'N/A');
+        return result; // Return the full result object from pg
 
     } catch (err) {
-        await client.query('ROLLBACK');
-        console.error('Database Error:', {
-            error: err.message,
-            query: err.query,
-            parameters: err.parameters,
-            stack: err.stack
-        });
+        console.error('❌ Error inserting activity into user_policy_activity:', err);
+        // Provide more context on the error if possible
+        console.error('Error Details:', { code: err.code, detail: err.detail });
+        console.error('Failed Query Values:', { actionType, userId, username, safePolicyId, status });
+        // It's important to throw the error so the calling function knows something went wrong
         throw err;
-    } finally {
-        client.release();
     }
 };
 
-module.exports = { logPolicyAction };
+module.exports = { logUserActivity };
